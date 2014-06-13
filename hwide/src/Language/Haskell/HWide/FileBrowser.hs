@@ -49,4 +49,4 @@ fileCls (File fp) = case takeExtension fp of
   ".hs"    -> "hsfile"
   ".lhs"   -> "hsfile"
   ".cabal" -> "cabalfile"
-  _       -> "file"
+  _        -> "file"
