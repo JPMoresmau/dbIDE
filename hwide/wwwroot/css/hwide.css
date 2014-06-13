@@ -1,0 +1,23 @@
+.file {
+	cursor: pointer;
+	background: url(file.png) no-repeat;
+	padding-left: 16px;
+}
+
+.hsfile {
+	cursor: pointer;
+	background: url(hsfile.png) no-repeat;
+	padding-left: 16px;
+}
+
+.cabalfile {
+	cursor: pointer;
+	background: url(cabal.png) no-repeat;
+	padding-left: 16px;
+}
+
+.folder {
+	cursor: pointer;
+	background: url(folder.png) no-repeat;
+	padding-left: 16px;
+}
