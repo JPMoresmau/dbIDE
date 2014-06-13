@@ -1,0 +1,50 @@
+Core:
+- store code in memory/graph db
+	- graph-db or acid-state.
+	- storage is controlled by it
+	- what about SCM integration then?
+- store code as AST
+	- typed lambda calculus + extensions
+	- some kind of "simple" language
+- get data from 
+	- all packages in sandboxes
+	- all packages in hackage
+	-> reuse scion-browser code
+	-> get source code from github/darcs site, etc?
+	- local projects for which we have source code
+- run code 
+	- via interpreter?
+	- via transformation to Haskell: existing haskell code we generate normal invocation our code is mapped to interpret
+
+UI:
+- use Web UI
+	- threepennygui + other javascript library?
+	- other?
+- search list
+	- like hoogle search
+	- nothing: list local projects
+	- type in: find matching projects/types/functions
+- project details
+	- when clicking on a project
+	- project info
+	- project dependencies both ways
+	- project contents
+- folder details:
+	- contents
+- module details:
+	- doc
+	- contents
+	- module dependencies both ways
+- function details:
+	- doc
+	- code how?
+	- add sugar
+	- references
+	- link to used functions/types definitions
+	- if source code know, replace function invocation by code
+- edit code
+	- how?
+	- structured or not?
+- save
+- export to Haskell project
+	- and build

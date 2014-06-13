@@ -1,0 +1,19 @@
+left pane: browser output (all packages) + all projects, with option to show/hide each and search
+right pane: names in scope, click show doc below (+ keywords?)
+middle: open projects(+new)->open files (+new)->outline(+new)
+        if function: type (with marker: inferred|explicit)
+ 	exported check box 
+	text box with current high level function/type
+		syntax highlighting
+		current word position right pane
+		press a customisable key: complete current word with right pane selection
+middle bottom: interpreter window
+
+CodeMirror http://codemirror.net/index.html
+open browser automatically http://www.dwheeler.com/essays/open-files-urls.html
+			http://stackoverflow.com/questions/4918131/open-browser-from-haskell-interpreter
+			http://hackage.haskell.org/package/wai-handler-launch-2.0.1.3/docs/src/Network-Wai-Handler-Launch.html#runUrl
+tree
+	http://www.jstree.com/
+autocomplete http://api.jqueryui.com/autocomplete/
+	http://codemirror.net/doc/manual.html#addon_show-hint
