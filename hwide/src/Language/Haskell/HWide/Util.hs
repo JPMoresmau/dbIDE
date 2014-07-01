@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, OverloadedStrings #-}
 module Language.Haskell.HWide.Util where
 
 import System.Directory 
@@ -8,7 +8,10 @@ import Data.Typeable (Typeable)
 import Data.Char (toLower)
 import Paths_hwide
 import Control.Monad (liftM)
-
+import qualified Data.Text as T
+import qualified Data.ByteString as B
+import Data.Text.Encoding 
+ 
 data FSItem = 
     Dir  {fsiPath :: FilePath}
   | File {fsiPath :: FilePath}
@@ -17,12 +20,12 @@ data FSItem =
 instance Ord FSItem where
   (Dir _)  <= (File _) = True
   (File _) <= (Dir _)  = False
-  f1       <= f2       = (can f1) <= (can f2)
+  f1       <= f2       = can f1 <= can f2
     where can = map toLower . takeFileName . fsiPath
 
 
-fileList :: FilePath -> IO [FSItem]
-fileList cd = do
+listFiles :: FilePath -> IO [FSItem]
+listFiles cd = do
   fs <- getDirectoryContents cd
   let visible = filter (not . ("." `isPrefixOf`) . takeFileName) fs
   mapM tofs visible
@@ -45,3 +48,15 @@ getStaticDir = do
     else do
       cd <- getCurrentDirectory
       return $ cd </> "wwwroot"
+
+getMode :: FilePath -> T.Text
+getMode fp = case takeExtension fp of
+  ".hs"  -> "haskell"
+  ".lhs" -> "haskell"
+  _      -> "text"
+
+getFileContents :: FilePath -> IO T.Text
+getFileContents fp = do
+  bs <- B.readFile fp
+  return $ decodeUtf8 bs
+

@@ -21,3 +21,17 @@
 	background: url(folder.png) no-repeat;
 	padding-left: 16px;
 }
+
+.fileBrowser {
+	display: table-cell;
+	vertical-align:top;
+}
+
+.codeEditor {
+	width:100px;
+	height:100px;
+}
+
+.table-cell {
+	vertical-align: top;
+}
