@@ -32,6 +32,11 @@
 	display:none;
 }
 
+.fileBrowserButtons {
+	border-bottom: 1px dashed black;
+	width: 100%;
+}
+
 /* .CodeMirror { */
 /* 	width:100%; */
 /* 	height:100%; */

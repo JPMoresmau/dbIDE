@@ -23,5 +23,5 @@ executable hwide
   other-modules:   
                    Language.Haskell.HWide.Util,
                    Language.Haskell.HWide.UI.PopupPane,
-                   Language.Haskell.HWide.UI.FileList
-er
+                   Language.Haskell.HWide.UI.FileList,
+                   Language.Haskell.HWide.UI.FileBrowser
