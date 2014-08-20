@@ -9,10 +9,20 @@ import Data.IORef
 
 import Language.Haskell.HWide.Util
 
-fileBrowser :: (FilePath -> UI()) -> UI Element
-fileBrowser onFile = do
+data FileBrowser = FileBrowser 
+  { fbElement :: Element
+  , fbFileOpen :: Event FilePath
+  }
+
+instance Widget FileBrowser where
+  getElement = fbElement
+
+fileBrowser :: UI FileBrowser
+fileBrowser = do
   cd <- liftIO $ canonicalizePath =<< getCurrentDirectory
   ior <- liftIO $ newIORef cd
+  
+  (evt,h) <- liftIO newEvent
   
   elFileList <- UI.div #. "fileBrowser"
   
@@ -36,12 +46,12 @@ fileBrowser onFile = do
       on UI.click a $ \_ ->
         case fs of
           Dir fp  -> liftIO (writeIORef ior fp) >> fillFileList
-          File fp -> onFile fp
+          File fp -> liftIO $ h fp
       br <- UI.br
       return [a,br]
   
   fillFileList  
-  return elFileList  
+  return $ FileBrowser elFileList evt
   
 fileCls :: FSItem -> String
 fileCls (Dir _) = "folder"

@@ -6,6 +6,7 @@ import Graphics.UI.Threepenny.Core
 
 import Language.Haskell.HWide.FileBrowser
 import Language.Haskell.HWide.FileList
+import Language.Haskell.HWide.UI.PopupPane
 import Language.Haskell.HWide.Util
 import System.FilePath ((</>))
 import qualified Data.Text as T
@@ -30,39 +31,43 @@ setup w = do
 --        s <- get value elInput
 --        debug $ "drop:" ++ show dts  
 -- myCodeMirror.setSize(500, 300);
+
+  fileListData <- fileList
+
+  fb <- fileBrowser 
+  
+  elFileBrowserIcon <- popupPane ("/static/img/folder.png","/static/img/folder_closed.png") fb
+
   let 
     codeMirror :: T.Text -> JSFunction ()
     codeMirror= ffi "myCodeMirror = CodeMirror.fromTextArea($(%1)[0],{lineNumbers: true,mode: 'haskell'}); $(myCodeMirror.getWrapperElement()).hide();"
     loadCode :: T.Text -> T.Text -> JSFunction ()
     loadCode =  ffi "$(myCodeMirror.getWrapperElement()).show();myCodeMirror.setOption('mode',%1);myCodeMirror.getDoc().setValue(%2);"
     showFile fp = do
+      ppClose elFileBrowserIcon
       s <- liftIO $ getFileContents fp
       runFunction $ loadCode (getMode fp) s
 
+  on fbFileOpen fb (flAdd fileListData)
 
-  fileListData <- fileList showFile
+  on eSelection fileListData showFile
 
-  elFileBrowser <- fileBrowser (\fp-> do
-    showFile fp
-    flAdd fileListData fp)
   
   let
     idEditor = "textArea"
   elText <- UI.textarea #. "codeEditor" # set UI.id_ idEditor
   
- 
+
   let
     mkLayout :: UI Element
-    mkLayout =row [element elFileBrowser,
+    mkLayout =
       column
-        [element $ flList fileListData,element elText]]
+        [row [column[element elFileBrowserIcon,element fb], element $ flList fileListData],element elText]
 
         
   layout <- mkLayout
   getBody w # set children [layout]
   runFunction $ codeMirror (T.pack $ '#' : idEditor)
     
-    
   return ()
-  
-  
+

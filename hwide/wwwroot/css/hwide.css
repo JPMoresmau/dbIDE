@@ -1,36 +1,41 @@
 .file {
 	cursor: pointer;
-	background: url(file.png) no-repeat;
+	background: url(../img/file.png) no-repeat;
 	padding-left: 16px;
 }
 
 .hsfile {
 	cursor: pointer;
-	background: url(hsfile.png) no-repeat;
+	background: url(../img/hsfile.png) no-repeat;
 	padding-left: 16px;
 }
 
 .cabalfile {
 	cursor: pointer;
-	background: url(cabal.png) no-repeat;
+	background: url(../img/cabal.png) no-repeat;
 	padding-left: 16px;
 }
 
 .folder {
 	cursor: pointer;
-	background: url(folder.png) no-repeat;
+	background: url(../img/folder.png) no-repeat;
 	padding-left: 16px;
 }
 
 .fileBrowser {
 	display: table-cell;
 	vertical-align:top;
+	border: 1px solid black;
+	background-color: white;
+	z-index:10;
+	position:absolute;
+	display:none;
 }
 
-.codeEditor {
-	width:100px;
-	height:100px;
-}
+/* .CodeMirror { */
+/* 	width:100%; */
+/* 	height:100%; */
+/* } */
 
 .table-cell {
 	vertical-align: top;

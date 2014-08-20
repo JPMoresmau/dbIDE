@@ -5,13 +5,16 @@ build-type:     Simple
 author:         jpmoresmau
 Data-dir:       .
 Data-files:     wwwroot/css/*.css
+                wwwroot/img/*.png
+                wwwroot/js/*.js
+                wwwroot/index.html
 
 executable hwide
   hs-source-dirs:  src
   main-is:         Main.hs
   build-depends:   
                    base >= 4,
-                   threepenny-gui >=0.4.2 && <0.5,
+                   threepenny-gui >=0.4.2.1 && <0.5,
                    directory >=1.2.1 && <1.3,
                    filepath >=1.3.0 && <1.4,
                    text >=1.1.1 && <1.2,
@@ -20,4 +23,5 @@ executable hwide
   other-modules:   
                    Language.Haskell.HWide.Util,
                    Language.Haskell.HWide.FileBrowser,
-                   Language.Haskell.HWide.FileList
+                   Language.Haskell.HWide.FileList,
+                   Language.Haskell.HWide.UI.PopupPane

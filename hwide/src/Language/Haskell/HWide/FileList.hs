@@ -3,7 +3,7 @@ module Language.Haskell.HWide.FileList where
 import qualified Graphics.UI.Threepenny as UI
 import           Graphics.UI.Threepenny.Core
 import           System.FilePath              (takeFileName)
-import           Data.List                    (sortBy, nub)
+import           Data.List                    (sortBy, nub, elemIndex)
 import           Data.IORef                   (atomicModifyIORef', newIORef)
 
 import           Control.Monad                (forM, void)
@@ -11,13 +11,16 @@ import           Data.Ord                     (comparing)
 
 data FileList = FileList 
   { flList  :: Element 
-  , flAdd   :: (FilePath -> UI())
-  , flClose :: (FilePath -> UI())
+  , flAdd   :: FilePath -> UI()
+  , flClose :: FilePath -> UI()
+  , eSelection :: Event FilePath
   }
 
+instance Widget FileList where
+  getElement = flList
 
-fileList :: (FilePath -> UI()) -> UI FileList
-fileList onOpen = do  
+fileList ::  UI FileList
+fileList = do  
   ior <- liftIO $ newIORef []
   sel <- UI.select  #. "fileList"
   let 
@@ -28,6 +31,7 @@ fileList onOpen = do
         ncs=nub $ sortBy (comparing takeFileName) (fp:cs)
         in (ncs,ncs)) 
       setFs fs
+      void $ return sel # set UI.selection (elemIndex fp fs)
     closeF ::FilePath -> UI()
     closeF fp = do
       fs<- liftIO $ atomicModifyIORef' ior (\fs->let
@@ -39,9 +43,11 @@ fileList onOpen = do
       opts <- forM fs (\fp -> UI.option # set value fp # set text (takeFileName fp))
       void $ return sel # set children opts
   
-  on (domEvent "livechange") sel $ \_ -> do
-    s <- get value sel
-    onOpen s
+--  on UI.selectionValueChange sel $ \s -> do
+--    onOpen s
+  --let eSel1 = filterJust $ UI.selectionChange sel
+  --let eSel = fmap (\_ -> get value sel) eSel1
     
-  return $ FileList sel addF closeF
+    
+  return $ FileList sel addF closeF (UI.selectionValueChange sel)
   
