@@ -22,6 +22,6 @@ executable hwide
   ghc-options:     -Wall -fno-warn-unused-do-bind
   other-modules:   
                    Language.Haskell.HWide.Util,
-                   Language.Haskell.HWide.FileBrowser,
-                   Language.Haskell.HWide.FileList,
-                   Language.Haskell.HWide.UI.PopupPane
+                   Language.Haskell.HWide.UI.PopupPane,
+                   Language.Haskell.HWide.UI.FileList
+er

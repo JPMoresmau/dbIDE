@@ -1,4 +1,4 @@
-module Language.Haskell.HWide.FileBrowser where
+module Language.Haskell.HWide.UI.FileBrowser where
 
 import qualified Graphics.UI.Threepenny as UI
 import Graphics.UI.Threepenny.Core

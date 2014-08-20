@@ -4,8 +4,8 @@ module Main where
 import qualified Graphics.UI.Threepenny as UI
 import Graphics.UI.Threepenny.Core
 
-import Language.Haskell.HWide.FileBrowser
-import Language.Haskell.HWide.FileList
+import Language.Haskell.HWide.UI.FileBrowser
+import Language.Haskell.HWide.UI.FileList
 import Language.Haskell.HWide.UI.PopupPane
 import Language.Haskell.HWide.Util
 import System.FilePath ((</>))

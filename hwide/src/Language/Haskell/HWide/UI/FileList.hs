@@ -1,4 +1,4 @@
-module Language.Haskell.HWide.FileList where
+module Language.Haskell.HWide.UI.FileList where
 
 import qualified Graphics.UI.Threepenny as UI
 import           Graphics.UI.Threepenny.Core
