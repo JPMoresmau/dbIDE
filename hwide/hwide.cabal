@@ -18,10 +18,12 @@ executable hwide
                    directory >=1.2.1 && <1.3,
                    filepath >=1.3.0 && <1.4,
                    text >=1.1.1 && <1.2,
-                   bytestring >=0.10.4 && <0.11
+                   bytestring >=0.10.4 && <0.11,
+                   containers >=0.5.5 && <0.6
   ghc-options:     -Wall -fno-warn-unused-do-bind
   other-modules:   
                    Language.Haskell.HWide.Util,
                    Language.Haskell.HWide.UI.PopupPane,
                    Language.Haskell.HWide.UI.FileList,
-                   Language.Haskell.HWide.UI.FileBrowser
+                   Language.Haskell.HWide.UI.FileBrowser,
+                   Language.Haskell.HWide.UI.UIUtils
