@@ -12,7 +12,7 @@ import           Data.Ord                     (comparing)
 data FileList = FileList 
   { flList  :: Element 
   , flAdd   :: FilePath -> UI()
-  , flClose :: FilePath -> UI()
+  , flClose :: UI()
   , eSelection :: Event FilePath
   }
 
@@ -32,12 +32,14 @@ fileList = do
         in (ncs,ncs)) 
       setFs fs
       void $ return sel # set UI.selection (elemIndex fp fs)
-    closeF ::FilePath -> UI()
-    closeF fp = do
+    closeF :: UI()
+    closeF = do
+      fp <- sel # get UI.value
       fs<- liftIO $ atomicModifyIORef' ior (\fs->let
         fs2=filter (fp /=) fs
         in (fs2,fs2))
       setFs fs
+      -- void $ return sel # set UI.selection (if null fs then Nothing else Just 0)
     setFs :: [FilePath] -> UI()
     setFs fs = do
       opts <- forM fs (\fp -> UI.option # set value fp # set text (takeFileName fp))

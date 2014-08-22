@@ -22,17 +22,17 @@ instance Widget (PopupPane w) where
 popupPane :: (Widget w) => (String,String) -> w -> UI (PopupPane w)
 popupPane (open,close) w = do
   ior <- liftIO $ newIORef False
-  popupButton <- UI.image # set UI.src open
+  popupButton <- UI.span #. open
   on UI.click popupButton (\_ -> do
     shouldShow <- liftIO $ atomicModifyIORef' ior (not &&& not)
     element w # set UI.style (if shouldShow then [("display","block")] else [("display","none")])
-    element popupButton # set UI.src (if shouldShow then close else open))
+    element popupButton #. (if shouldShow then close else open))
   let openF  = liftIO (writeIORef ior True) >> void (do
         element w # set UI.style [("display","block")]
-        element popupButton # set UI.src close
+        element popupButton #. close
         )
       closeF = liftIO (writeIORef ior False) >> void (do
         element w # set UI.style [("display","none")]
-        element popupButton # set UI.src open)
+        element popupButton #. open)
   return $ PopupPane popupButton w openF closeF
   

@@ -10,6 +10,7 @@ import Language.Haskell.HWide.UI.PopupPane
 import Language.Haskell.HWide.Util
 import System.FilePath ((</>))
 import qualified Data.Text as T
+import Control.Monad (void)
 
 -- | Main entry point.
 main :: IO ()
@@ -34,24 +35,32 @@ setup w = do
 
   fileListData <- fileList
 
-  fb <- fileBrowser 
+  fb <- fileBrowser
   
-  elFileBrowserIcon <- popupPane ("/static/img/folder.png","/static/img/folder_closed.png") fb
+  -- elFileBrowserIcon <- popupPane ("/static/img/folder_closed.png","/static/img/folder.png") fb
+  elFileBrowserIcon <- popupPane ("fileBrowserIcon-Closed","fileBrowserIcon-Opened") fb
+
+  closeFile <- UI.span #. "fileClose" # set style [("display","none")]
 
   let 
     codeMirror :: T.Text -> JSFunction ()
-    codeMirror= ffi "myCodeMirror = CodeMirror.fromTextArea($(%1)[0],{lineNumbers: true,mode: 'haskell'}); $(myCodeMirror.getWrapperElement()).hide();"
+    codeMirror= ffi "initCM(%1)"
     loadCode :: T.Text -> T.Text -> JSFunction ()
-    loadCode =  ffi "$(myCodeMirror.getWrapperElement()).show();myCodeMirror.setOption('mode',%1);myCodeMirror.getDoc().setValue(%2);"
+    loadCode =  ffi "loadCM(%1,%2)"
+    showFile "" = do
+      runFunction $ loadCode "haskell" "" 
+      void $ element closeFile # set style [("display","none")]
     showFile fp = do
       ppClose elFileBrowserIcon
       s <- liftIO $ getFileContents fp
       runFunction $ loadCode (getMode fp) s
+      void $ element closeFile # set style [("display","block")]
 
   on fbFileOpen fb (flAdd fileListData)
 
   on eSelection fileListData showFile
 
+  on UI.click closeFile (\_ -> flClose fileListData)
   
   let
     idEditor = "textArea"
@@ -62,7 +71,7 @@ setup w = do
     mkLayout :: UI Element
     mkLayout =
       column
-        [row [column[element elFileBrowserIcon,element fb], element $ flList fileListData],element elText]
+        [row [column[element elFileBrowserIcon,element fb], element $ flList fileListData, element $ closeFile],element elText]
 
         
   layout <- mkLayout

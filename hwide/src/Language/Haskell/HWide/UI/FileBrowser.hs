@@ -10,7 +10,7 @@ import Data.IORef
 
 import Language.Haskell.HWide.Util
 import Data.Text (Text)
-import Control.Monad (when, unless)
+import Control.Monad (unless)
 
 data FileBrowser = FileBrowser 
   { fbElement :: Element
@@ -38,8 +38,8 @@ fileBrowser = do
   creates <- UI.div #. "fileBrowserButtons" # set children [createFolder,createFile]
   
   let
-    prompt :: Text -> JSFunction (String)
-    prompt = ffi "var p=prompt(%1,'');if (p==null) {p='';} p"
+    prompt :: Text -> JSFunction String
+    prompt = ffi "prompt(%1,'')"
     fillFileList = do
       dir <- liftIO $ canonicalizePath =<< readIORef ior
       fs <- liftIO $ listFiles dir

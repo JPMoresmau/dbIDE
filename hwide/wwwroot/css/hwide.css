@@ -37,6 +37,25 @@
 	width: 100%;
 }
 
+.fileBrowserIcon-Closed {
+	cursor: pointer;
+	background: url(../img/folder_closed.png) no-repeat;
+	padding-left: 16px;
+}
+
+.fileBrowserIcon-Opened {
+	cursor: pointer;
+	background: url(../img/folder.png) no-repeat;
+	padding-left: 16px;
+}
+
+.fileClose {
+	cursor: pointer;
+	background: url(../img/close.png) no-repeat;
+	padding-left: 16px;	
+	padding-top: 16px;	
+}
+
 /* .CodeMirror { */
 /* 	width:100%; */
 /* 	height:100%; */
