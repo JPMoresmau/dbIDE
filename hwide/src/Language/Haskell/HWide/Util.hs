@@ -60,3 +60,6 @@ getFileContents fp = do
   bs <- B.readFile fp
   return $ decodeUtf8 bs
 
+setFileContents :: FilePath -> T.Text -> IO()
+setFileContents fp cnts = 
+  B.writeFile fp $ encodeUtf8 cnts

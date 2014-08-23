@@ -24,32 +24,23 @@ main = do
 
 setup :: Window -> UI ()
 setup w = do
-  -- active elements
+
   return w # set title "Haskell Web IDE"
   UI.addStyleSheet w "hwide.css"
---  elInput <- UI.input # set value "" # set UI.droppable True
---  debug "start"
---  on (domEvent "livechange") elInput $ \_ -> do
---        s <- get value elInput
---        debug s
---  on (domEvent "drop") elInput $ \(EventData dts) -> do
---        s <- get value elInput
---        debug $ "drop:" ++ show dts  
--- myCodeMirror.setSize(500, 300);
 
   iorCurrentFile <- liftIO $ newIORef ""
   iorFileInfo <- liftIO $ newIORef (DM.singleton "" (FileInfo "" False))
 
   fileListData <- fileList
-
+  element (getElement fileListData) # set UI.title__ "Opened files"
   fb <- fileBrowser
   
   -- elFileBrowserIcon <- popupPane ("/static/img/folder_closed.png","/static/img/folder.png") fb
-  elFileBrowserIcon <- popupPane ("fileBrowserIcon-Closed","fileBrowserIcon-Opened") fb
+  elFileBrowserIcon <- popupPane ("fileBrowserIcon-Closed","fileBrowserIcon-Opened") ("Open File Browser","Close File Browser") fb
 
-  closeFile <- UI.span #. "fileClose"
+  closeFile <- UI.span #. "fileClose" # set UI.title__ "Close current file"
   setVisible closeFile False
-  saveFile <- UI.span #. "fileSave"
+  saveFile <- UI.span #. "fileSave" # set UI.title__ "Save current file"
   setVisible saveFile False
   
   changeTick <- UI.input # set UI.type_ "hidden" # set UI.id_ "changeTick"
@@ -59,6 +50,8 @@ setup w = do
     codeMirror= ffi "initCM(%1)"
     loadCode :: T.Text -> T.Text -> JSFunction ()
     loadCode =  ffi "loadCM(%1,%2)"
+    getCode :: JSFunction T.Text
+    getCode =  ffi "getCMContents()"
     showContents fp mode contents=do
       ppClose elFileBrowserIcon
       liftIO (writeIORef iorCurrentFile fp)
@@ -81,7 +74,20 @@ setup w = do
 
   on eSelection fileListData showFile
 
-  on UI.click closeFile (\_ -> flClose fileListData)
+  on UI.click closeFile (\_ -> do
+    liftIO $ do
+      fp <- readIORef iorCurrentFile
+      atomicModifyIORef' iorFileInfo (\m -> (DM.delete fp m,()))
+    flClose fileListData)
+  
+  on UI.click saveFile (\_ -> do
+    cnts <- callFunction getCode
+    liftIO $ do
+      fp <- readIORef iorCurrentFile
+      setFileContents fp cnts
+      atomicModifyIORef' iorFileInfo (\m -> (DM.adjust setClean fp m,()))
+    setVisible saveFile False
+    )
   
   let
     idEditor = "textArea"
@@ -92,22 +98,21 @@ setup w = do
     mkLayout :: UI Element
     mkLayout =
       column
-        [row [column[element elFileBrowserIcon,element fb], element $ flList fileListData, element closeFile, element saveFile]
+        [row [column[element elFileBrowserIcon,element fb], element $ getElement fileListData, element closeFile, element saveFile]
         ,element elText,element changeTick]
 
         
   layout <- mkLayout
   getBody w # set children [layout]
   runFunction $ codeMirror (T.pack $ '#' : idEditor)
-    
-  --cm <- liftM head $ getElementsByClassName w "CodeMirror"
+
    
   on UI.sendValue changeTick (\_-> do
     setVisible saveFile True
-    fp <- liftIO $ readIORef iorCurrentFile
-    liftIO $ atomicModifyIORef' iorFileInfo (\m -> (DM.adjust setDirty fp m,()))
+    liftIO $ do
+      fp <- readIORef iorCurrentFile
+      atomicModifyIORef' iorFileInfo (\m -> (DM.adjust setDirty fp m,()))
     )
-  --element saveFile # set style [("display","none")]
    
   return ()
 
