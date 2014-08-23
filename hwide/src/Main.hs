@@ -28,20 +28,22 @@ setup w = do
   return w # set title "Haskell Web IDE"
   UI.addStyleSheet w "hwide.css"
 
-  iorCurrentFile <- liftIO $ newIORef ""
   iorFileInfo <- liftIO $ newIORef (DM.singleton "" (FileInfo "" False))
 
-  fileListData <- fileList
-  element (getElement fileListData) # set UI.title__ "Opened files"
   fb <- fileBrowser
   
-  -- elFileBrowserIcon <- popupPane ("/static/img/folder_closed.png","/static/img/folder.png") fb
-  elFileBrowserIcon <- popupPane ("fileBrowserIcon-Closed","fileBrowserIcon-Opened") ("Open File Browser","Close File Browser") fb
-
   closeFile <- UI.span #. "fileClose" # set UI.title__ "Close current file"
   setVisible closeFile False
   saveFile <- UI.span #. "fileSave" # set UI.title__ "Save current file"
   setVisible saveFile False
+  
+  fileListData <- fileList (fbFileOpen fb) (UI.click closeFile)
+  element (getElement fileListData) # set UI.title__ "Opened files"
+  
+  let bCurrentFile = flbSelection fileListData
+  
+  (eCloseFileBrowser,forceClose) <- liftIO newEvent
+  elFileBrowserIcon <- popupPane ("fileBrowserIcon-Closed","fileBrowserIcon-Opened") ("Open File Browser","Close File Browser") fb eCloseFileBrowser
   
   changeTick <- UI.input # set UI.type_ "hidden" # set UI.id_ "changeTick"
 
@@ -53,8 +55,7 @@ setup w = do
     getCode :: JSFunction T.Text
     getCode =  ffi "getCMContents()"
     showContents fp mode contents=do
-      ppClose elFileBrowserIcon
-      liftIO (writeIORef iorCurrentFile fp)
+      liftIO $ forceClose ()
       runFunction $ loadCode mode contents
       m <- liftIO $ readIORef iorFileInfo
       case DM.lookup fp m of
@@ -70,20 +71,20 @@ setup w = do
       s <- liftIO $ getFileContents fp
       showContents fp (getMode fp) s
       
-  on fbFileOpen fb (flAdd fileListData)
+  -- on fbFileOpen fb (flAdd fileListData)
 
-  on eSelection fileListData showFile
+  onChanges bCurrentFile showFile
 
   on UI.click closeFile (\_ -> do
+    fp <- currentValue bCurrentFile
     liftIO $ do
-      fp <- readIORef iorCurrentFile
       atomicModifyIORef' iorFileInfo (\m -> (DM.delete fp m,()))
-    flClose fileListData)
+    )
   
   on UI.click saveFile (\_ -> do
     cnts <- callFunction getCode
+    fp <- currentValue bCurrentFile
     liftIO $ do
-      fp <- readIORef iorCurrentFile
       setFileContents fp cnts
       atomicModifyIORef' iorFileInfo (\m -> (DM.adjust setClean fp m,()))
     setVisible saveFile False
@@ -109,8 +110,8 @@ setup w = do
    
   on UI.sendValue changeTick (\_-> do
     setVisible saveFile True
+    fp <- currentValue bCurrentFile
     liftIO $ do
-      fp <- readIORef iorCurrentFile
       atomicModifyIORef' iorFileInfo (\m -> (DM.adjust setDirty fp m,()))
     )
    

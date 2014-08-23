@@ -1,55 +1,55 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 module Language.Haskell.HWide.UI.FileList where
 
 import qualified Graphics.UI.Threepenny as UI
 import           Graphics.UI.Threepenny.Core
 import           System.FilePath              (takeFileName)
 import           Data.List                    (sortBy, nub, elemIndex)
-import           Data.IORef                   (atomicModifyIORef', newIORef)
 
 import           Control.Monad                (forM, void)
 import           Data.Ord                     (comparing)
+import Data.Typeable (Typeable)
 
 data FileList = FileList 
   { flList  :: Element 
-  , flAdd   :: FilePath -> UI()
-  , flClose :: UI()
-  , eSelection :: Event FilePath
+  , flbSelection :: Behavior FilePath
   }
 
 instance Widget FileList where
   getElement = flList
 
-fileList ::  UI FileList
-fileList = do  
-  ior <- liftIO $ newIORef []
+data FileListData = FileListData
+  { fldCurrent :: FilePath
+  , fldList    :: [FilePath]  
+  } deriving (Show,Read,Eq,Ord,Typeable)
+
+addFileToList :: FilePath -> FileListData -> FileListData
+addFileToList fp (FileListData _ cs) = FileListData fp $ nub $ sortBy (comparing takeFileName) (fp : cs)
+
+removeFileFromList :: FileListData -> FileListData
+removeFileFromList (FileListData c cs) = let
+  ncs = filter (c /=) cs
+  nc = if null ncs then "" else head ncs
+  in FileListData nc ncs
+
+setCurrentFileInList :: FilePath -> FileListData -> FileListData
+setCurrentFileInList fp (FileListData _ cs) = FileListData fp cs
+
+fileList :: Event FilePath -> Event () -> UI FileList
+fileList eOpen eClose = do  
   sel <- UI.select  #. "fileList"
-  let 
-    addF :: FilePath -> UI()
-    addF fp = do
-      --opt <- UI.option # set value fp # set text (takeFileName fp)
-      fs<- liftIO $ atomicModifyIORef' ior (\cs->let
-        ncs=nub $ sortBy (comparing takeFileName) (fp:cs)
-        in (ncs,ncs)) 
-      setFs fs
-      void $ return sel # set UI.selection (elemIndex fp fs)
-    closeF :: UI()
-    closeF = do
-      fp <- sel # get UI.value
-      fs<- liftIO $ atomicModifyIORef' ior (\fs->let
-        fs2=filter (fp /=) fs
-        in (fs2,fs2))
-      setFs fs
-      -- void $ return sel # set UI.selection (if null fs then Nothing else Just 0)
-    setFs :: [FilePath] -> UI()
-    setFs fs = do
+  let
+    setFs :: FileListData -> UI()
+    setFs (FileListData c fs) = do
       opts <- forM fs (\fp -> UI.option # set value fp # set text (takeFileName fp))
-      void $ return sel # set children opts
-  
---  on UI.selectionValueChange sel $ \s -> do
---    onOpen s
-  --let eSel1 = filterJust $ UI.selectionChange sel
-  --let eSel = fmap (\_ -> get value sel) eSel1
+      void $ return sel # set children opts # set UI.selection (elemIndex c fs)
+    eSetCurrent = setCurrentFileInList <$> UI.selectionValueChange sel
+    eAdd = addFileToList <$> eOpen
+    eRemove = const removeFileFromList <$> eClose
+    eAll = concatenate <$> unions [eSetCurrent,eAdd,eRemove]
     
-    
-  return $ FileList sel addF closeF (UI.selectionValueChange sel)
+  bData <- accumB (FileListData "" []) eAll
+  onChanges bData setFs
+
+  return $ FileList sel (fldCurrent <$> bData)
   
