@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+-- | The file browser widget
 module Language.Haskell.HWide.UI.FileBrowser where
 
 import qualified Graphics.UI.Threepenny as UI
@@ -11,22 +12,29 @@ import Language.Haskell.HWide.Util
 import Data.Text (Text)
 import Control.Monad (unless)
 
+-- | The FileBrowser Widget
 data FileBrowser = FileBrowser 
-  { fbElement :: Element
-  , fbFileOpen :: Event FilePath
+  { fbElement :: Element -- ^ The graphical element
+  , fbFileOpen :: Event FilePath -- ^ The even fired when a file is selected for opening
   }
 
+-- | Widget instance
 instance Widget FileBrowser where
   getElement = fbElement
 
+-- | Build a file browser
 fileBrowser :: UI FileBrowser
 fileBrowser = do
   cd <- liftIO $ canonicalizePath =<< getCurrentDirectory
 
+  -- current folder: event -> behavior
   (evtNewCurrentFolder,fireNewCurrentFolder) <- liftIO newEvent
+  -- shoulw we expose that behavior?
   bCurrentFolder <- stepper cd evtNewCurrentFolder
+  -- open file event
   (evtOpenFile,fireOpenFile) <- liftIO newEvent
   
+  -- UI
   elFileList <- UI.div #. "fileBrowser"
 
   createFolder <- UI.image 
@@ -40,6 +48,8 @@ fileBrowser = do
   let
     prompt :: Text -> JSFunction String
     prompt = ffi "prompt(%1,'')"
+    -- list all file system items in the current folder and display them, including ..
+    fillFileList :: FilePath -> UI ()
     fillFileList dir = do
       fs <- liftIO $ listFiles dir
       lis <- mapM fileElem $ sort fs 
@@ -50,7 +60,8 @@ fileBrowser = do
         else return lis
       element elFileList # set children (creates : concat lis2)
       return ()
-           
+      
+    -- build a single element       
     fileElem :: FSItem -> UI [Element]
     fileElem fs = do
       let s = takeFileName $ fsiPath fs
@@ -63,6 +74,7 @@ fileBrowser = do
       br <- UI.br
       return [a,br]
   
+  -- folder creation
   on UI.click createFolder (\_ -> do
     fldr <- callFunction $ prompt "Enter new folder name"
     unless (null fldr) $ do
@@ -73,6 +85,7 @@ fileBrowser = do
         fireNewCurrentFolder ndir
     return ()
     )
+  -- file creation
   on UI.click createFile (\_ -> do
     file <- callFunction $ prompt "Enter new file name"
     unless (null file) $ do
@@ -84,9 +97,12 @@ fileBrowser = do
     )
   
   fillFileList cd
+  -- refresh view on change
   onEvent evtNewCurrentFolder fillFileList
   return $ FileBrowser elFileList evtOpenFile
   
+
+-- | Determine the class of a file system item UI element
 fileCls :: FSItem -> String
 fileCls (Dir _) = "folder"
 fileCls (File fp) = case takeExtension fp of

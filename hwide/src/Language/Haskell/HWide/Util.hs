@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, OverloadedStrings #-}
+-- | Utility functions
 module Language.Haskell.HWide.Util where
 
 import System.Directory 
@@ -12,11 +13,17 @@ import qualified Data.Text as T
 import qualified Data.ByteString as B
 import Data.Text.Encoding 
  
+-- | A File System item, wrapping the path
 data FSItem = 
-    Dir  {fsiPath :: FilePath}
-  | File {fsiPath :: FilePath}
+    -- | A directory
+    Dir 
+      {fsiPath :: FilePath}
+  | -- | A path
+    File 
+      {fsiPath :: FilePath}
   deriving (Show,Read,Eq,Typeable)
 
+-- | Instance for sorting
 instance Ord FSItem where
   (Dir _)  <= (File _) = True
   (File _) <= (Dir _)  = False
@@ -24,6 +31,7 @@ instance Ord FSItem where
     where can = map toLower . takeFileName . fsiPath
 
 
+-- | List all files inside a given directory
 listFiles :: FilePath -> IO [FSItem]
 listFiles cd = do
   fs <- getDirectoryContents cd
@@ -39,6 +47,7 @@ listFiles cd = do
         else Dir can
         
 
+-- | Get directory where static resources are kept
 getStaticDir :: IO FilePath
 getStaticDir = do
   d <- (</> "wwwroot") `liftM` Paths_hwide.getDataDir
@@ -49,17 +58,23 @@ getStaticDir = do
       cd <- getCurrentDirectory
       return $ cd </> "wwwroot"
 
+
+-- | Get the CodeMirror file for the given text
 getMode :: FilePath -> T.Text
 getMode fp = case takeExtension fp of
   ".hs"  -> "haskell"
   ".lhs" -> "haskell"
   _      -> "text"
 
+
+-- | Get the file contents as a Text. Assumes UTF-8 encoding
 getFileContents :: FilePath -> IO T.Text
 getFileContents fp = do
   bs <- B.readFile fp
   return $ decodeUtf8 bs
 
+
+-- | Set the file contents as a Text. Assumes UTF-8 encoding
 setFileContents :: FilePath -> T.Text -> IO()
 setFileContents fp cnts = 
   B.writeFile fp $ encodeUtf8 cnts

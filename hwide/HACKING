@@ -1,0 +1,4 @@
+# Hwide uses codemirror, but for the moment the code mirror source code has not be put under github.
+
+1. Download code mirror, and unzip it under wwwroot/js
+2. add index.html if you use a different version that the one referenced there.
