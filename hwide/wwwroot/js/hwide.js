@@ -20,6 +20,8 @@ function initCM(txt){
 	myCodeMirror.on("change",function(cm){
 		tick();
 		});
+	// uurrrgghhh magic numbers for padding and such
+	myCodeMirror.setSize($( window ).width()-20 ,$( window ).height() - 40);
 }
 
 function loadCM(mode,contents){
