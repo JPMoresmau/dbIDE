@@ -6,7 +6,6 @@ import Graphics.UI.Threepenny.Core
 import System.Directory 
 import System.FilePath
 import Data.List (sort)
-import Data.IORef
 
 import Language.Haskell.HWide.Util
 import Data.Text (Text)
@@ -23,9 +22,10 @@ instance Widget FileBrowser where
 fileBrowser :: UI FileBrowser
 fileBrowser = do
   cd <- liftIO $ canonicalizePath =<< getCurrentDirectory
-  ior <- liftIO $ newIORef cd
-  
-  (evt,h) <- liftIO newEvent
+
+  (evtNewCurrentFolder,fireNewCurrentFolder) <- liftIO newEvent
+  bCurrentFolder <- stepper cd evtNewCurrentFolder
+  (evtOpenFile,fireOpenFile) <- liftIO newEvent
   
   elFileList <- UI.div #. "fileBrowser"
 
@@ -40,8 +40,7 @@ fileBrowser = do
   let
     prompt :: Text -> JSFunction String
     prompt = ffi "prompt(%1,'')"
-    fillFileList = do
-      dir <- liftIO $ canonicalizePath =<< readIORef ior
+    fillFileList dir = do
       fs <- liftIO $ listFiles dir
       lis <- mapM fileElem $ sort fs 
       lis2 <- if dir /= cd
@@ -54,36 +53,39 @@ fileBrowser = do
            
     fileElem :: FSItem -> UI [Element]
     fileElem fs = do
-      let s =   takeFileName $ fsiPath fs
-      a <- UI.span  # set text s #. fileCls fs
-      on UI.click a $ \_ ->
+      let s = takeFileName $ fsiPath fs
+      fp <- if s == ".." then liftIO $ canonicalizePath $ fsiPath fs else return $ fsiPath fs
+      a <- UI.span  # set text s #. fileCls fs # set UI.title__ fp
+      on UI.click a $ \_ -> liftIO $
         case fs of
-          Dir fp  -> liftIO (writeIORef ior fp) >> fillFileList
-          File fp -> liftIO $ h fp
+          Dir d  -> fireNewCurrentFolder d
+          File f-> fireOpenFile f
       br <- UI.br
       return [a,br]
   
   on UI.click createFolder (\_ -> do
     fldr <- callFunction $ prompt "Enter new folder name"
     unless (null fldr) $ do
+      dir <- currentValue bCurrentFolder
+      let ndir = dir </> fldr
       liftIO $ do
-        dir <- canonicalizePath =<< readIORef ior
-        createDirectoryIfMissing False $ dir </> fldr
-      fillFileList
+        createDirectoryIfMissing False ndir 
+        fireNewCurrentFolder ndir
     return ()
     )
   on UI.click createFile (\_ -> do
     file <- callFunction $ prompt "Enter new file name"
     unless (null file) $ do
+      dir <- currentValue bCurrentFolder
       liftIO $ do
-        dir <- canonicalizePath =<< readIORef ior
         writeFile (dir </> file) ""
-      fillFileList
+        fireNewCurrentFolder dir
     return ()
     )
   
-  fillFileList  
-  return $ FileBrowser elFileList evt
+  fillFileList cd
+  onEvent evtNewCurrentFolder fillFileList
+  return $ FileBrowser elFileList evtOpenFile
   
 fileCls :: FSItem -> String
 fileCls (Dir _) = "folder"
