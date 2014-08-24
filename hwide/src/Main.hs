@@ -4,6 +4,7 @@ module Main where
 import qualified Graphics.UI.Threepenny as UI
 import Graphics.UI.Threepenny.Core
 
+import Language.Haskell.HWide.Files
 import Language.Haskell.HWide.UI.FileBrowser
 import Language.Haskell.HWide.UI.FileList
 import Language.Haskell.HWide.UI.PopupPane
@@ -11,10 +12,8 @@ import Language.Haskell.HWide.UI.UIUtils
 import Language.Haskell.HWide.Util
 import System.FilePath ((</>))
 import qualified Data.Text as T
-import Data.IORef
 
 import qualified Data.Map as DM
-import Data.Typeable (Typeable)
 
 -- | Main entry point.
 main :: IO ()
@@ -28,7 +27,8 @@ setup w = do
   return w # set title "Haskell Web IDE"
   UI.addStyleSheet w "hwide.css"
 
-  iorFileInfo <- liftIO $ newIORef (DM.singleton "" (FileInfo "" False))
+  (evtEditorStateChange,fireEditorStateChange) <- liftIO newEvent
+  bEditorState <- accumB mkEditorState evtEditorStateChange
 
   fb <- fileBrowser
   
@@ -57,12 +57,12 @@ setup w = do
     showContents fp mode contents=do
       liftIO $ forceClose ()
       runFunction $ loadCode mode contents
-      m <- liftIO $ readIORef iorFileInfo
-      case DM.lookup fp m of
+      es <- currentValue bEditorState
+      case DM.lookup fp $ esFileInfos es of
         Just FileInfo{fiDirty} -> setVisible saveFile fiDirty
         Nothing -> do
           setVisible saveFile False
-          liftIO $ atomicModifyIORef' iorFileInfo (\m2 -> (DM.insert fp (FileInfo fp False) m2,()))
+          liftIO $ fireEditorStateChange $ addFile fp
     showFile "" = do
       setVisible closeFile False
       showContents "" "haskell" ""
@@ -77,8 +77,7 @@ setup w = do
 
   on UI.click closeFile (\_ -> do
     fp <- currentValue bCurrentFile
-    liftIO $ do
-      atomicModifyIORef' iorFileInfo (\m -> (DM.delete fp m,()))
+    liftIO $ fireEditorStateChange $ removeFile fp
     )
   
   on UI.click saveFile (\_ -> do
@@ -86,7 +85,7 @@ setup w = do
     fp <- currentValue bCurrentFile
     liftIO $ do
       setFileContents fp cnts
-      atomicModifyIORef' iorFileInfo (\m -> (DM.adjust setClean fp m,()))
+      liftIO $ fireEditorStateChange $ adjustFile fp setClean
     setVisible saveFile False
     )
   
@@ -111,17 +110,8 @@ setup w = do
   on UI.sendValue changeTick (\_-> do
     setVisible saveFile True
     fp <- currentValue bCurrentFile
-    liftIO $ do
-      atomicModifyIORef' iorFileInfo (\m -> (DM.adjust setDirty fp m,()))
+    liftIO $ fireEditorStateChange $ adjustFile fp setDirty
     )
    
   return ()
 
-setDirty fi = fi {fiDirty=True}
-
-setClean fi = fi {fiDirty=False}
-
-data FileInfo = FileInfo
-  { fiFile  :: FilePath
-  , fiDirty :: Bool
-  } deriving (Show,Read,Eq,Ord,Typeable)

@@ -26,4 +26,5 @@ executable hwide
                    Language.Haskell.HWide.UI.PopupPane,
                    Language.Haskell.HWide.UI.FileList,
                    Language.Haskell.HWide.UI.FileBrowser,
-                   Language.Haskell.HWide.UI.UIUtils
+                   Language.Haskell.HWide.UI.UIUtils,
+                   Language.Haskell.HWide.Files
