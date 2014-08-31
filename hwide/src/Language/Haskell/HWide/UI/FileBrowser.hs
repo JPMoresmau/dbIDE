@@ -23,9 +23,10 @@ instance Widget FileBrowser where
   getElement = fbElement
 
 -- | Build a file browser
-fileBrowser :: UI FileBrowser
-fileBrowser = do
-  cd <- liftIO $ canonicalizePath =<< getCurrentDirectory
+fileBrowser
+  :: FilePath -- ^ Root directory 
+  -> UI FileBrowser
+fileBrowser cd = do
 
   -- current folder: event -> behavior
   (evtNewCurrentFolder,fireNewCurrentFolder) <- liftIO newEvent

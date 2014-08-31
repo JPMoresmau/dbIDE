@@ -5,16 +5,19 @@ module Main where
 import qualified Graphics.UI.Threepenny as UI
 import Graphics.UI.Threepenny.Core
 
-import Language.Haskell.HWide.Files
+import Language.Haskell.HWide.Config
 import Language.Haskell.HWide.UI.FileBrowser
 import Language.Haskell.HWide.UI.FileList
 import Language.Haskell.HWide.UI.PopupPane
 import Language.Haskell.HWide.UI.UIUtils
 import Language.Haskell.HWide.Util
+import System.Directory (canonicalizePath,getCurrentDirectory, doesFileExist)
 import System.FilePath ((</>))
 import qualified Data.Text as T
 
 import qualified Data.Map as DM
+import Reactive.Threepenny (onChange)
+import Control.Monad (filterM, liftM, when)
 
 -- | Main entry point.
 main :: IO ()
@@ -25,16 +28,24 @@ main = do
 -- | Build UI
 setup :: Window -> UI ()
 setup w = do
+  cd <- liftIO $ canonicalizePath =<< getCurrentDirectory
+  initState <- liftIO $ mkEditorState cd
 
   return w # set title "Haskell Web IDE"
   UI.addStyleSheet w "hwide.css"
 
   -- editor state event and behavior
   (evtEditorStateChange,fireEditorStateChange) <- liftIO newEvent
-  bEditorState <- accumB mkEditorState evtEditorStateChange
+  (evtEditorStateCurrentChange,fireEditorStateCurrentChange) <- liftIO newEvent
+  let evtEditorStateCurrentChange2 = fmap setCurrent evtEditorStateCurrentChange
+  bEditorState <- accumB initState (unionWith (.) evtEditorStateChange evtEditorStateCurrentChange2)
+
+  liftIO $ onChange bEditorState $ saveEditorState cd
 
   -- filebrowser component
-  fb <- fileBrowser
+  fb <- fileBrowser cd
+  
+  on fbFileOpen fb $ liftIO . fireEditorStateChange . addFile
   
   -- buttons
   closeFile <- UI.span #. "fileClose" # set UI.title__ "Close current file"
@@ -43,10 +54,9 @@ setup w = do
   setVisible saveFile False
   
   -- current file list
-  fileListData <- fileList (fbFileOpen fb) (UI.click closeFile)
+  preOpened <- liftIO $ filterM doesFileExist $ filter (not . null) $ DM.keys $ esFileInfos initState
+  fileListData <- fileList bEditorState fireEditorStateCurrentChange
   element (getElement fileListData) # set UI.title__ "Opened files"
-  -- current file behavior
-  let bCurrentFile = flbSelection fileListData
   
   -- force close event
   (eCloseFileBrowser,forceClose) <- liftIO newEvent
@@ -85,18 +95,18 @@ setup w = do
       showContents fp (getMode fp) s
 
 
-  onChanges bCurrentFile showFile
+  onEvent evtEditorStateCurrentChange showFile
   
   -- close file
   on UI.click closeFile (\_ -> do
-    fp <- currentValue bCurrentFile
+    fp <- liftM esCurrent $ currentValue bEditorState
     liftIO $ fireEditorStateChange $ removeFile fp
     )
   
   -- save file
   on UI.click saveFile (\_ -> do
     cnts <- callFunction getCode
-    fp <- currentValue bCurrentFile
+    fp <- liftM esCurrent $ currentValue bEditorState
     liftIO $ do
       setFileContents fp cnts
       liftIO $ fireEditorStateChange $ adjustFile fp setClean
@@ -123,9 +133,11 @@ setup w = do
 
   -- on each code mirror change, we set the current file to dirty
   on UI.sendValue changeTick (\_-> do
-    setVisible saveFile True
-    fp <- currentValue bCurrentFile
-    liftIO $ fireEditorStateChange $ adjustFile fp setDirty
+    es <- currentValue bEditorState
+    let fp = esCurrent es
+    when (Just True /= fmap fiDirty (DM.lookup fp $ esFileInfos es)) $ do
+       setVisible saveFile True
+       liftIO $ fireEditorStateChange $ adjustFile fp setDirty
     )
    
   return ()

@@ -78,3 +78,4 @@ getFileContents fp = do
 setFileContents :: FilePath -> T.Text -> IO()
 setFileContents fp cnts = 
   B.writeFile fp $ encodeUtf8 cnts
+
