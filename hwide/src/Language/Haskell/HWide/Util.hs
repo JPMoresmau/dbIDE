@@ -12,6 +12,7 @@ import Control.Monad (liftM)
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import Data.Text.Encoding 
+import Data.Hashable (hash)
  
 -- | A File System item, wrapping the path
 data FSItem = 
@@ -75,7 +76,26 @@ getFileContents fp = do
 
 
 -- | Set the file contents as a Text. Assumes UTF-8 encoding
-setFileContents :: FilePath -> T.Text -> IO()
+setFileContents :: FilePath -> T.Text -> IO ()
 setFileContents fp cnts = 
   B.writeFile fp $ encodeUtf8 cnts
 
+
+-- | Get the directory where hwide is going to store its info
+getHWideDir ::  IO FilePath
+getHWideDir = do
+  userDir <- getAppUserDataDirectory "hwide"
+  createDirectoryIfMissing True userDir
+  return userDir
+  
+-- | Get the workspace specific directory
+-- This is inside the app directory to not pollute the user's workspace
+getHWideWorkspaceDir :: FilePath -> IO FilePath
+getHWideWorkspaceDir root = do
+  userDir <- getHWideDir
+  let rootName = hash root 
+  let workDir = userDir </> makeValid (show rootName)
+  createDirectoryIfMissing False workDir
+  return workDir
+
+  

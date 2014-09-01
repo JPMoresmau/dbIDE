@@ -11,13 +11,13 @@ import Language.Haskell.HWide.UI.FileList
 import Language.Haskell.HWide.UI.PopupPane
 import Language.Haskell.HWide.UI.UIUtils
 import Language.Haskell.HWide.Util
-import System.Directory (canonicalizePath,getCurrentDirectory, doesFileExist)
+import System.Directory (canonicalizePath,getCurrentDirectory)
 import System.FilePath ((</>))
 import qualified Data.Text as T
 
 import qualified Data.Map as DM
 import Reactive.Threepenny (onChange)
-import Control.Monad (filterM, liftM, when)
+import Control.Monad (liftM, when)
 
 -- | Main entry point.
 main :: IO ()
@@ -29,6 +29,7 @@ main = do
 setup :: Window -> UI ()
 setup w = do
   cd <- liftIO $ canonicalizePath =<< getCurrentDirectory
+  workDir <- liftIO $ getHWideWorkspaceDir cd
   initState <- liftIO $ mkEditorState cd
 
   return w # set title "Haskell Web IDE"
@@ -53,8 +54,6 @@ setup w = do
   saveFile <- UI.span #. "fileSave" # set UI.title__ "Save current file"
   setVisible saveFile False
   
-  -- current file list
-  preOpened <- liftIO $ filterM doesFileExist $ filter (not . null) $ DM.keys $ esFileInfos initState
   fileListData <- fileList bEditorState fireEditorStateCurrentChange
   element (getElement fileListData) # set UI.title__ "Opened files"
   

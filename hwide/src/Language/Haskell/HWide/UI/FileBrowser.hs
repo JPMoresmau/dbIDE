@@ -54,19 +54,34 @@ fileBrowser cd = do
     fillFileList dir = do
       fs <- liftIO $ listFiles dir
       lis <- mapM fileElem $ sort fs 
-      lis2 <- if dir /= cd
+      lis2 <- if not $ equalFilePath dir cd
         then do
-          up <- fileElem $ Dir $ dir </> ".."
-          return $ up:lis
+          -- up link
+          let upResult = takeDirectory dir
+          up <- specialDirElem upResult ".."
+          if not $ equalFilePath upResult cd 
+            then do
+              -- root link
+              r <- specialDirElem cd "/"
+              return $ r:up:lis
+            else return $ up:lis
         else return lis
       element elFileList # set children (creates : concat lis2)
       return ()
+    
+    -- build special directories
+    specialDirElem :: FilePath -> String ->  UI [Element]
+    specialDirElem fp name = do
+      a <- UI.span  # set text name #. fileCls (Dir fp) # set UI.title__ cd
+      on UI.click a $ \_ -> liftIO $ fireNewCurrentFolder fp
+      br <- UI.br
+      return [a,br]
       
     -- build a single element       
     fileElem :: FSItem -> UI [Element]
     fileElem fs = do
-      let s = takeFileName $ fsiPath fs
-      fp <- if s == ".." then liftIO $ canonicalizePath $ fsiPath fs else return $ fsiPath fs
+      let fp = fsiPath fs
+      let s = takeFileName fp
       a <- UI.span  # set text s #. fileCls fs # set UI.title__ fp
       on UI.click a $ \_ -> liftIO $
         case fs of
