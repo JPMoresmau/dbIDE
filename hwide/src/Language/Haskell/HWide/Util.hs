@@ -98,4 +98,3 @@ getHWideWorkspaceDir root = do
   createDirectoryIfMissing False workDir
   return workDir
 
-  

@@ -11,6 +11,7 @@ import Data.List (sort)
 import Language.Haskell.HWide.Util
 import Data.Text (Text)
 import Control.Monad (unless)
+import Data.Maybe (maybeToList)
 
 -- | The FileBrowser Widget
 data FileBrowser = FileBrowser 
@@ -25,12 +26,13 @@ instance Widget FileBrowser where
 -- | Build a file browser
 fileBrowser
   :: FilePath -- ^ Root directory 
+  -> Maybe (FilePath,String) -- ^ Workspace HWide directory
   -> UI FileBrowser
-fileBrowser cd = do
+fileBrowser cd mWorkDir= do
 
   -- current folder: event -> behavior
   (evtNewCurrentFolder,fireNewCurrentFolder) <- liftIO newEvent
-  -- shoulw we expose that behavior?
+  -- should we expose that behavior?
   bCurrentFolder <- stepper cd evtNewCurrentFolder
   -- open file event
   (evtOpenFile,fireOpenFile) <- liftIO newEvent
@@ -46,33 +48,11 @@ fileBrowser cd = do
     # set UI.title__ "Create a new file"
   creates <- UI.div #. "fileBrowserButtons" # set children [createFolder,createFile]
   
-  let
-    prompt :: Text -> JSFunction String
-    prompt = ffi "prompt(%1,'')"
-    -- list all file system items in the current folder and display them, including ..
-    fillFileList :: FilePath -> UI ()
-    fillFileList dir = do
-      fs <- liftIO $ listFiles dir
-      lis <- mapM fileElem $ sort fs 
-      lis2 <- if not $ equalFilePath dir cd
-        then do
-          -- up link
-          let upResult = takeDirectory dir
-          up <- specialDirElem upResult ".."
-          if not $ equalFilePath upResult cd 
-            then do
-              -- root link
-              r <- specialDirElem cd "/"
-              return $ r:up:lis
-            else return $ up:lis
-        else return lis
-      element elFileList # set children (creates : concat lis2)
-      return ()
-    
+  let     
     -- build special directories
     specialDirElem :: FilePath -> String ->  UI [Element]
     specialDirElem fp name = do
-      a <- UI.span  # set text name #. fileCls (Dir fp) # set UI.title__ cd
+      a <- UI.span  # set text name #. fileCls (Dir fp) # set UI.title__ fp
       on UI.click a $ \_ -> liftIO $ fireNewCurrentFolder fp
       br <- UI.br
       return [a,br]
@@ -90,6 +70,33 @@ fileBrowser cd = do
       br <- UI.br
       return [a,br]
   
+  toWork <- mapM (uncurry specialDirElem) $ maybeToList mWorkDir
+  
+  let
+    prompt :: Text -> JSFunction String
+    prompt = ffi "prompt(%1,'')"
+    -- list all file system items in the current folder and display them, including ..
+    fillFileList :: FilePath -> UI ()
+    fillFileList dir = do
+      fs <- liftIO $ listFiles dir
+      lis <- mapM fileElem $ sort fs 
+      lis2 <- if not $ equalFilePath dir cd
+        then do
+          -- up link
+          let upResult = takeDirectory dir
+          up <- case fmap fst mWorkDir of
+            Just d | d == dir -> specialDirElem cd ".."
+            _ -> specialDirElem upResult ".."
+          if not $ equalFilePath upResult cd 
+            then do
+              -- root link
+              r <- specialDirElem cd "/"
+              return $ r:up:lis
+            else return $ up:lis
+        else return $ toWork ++ lis
+      element elFileList # set children (creates : concat lis2)
+      return ()
+   
   -- folder creation
   on UI.click createFolder (\_ -> do
     fldr <- callFunction $ prompt "Enter new folder name"

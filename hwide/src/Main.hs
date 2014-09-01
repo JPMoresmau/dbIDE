@@ -44,7 +44,7 @@ setup w = do
   liftIO $ onChange bEditorState $ saveEditorState cd
 
   -- filebrowser component
-  fb <- fileBrowser cd
+  fb <- fileBrowser cd $ Just (workDir,"workspace")
   
   on fbFileOpen fb $ liftIO . fireEditorStateChange . addFile
   
@@ -134,7 +134,7 @@ setup w = do
   on UI.sendValue changeTick (\_-> do
     es <- currentValue bEditorState
     let fp = esCurrent es
-    when (Just True /= fmap fiDirty (DM.lookup fp $ esFileInfos es)) $ do
+    when (not (null fp) && Just True /= fmap fiDirty (DM.lookup fp $ esFileInfos es)) $ do
        setVisible saveFile True
        liftIO $ fireEditorStateChange $ adjustFile fp setDirty
     )
