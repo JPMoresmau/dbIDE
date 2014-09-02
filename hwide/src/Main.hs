@@ -1,10 +1,12 @@
-{-# LANGUAGE OverloadedStrings, DeriveDataTypeable,NamedFieldPuns #-}
+{-# LANGUAGE OverloadedStrings, DeriveDataTypeable,NamedFieldPuns, ScopedTypeVariables #-}
 -- | Main entry point
 module Main where
 
 import qualified Graphics.UI.Threepenny as UI
 import Graphics.UI.Threepenny.Core
 
+import Language.Haskell.HWide.Cabal
+import Language.Haskell.HWide.Cache
 import Language.Haskell.HWide.Config
 import Language.Haskell.HWide.UI.FileBrowser
 import Language.Haskell.HWide.UI.FileList
@@ -18,6 +20,9 @@ import qualified Data.Text as T
 import qualified Data.Map as DM
 import Reactive.Threepenny (onChange)
 import Control.Monad (liftM, when)
+import Data.Default (def)
+import Data.Maybe (isJust)
+
 
 -- | Main entry point.
 main :: IO ()
@@ -25,12 +30,20 @@ main = do
   static <- getStaticDir
   startGUI defaultConfig {tpStatic = Just static,tpCustomHTML=Just $ static </> "index.html"} setup
 
+getDirectories :: IO Directories
+getDirectories = do
+  cd <- canonicalizePath =<< getCurrentDirectory
+  workDir <- getHWideWorkspaceDir cd
+  logsDir <- getLogsDir workDir
+  sandboxDir <- getSandboxDir workDir
+  return $ Directories cd workDir logsDir sandboxDir
+
+
 -- | Build UI
 setup :: Window -> UI ()
 setup w = do
-  cd <- liftIO $ canonicalizePath =<< getCurrentDirectory
-  workDir <- liftIO $ getHWideWorkspaceDir cd
-  initState <- liftIO $ mkEditorState cd
+  dirs <- liftIO getDirectories
+  initState <- liftIO $ mkEditorState $ dRootDir dirs
 
   return w # set title "Haskell Web IDE"
   UI.addStyleSheet w "hwide.css"
@@ -41,10 +54,13 @@ setup w = do
   let evtEditorStateCurrentChange2 = fmap setCurrent evtEditorStateCurrentChange
   bEditorState <- accumB initState (unionWith (.) evtEditorStateChange evtEditorStateCurrentChange2)
 
-  liftIO $ onChange bEditorState $ saveEditorState cd
+  liftIO $ onChange bEditorState $ saveEditorState $ dRootDir dirs
+
+  (evtCacheChange,fireCacheChange) <- liftIO newEvent
+  bCacheState <- accumB def evtCacheChange
 
   -- filebrowser component
-  fb <- fileBrowser cd $ Just (workDir,"workspace")
+  fb <- fileBrowser (dRootDir dirs) $ Just (dWorkDir dirs,"workspace")
   
   on fbFileOpen fb $ liftIO . fireEditorStateChange . addFile
   
@@ -108,12 +124,14 @@ setup w = do
     fp <- liftM esCurrent $ currentValue bEditorState
     liftIO $ do
       setFileContents fp cnts
-      liftIO $ fireEditorStateChange $ adjustFile fp setClean
+      fireEditorStateChange $ adjustFile fp setClean
     setVisible saveFile False
+    cfi <- getCachedFileInfo fp bCacheState fireCacheChange
+    when (isJust $ cfiRootPath cfi) $ do
+      return ()
     )
   
-  let
-    idEditor = "textArea"
+  let idEditor = "textArea"
   -- text area anchoring the code mirror editor
   elText <- UI.textarea #. "codeEditor" # set UI.id_ idEditor
   

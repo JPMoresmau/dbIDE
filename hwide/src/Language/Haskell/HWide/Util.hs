@@ -8,7 +8,7 @@ import Data.List (isPrefixOf)
 import Data.Typeable (Typeable)
 import Data.Char (toLower)
 import Paths_hwide
-import Control.Monad (liftM)
+import Control.Monad (liftM, when)
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import Data.Text.Encoding 
@@ -51,7 +51,7 @@ listFiles cd = do
 -- | Get directory where static resources are kept
 getStaticDir :: IO FilePath
 getStaticDir = do
-  d <- (</> "wwwroot") `liftM` Paths_hwide.getDataDir
+  d <- Paths_hwide.getDataFileName "wwwroot"
   ex <- doesDirectoryExist d
   if ex 
     then return d
@@ -85,7 +85,7 @@ setFileContents fp cnts =
 getHWideDir ::  IO FilePath
 getHWideDir = do
   userDir <- getAppUserDataDirectory "hwide"
-  createDirectoryIfMissing True userDir
+  createDirectoryIfMissing False userDir
   return userDir
   
 -- | Get the workspace specific directory
@@ -94,7 +94,43 @@ getHWideWorkspaceDir :: FilePath -> IO FilePath
 getHWideWorkspaceDir root = do
   userDir <- getHWideDir
   let rootName = hash root 
-  let workDir = userDir </> makeValid (show rootName)
-  createDirectoryIfMissing False workDir
-  return workDir
+  createSubDir userDir $ show rootName
 
+
+getLogsDir :: FilePath -> IO FilePath
+getLogsDir root = createSubDir root "logs"
+  
+  
+createSubDir :: FilePath -> FilePath -> IO FilePath
+createSubDir root dir = do
+  let subDir = root </> makeValid dir
+  createDirectoryIfMissing True subDir
+  return subDir
+
+getCabalFile :: FilePath -> IO (Maybe FilePath)
+getCabalFile fp = do
+  let dir = takeDirectory fp
+  go dir
+  where 
+    go dir = do
+      fs <- getDirectoryContents dir
+      let cabals = filter ((".cabal" ==) . takeExtension) fs 
+      case cabals of
+        [x] -> return $ Just x
+        []  -> do
+          let up = takeDirectory dir
+          if up == dir then return Nothing else go up
+        xs  -> do
+          let sm = filter ((takeFileName dir ==) . dropExtension . takeFileName) xs
+          case sm of
+            (x:_) -> return $ Just x
+            _      -> return $ Just $ head xs
+
+
+data Directories = Directories
+  { dRootDir    :: FilePath
+  , dWorkDir    :: FilePath
+  , dLogsDir    :: FilePath
+  , dSandboxDir :: FilePath
+  } deriving (Read,Show,Eq,Ord,Typeable)
+        
