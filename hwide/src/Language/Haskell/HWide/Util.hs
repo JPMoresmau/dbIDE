@@ -8,12 +8,14 @@ import Data.List (isPrefixOf)
 import Data.Typeable (Typeable)
 import Data.Char (toLower)
 import Paths_hwide
-import Control.Monad (liftM, when)
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import Data.Text.Encoding 
 import Data.Hashable (hash)
- 
+import System.IO
+import System.Process
+import System.Exit (ExitCode(..))
+
 -- | A File System item, wrapping the path
 data FSItem = 
     -- | A directory
@@ -134,3 +136,28 @@ data Directories = Directories
   , dSandboxDir :: FilePath
   } deriving (Read,Show,Eq,Ord,Typeable)
         
+
+data RunToLogResult = RunToLogResult
+  {
+    rtlrOutFile  :: FilePath
+  , rtlrErrFile  :: FilePath
+  , rtlrExitCode :: ExitCode
+  } deriving (Read,Show,Eq,Ord,Typeable)
+
+
+-- | Run a program in a directory and arguments, writing output to the log file
+runToLog :: FilePath -> FilePath -> (String,FilePath) -> [String] -> IO RunToLogResult
+runToLog pgm dir (logName,logDir) args = do
+  let outF = logDir </> addExtension (logName ++ "-out") "log"
+  let errF = logDir </> addExtension (logName ++ "-err") "log"
+  ex <- withFile outF WriteMode $ \outH ->
+   withFile errF WriteMode $ \errH -> do
+    let cp = (proc pgm args)
+              {
+                cwd = Just dir
+              , std_out = UseHandle outH
+              , std_err = UseHandle errH  
+              }
+    (_,_,_,ph) <- createProcess cp
+    waitForProcess ph
+  return $ RunToLogResult outF errF ex

@@ -35,7 +35,7 @@ getDirectories = do
   cd <- canonicalizePath =<< getCurrentDirectory
   workDir <- getHWideWorkspaceDir cd
   logsDir <- getLogsDir workDir
-  sandboxDir <- getSandboxDir workDir
+  sandboxDir <- getSandboxDir workDir logsDir
   return $ Directories cd workDir logsDir sandboxDir
 
 

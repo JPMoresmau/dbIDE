@@ -2,22 +2,17 @@ module Language.Haskell.HWide.Cabal where
 
 import System.Directory
 import System.FilePath
-import Control.Monad (when)
-import System.Process (readProcessWithExitCode)
+import Control.Monad (void, unless)
+import Control.Concurrent (forkIO)
 
-getSandboxDir :: FilePath -> IO FilePath
-getSandboxDir root = do
+import Language.Haskell.HWide.Util
+
+getSandboxDir :: FilePath -> FilePath -> IO FilePath
+getSandboxDir root logDir = do
   let subDir = root </> "sandbox"
   ex <- doesDirectoryExist subDir
-  when (not ex) $ do
+  unless ex $ do
     createDirectory subDir
-    runCabal subDir ["sandbox","init"]
+    void $ forkIO $ void $ runToLog "cabal" subDir ("sandbox_init",logDir) ["sandbox","init"]
   return subDir
   
-
-runCabal :: FilePath -> [String] -> IO ()
-runCabal dir args = do
-  cd<-getCurrentDirectory
-  setCurrentDirectory dir
-  (ex,out,err)<-readProcessWithExitCode "cabal" args ""
-  setCurrentDirectory cd
