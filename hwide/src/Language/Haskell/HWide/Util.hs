@@ -9,12 +9,16 @@ import Data.Typeable (Typeable)
 import Data.Char (toLower)
 import Paths_hwide
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as T
 import qualified Data.ByteString as B
 import Data.Text.Encoding 
 import Data.Hashable (hash)
 import System.IO
 import System.Process
 import System.Exit (ExitCode(..))
+import Network.Mime
+
+import qualified Data.Map as DM
 
 -- | A File System item, wrapping the path
 data FSItem = 
@@ -62,12 +66,22 @@ getStaticDir = do
       return $ cd </> "wwwroot"
 
 
--- | Get the CodeMirror file for the given text
-getMode :: FilePath -> T.Text
-getMode fp = case takeExtension fp of
-  ".hs"  -> "haskell"
-  ".lhs" -> "haskell"
-  _      -> "text"
+-- | Extended mime map with haskell and YAML
+extendedMimeMap :: DM.Map Extension MimeType
+extendedMimeMap = foldr (uncurry DM.insert) defaultMimeMap 
+                    [("hs","text/x-haskell"),("lhs","text/x-haskell"),
+                     ("yaml","text/x-yaml")
+                    ]
+
+
+
+-- | Get the mime type for the given file name
+getMIME :: FilePath -> T.Text
+getMIME = T.decodeUtf8 . mimeByExt extendedMimeMap "text" . T.pack
+--case takeExtension fp of
+--  ".hs"  -> "haskell"
+--  ".lhs" -> "haskell"
+--  _      -> "text"
 
 
 -- | Get the file contents as a Text. Assumes UTF-8 encoding
@@ -99,16 +113,22 @@ getHWideWorkspaceDir root = do
   createSubDir userDir $ show rootName
 
 
+-- | Get the "logs" subdirectory
 getLogsDir :: FilePath -> IO FilePath
 getLogsDir root = createSubDir root "logs"
   
   
-createSubDir :: FilePath -> FilePath -> IO FilePath
+-- | create a subdirectory inside a parent
+createSubDir 
+  :: FilePath -- ^ The parent
+  -> FilePath -- ^ The name of the subdirectory
+  -> IO FilePath
 createSubDir root dir = do
   let subDir = root </> makeValid dir
   createDirectoryIfMissing True subDir
   return subDir
 
+-- | Get the cabal file for a given source file
 getCabalFile :: FilePath -> IO (Maybe FilePath)
 getCabalFile fp = do
   let dir = takeDirectory fp
@@ -128,7 +148,7 @@ getCabalFile fp = do
             (x:_) -> return $ Just x
             _      -> return $ Just $ head xs
 
-
+-- | Useful directories
 data Directories = Directories
   { dRootDir    :: FilePath
   , dWorkDir    :: FilePath
@@ -137,6 +157,7 @@ data Directories = Directories
   } deriving (Read,Show,Eq,Ord,Typeable)
         
 
+-- | Result of running a process into a log
 data RunToLogResult = RunToLogResult
   {
     rtlrOutFile  :: FilePath

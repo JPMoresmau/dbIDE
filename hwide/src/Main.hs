@@ -22,6 +22,7 @@ import Reactive.Threepenny (onChange)
 import Control.Monad (liftM, when)
 import Data.Default (def)
 import Data.Maybe (isJust)
+import System.IO
 
 
 -- | Main entry point.
@@ -107,7 +108,7 @@ setup w = do
     showFile fp = do
       setVisible closeFile True
       s <- liftIO $ getFileContents fp
-      showContents fp (getMode fp) s
+      showContents fp (getMIME fp) s
 
 
   onEvent evtEditorStateCurrentChange showFile
@@ -117,7 +118,7 @@ setup w = do
     fp <- liftM esCurrent $ currentValue bEditorState
     liftIO $ fireEditorStateChange $ removeFile fp
     )
-  
+
   -- save file
   on UI.click saveFile (\_ -> do
     cnts <- callFunction getCode

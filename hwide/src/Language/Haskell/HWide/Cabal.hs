@@ -7,7 +7,11 @@ import Control.Concurrent (forkIO)
 
 import Language.Haskell.HWide.Util
 
-getSandboxDir :: FilePath -> FilePath -> IO FilePath
+-- |Get the directory for the Cabal sandbox, creating it and initializing it if needed
+getSandboxDir 
+  :: FilePath -- | Root directory
+  -> FilePath -- | Log directory
+  -> IO FilePath
 getSandboxDir root logDir = do
   let subDir = root </> "sandbox"
   ex <- doesDirectoryExist subDir
