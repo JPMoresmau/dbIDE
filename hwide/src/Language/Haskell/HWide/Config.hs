@@ -13,6 +13,14 @@ import Data.Functor
 import Control.Applicative
 import Control.Monad (filterM, liftM)
 
+import Language.Haskell.HWide.Util
+
+-- | State that doesn't changed during a session
+data StaticState = StaticState
+  {
+    ssPaths         :: Paths
+  , ssDirectories   :: Directories
+  } deriving (Typeable)
 
 -- | Useful paths
 data Paths = Paths

@@ -31,6 +31,7 @@ main = do
   static <- getStaticDir
   startGUI defaultConfig {tpStatic = Just static,tpCustomHTML=Just $ static </> "index.html"} setup
 
+-- | Get the useful directories
 getDirectories :: IO Directories
 getDirectories = do
   cd <- canonicalizePath =<< getCurrentDirectory
@@ -40,12 +41,27 @@ getDirectories = do
   return $ Directories cd workDir logsDir sandboxDir
 
 
+-- | Initialize things in the IO Monad
+initIO :: IO (StaticState,EditorState)
+initIO = do
+  dirs <- getDirectories
+  initState <- mkEditorState $ dWorkDir dirs
+  let ss = StaticState (esPaths initState) dirs
+  return (ss,initState)
+
+
 -- | Build UI
 setup :: Window -> UI ()
 setup w = do
-  dirs <- liftIO getDirectories
-  initState <- liftIO $ mkEditorState $ dWorkDir dirs
-  liftIO $ initSandboxDir dirs (esPaths initState)
+  (ss,initState) <- liftIO initIO
+  let dirs = ssDirectories ss
+
+  runHandling <- mkRunHandling
+
+  mSandBox <- initSandboxDir ss
+  case mSandBox of
+    Just s -> scheduleRun runHandling s Nothing
+    _      -> return ()
 
   return w # set title "Haskell Web IDE"
   UI.addStyleSheet w "hwide.css"

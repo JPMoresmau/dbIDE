@@ -34,4 +34,5 @@ executable hwide
                    Language.Haskell.HWide.UI.UIUtils,
                    Language.Haskell.HWide.Config,
                    Language.Haskell.HWide.Cache,
-                   Language.Haskell.HWide.Cabal
+                   Language.Haskell.HWide.Cabal,
+                   Language.Haskell.HWide.Internal.UniqueQueue

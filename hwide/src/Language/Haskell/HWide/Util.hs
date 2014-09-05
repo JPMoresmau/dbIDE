@@ -17,8 +17,13 @@ import System.IO
 import System.Process
 import System.Exit (ExitCode(..))
 import Network.Mime
+import Control.Concurrent (forkIO)
 
 import qualified Data.Map as DM
+
+import Language.Haskell.HWide.Internal.UniqueQueue
+import Control.Monad (forever)
+import Reactive.Threepenny (Handler)
 
 -- | A File System item, wrapping the path
 data FSItem = 
@@ -166,9 +171,18 @@ data RunToLogResult = RunToLogResult
   } deriving (Read,Show,Eq,Ord,Typeable)
 
 
+-- | Input to run a process into a log
+data RunToLogInput = RunToLogInput
+  {
+    rtliProgram   :: FilePath
+  , rtliDirectory :: FilePath
+  , rtliLogInfo   :: (String,FilePath)
+  , rtliArgs      :: [String]
+  } deriving (Read,Show,Eq,Ord,Typeable)
+
 -- | Run a program in a directory and arguments, writing output to the log file
-runToLog :: FilePath -> FilePath -> (String,FilePath) -> [String] -> IO RunToLogResult
-runToLog pgm dir (logName,logDir) args = do
+runToLog :: RunToLogInput -> IO RunToLogResult
+runToLog (RunToLogInput pgm dir (logName,logDir) args) = do
   let outF = logDir </> addExtension (logName ++ "-out") "log"
   let errF = logDir </> addExtension (logName ++ "-err") "log"
   ex <- withFile outF WriteMode $ \outH ->
@@ -182,3 +196,14 @@ runToLog pgm dir (logName,logDir) args = do
     (_,_,_,ph) <- createProcess cp
     waitForProcess ph
   return $ RunToLogResult outF errF ex
+
+
+-- | Start the queue running programs to log, firing an event when done
+startRunToLogQueue :: Handler (RunToLogInput,RunToLogResult) -> IO (UniqueQueue RunToLogInput)
+startRunToLogQueue fire = do
+  q <- mkUniqueQueue
+  forkIO $ forever $ do
+    run <- takeUnique q
+    res <- runToLog run
+    fire (run,res)
+  return q
