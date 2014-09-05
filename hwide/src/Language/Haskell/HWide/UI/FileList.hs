@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable,RecordWildCards #-}
 -- | List of opened files
 module Language.Haskell.HWide.UI.FileList where
 
@@ -58,10 +58,10 @@ fileList bEs fireModify = do
     getFileText :: FileInfo -> String
     getFileText fi = takeFileName $ fiFile fi ++ (if fiDirty fi then "*" else "")
     setFs :: EditorState -> UI()
-    setFs (EditorState mfs c) = do
-      let fs = DM.assocs mfs
+    setFs (EditorState{..}) = do
+      let fs = DM.assocs esFileInfos
       opts <- forM (map snd fs) (\fi -> UI.option # set value (fiFile fi) # set text (getFileText fi))
-      void $ return sel # set children opts # set UI.selection (elemIndex c (map fst fs))
+      void $ return sel # set children opts # set UI.selection (elemIndex esCurrent (map fst fs))
   on UI.selectionValueChange sel $ liftIO . fireModify
   initFld <- currentValue bEs
   setFs initFld

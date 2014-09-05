@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, OverloadedStrings #-}
--- | Edited files handling
+-- | Configuration data
 module Language.Haskell.HWide.Config where
 
 import qualified Data.Map as DM
@@ -12,28 +12,52 @@ import Data.Default
 import Data.Functor
 import Control.Applicative
 import Control.Monad (filterM, liftM)
-import Data.Maybe (fromMaybe)
+
+
+-- | Useful paths
+data Paths = Paths
+  { pCabalPath  :: FilePath
+  } deriving (Read,Show,Eq,Ord,Typeable)
+
+-- | Default value
+instance Default Paths where
+  def = Paths "cabal"
+
+-- | Reading from JSON/YAML
+instance FromJSON Paths where
+  parseJSON (Object v) = Paths
+    <$> v .:? "cabal" .!= def
+  parseJSON _ = fail "Paths"
+
+-- | Writing to JSON/YAML
+instance ToJSON Paths where
+  toJSON (Paths cb)=object ["cabal" .= cb]
+  
 
 -- | The state we keep in the editor
 data EditorState = EditorState 
   { esFileInfos :: DM.Map FilePath FileInfo 
   , esCurrent   :: FilePath
+  , esPaths     :: Paths
   } deriving (Show,Read,Eq,Ord,Typeable)
+
+
 
 -- | Default value
 instance Default EditorState where
-  def = EditorState (DM.singleton "" (defFileInfo "")) ""
+  def = EditorState (DM.singleton "" (defFileInfo "")) "" def
 
 -- | Reading from JSON/YAML
 instance FromJSON EditorState where
   parseJSON (Object v) = EditorState
-    <$> ((DM.fromList . map (\x->(x,defFileInfo x)) . ("":) . fromMaybe []) <$> v .:? "files")
-    <*> (fromMaybe "" <$> v .:? "current")
+    <$> ((DM.fromList . map (\x->(x,defFileInfo x)) . ("":)) <$> v .:? "files" .!= [])
+    <*> v .:? "current" .!= ""
+    <*> v .:? "paths" .!= def
   parseJSON _ = fail "EditorState"
 
 -- | Writing to JSON/YAML
 instance ToJSON EditorState where
-  toJSON (EditorState fis c)=object ["files" .= filter (not . null) (DM.keys fis), "current" .= c]
+  toJSON (EditorState fis c ps)=object ["files" .= filter (not . null) (DM.keys fis), "current" .= c, "paths" .= ps]
 
 -- | Information about a file
 data FileInfo = FileInfo
@@ -41,6 +65,7 @@ data FileInfo = FileInfo
   , fiDirty :: Bool -- ^ dirty -> file has been modified and not saved to disk
   } deriving (Show,Read,Eq,Ord,Typeable)
   
+-- | Default file info for a given file
 defFileInfo :: FilePath -> FileInfo
 defFileInfo fp = FileInfo fp False
 

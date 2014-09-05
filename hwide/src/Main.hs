@@ -22,7 +22,7 @@ import Reactive.Threepenny (onChange)
 import Control.Monad (liftM, when)
 import Data.Default (def)
 import Data.Maybe (isJust)
-import System.IO
+-- import System.IO
 
 
 -- | Main entry point.
@@ -36,7 +36,7 @@ getDirectories = do
   cd <- canonicalizePath =<< getCurrentDirectory
   workDir <- getHWideWorkspaceDir cd
   logsDir <- getLogsDir workDir
-  sandboxDir <- getSandboxDir workDir logsDir
+  let sandboxDir = getSandboxDir workDir
   return $ Directories cd workDir logsDir sandboxDir
 
 
@@ -44,7 +44,8 @@ getDirectories = do
 setup :: Window -> UI ()
 setup w = do
   dirs <- liftIO getDirectories
-  initState <- liftIO $ mkEditorState $ dRootDir dirs
+  initState <- liftIO $ mkEditorState $ dWorkDir dirs
+  liftIO $ initSandboxDir dirs (esPaths initState)
 
   return w # set title "Haskell Web IDE"
   UI.addStyleSheet w "hwide.css"
@@ -55,7 +56,7 @@ setup w = do
   let evtEditorStateCurrentChange2 = fmap setCurrent evtEditorStateCurrentChange
   bEditorState <- accumB initState (unionWith (.) evtEditorStateChange evtEditorStateCurrentChange2)
 
-  liftIO $ onChange bEditorState $ saveEditorState $ dRootDir dirs
+  liftIO $ onChange bEditorState $ saveEditorState $ dWorkDir dirs
 
   (evtCacheChange,fireCacheChange) <- liftIO newEvent
   bCacheState <- accumB def evtCacheChange
