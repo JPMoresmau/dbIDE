@@ -21,7 +21,7 @@ import qualified Data.Map as DM
 import Reactive.Threepenny (onChange)
 import Control.Monad (liftM, when)
 import Data.Default (def)
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, catMaybes)
 -- import System.IO
 
 
@@ -145,8 +145,10 @@ setup w = do
       fireEditorStateChange $ adjustFile fp setClean
     setVisible saveFile False
     cfi <- getCachedFileInfo fp bCacheState fireCacheChange
-    when (isJust $ cfiRootPath cfi) $ do
-      return ()
+    nc <- needsConfigure cfi
+    let inputs = catMaybes $ [getConfigureInput ss cfi | nc]
+                  ++ [getBuildInput ss cfi False]
+    mapM (\i->scheduleRun runHandling i Nothing) inputs
     )
   
   let idEditor = "textArea"

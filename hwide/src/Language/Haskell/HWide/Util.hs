@@ -7,6 +7,7 @@ import System.FilePath
 import Data.List (isPrefixOf)
 import Data.Typeable (Typeable)
 import Data.Char (toLower)
+import Data.Traversable (traverse)
 import Paths_hwide
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
@@ -22,8 +23,9 @@ import Control.Concurrent (forkIO)
 import qualified Data.Map as DM
 
 import Language.Haskell.HWide.Internal.UniqueQueue
-import Control.Monad (forever)
+import Control.Monad (forever, liftM)
 import Reactive.Threepenny (Handler)
+import Graphics.UI.Threepenny.Core 
 
 -- | A File System item, wrapping the path
 data FSItem = 
@@ -135,23 +137,25 @@ createSubDir root dir = do
 
 -- | Get the cabal file for a given source file
 getCabalFile :: FilePath -> IO (Maybe FilePath)
+getCabalFile fp | (".cabal" ==) $ takeExtension fp = return $ Just fp
 getCabalFile fp = do
   let dir = takeDirectory fp
-  go dir
+  cf <- go dir
+  traverse canonicalizePath cf
   where 
     go dir = do
       fs <- getDirectoryContents dir
       let cabals = filter ((".cabal" ==) . takeExtension) fs 
       case cabals of
-        [x] -> return $ Just x
+        [x] -> return $ Just $ dir </> x
         []  -> do
           let up = takeDirectory dir
           if up == dir then return Nothing else go up
         xs  -> do
           let sm = filter ((takeFileName dir ==) . dropExtension . takeFileName) xs
           case sm of
-            (x:_) -> return $ Just x
-            _      -> return $ Just $ head xs
+            (x:_) -> return $ Just $ dir </> x
+            _      -> return $ Just $ dir </> head xs
 
 -- | Useful directories
 data Directories = Directories
@@ -182,7 +186,8 @@ data RunToLogInput = RunToLogInput
 
 -- | Run a program in a directory and arguments, writing output to the log file
 runToLog :: RunToLogInput -> IO RunToLogResult
-runToLog (RunToLogInput pgm dir (logName,logDir) args) = do
+runToLog r@(RunToLogInput pgm dir (logName,logDir) args) = do
+  writeToOut r 
   let outF = logDir </> addExtension (logName ++ "-out") "log"
   let errF = logDir </> addExtension (logName ++ "-err") "log"
   ex <- withFile outF WriteMode $ \outH ->
@@ -207,3 +212,19 @@ startRunToLogQueue fire = do
     res <- runToLog run
     fire (run,res)
   return q
+
+-- | is the first file more recent than the second file?
+-- the second file may not exist
+isMoreRecent :: FilePath -> FilePath -> IO Bool
+isMoreRecent fullSrc fullTgt=do
+        ex<-doesFileExist fullTgt
+        if not ex 
+                then return True
+                else 
+                  do modSrc <- getModificationTime fullSrc
+                     modTgt <- getModificationTime fullTgt
+                     return (modSrc >= modTgt)
+
+-- | Debug info
+writeToOut :: (Show s, MonadIO m) => s -> m ()
+writeToOut s = liftIO $ print s >> hFlush stdout
