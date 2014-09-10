@@ -174,11 +174,13 @@ data RunToLogResult = RunToLogResult
   , rtlrExitCode :: ExitCode
   } deriving (Read,Show,Eq,Ord,Typeable)
 
+data RunToLogType = CabalSandbox | CabalConfigure | CabalBuild
+  deriving (Read,Show,Eq,Ord,Typeable,Bounded,Enum)
 
 -- | Input to run a process into a log
 data RunToLogInput = RunToLogInput
-  {
-    rtliProgram   :: FilePath
+  { rtliType      :: RunToLogType
+  , rtliProgram   :: FilePath
   , rtliDirectory :: FilePath
   , rtliLogInfo   :: (String,FilePath)
   , rtliArgs      :: [String]
@@ -186,7 +188,7 @@ data RunToLogInput = RunToLogInput
 
 -- | Run a program in a directory and arguments, writing output to the log file
 runToLog :: RunToLogInput -> IO RunToLogResult
-runToLog r@(RunToLogInput pgm dir (logName,logDir) args) = do
+runToLog r@(RunToLogInput _ pgm dir (logName,logDir) args) = do
   writeToOut r 
   let outF = logDir </> addExtension (logName ++ "-out") "log"
   let errF = logDir </> addExtension (logName ++ "-err") "log"

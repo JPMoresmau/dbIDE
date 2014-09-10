@@ -21,7 +21,7 @@ import qualified Data.Map as DM
 import Reactive.Threepenny (onChange)
 import Control.Monad (liftM, when)
 import Data.Default (def)
-import Data.Maybe (isJust, catMaybes)
+import Data.Maybe (catMaybes)
 -- import System.IO
 
 
@@ -46,7 +46,12 @@ initIO :: IO (StaticState,EditorState)
 initIO = do
   dirs <- getDirectories
   initState <- mkEditorState $ dWorkDir dirs
-  let ss = StaticState (esPaths initState) dirs
+    
+  (evtLogRun,fireLogRun) <- newEvent
+
+  runQueue <- startRunToLogQueue fireLogRun
+  
+  let ss = StaticState (esPaths initState) dirs runQueue evtLogRun
   return (ss,initState)
 
 
@@ -56,11 +61,10 @@ setup w = do
   (ss,initState) <- liftIO initIO
   let dirs = ssDirectories ss
 
-  runHandling <- mkRunHandling
 
   mSandBox <- initSandboxDir ss
   case mSandBox of
-    Just s -> scheduleRun runHandling s Nothing
+    Just s -> scheduleRun ss s
     _      -> return ()
 
   return w # set title "Haskell Web IDE"
@@ -146,10 +150,14 @@ setup w = do
     setVisible saveFile False
     cfi <- getCachedFileInfo fp bCacheState fireCacheChange
     nc <- needsConfigure cfi
+    --let mli = if nc then getConfigureInput ss cfi else getBuildInput ss cfi False
+    --traverse (scheduleRun ss) mli
     let inputs = catMaybes $ [getConfigureInput ss cfi | nc]
                   ++ [getBuildInput ss cfi False]
-    mapM (\i->scheduleRun runHandling i Nothing) inputs
+    mapM (scheduleRun ss) inputs
     )
+  
+  onEvent (ssRunEvent ss) (handleRunLog ss)
   
   let idEditor = "textArea"
   -- text area anchoring the code mirror editor
@@ -179,3 +187,8 @@ setup w = do
    
   return ()
 
+handleRunLog :: StaticState -> (RunToLogInput,RunToLogResult) -> UI()
+handleRunLog ss (i,r) = case rtliType i of
+  CabalConfigure -> return ()
+  CabalBuild   -> return ()
+  _            -> return ()

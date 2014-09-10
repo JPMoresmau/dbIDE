@@ -28,7 +28,7 @@ initSandboxDir ss = liftIO $ do
     else do
       let logDir = dLogsDir dirs
       createDirectory sand
-      return $ Just $ RunToLogInput (pCabalPath $ ssPaths ss) sand ("sandbox_init",logDir) ["sandbox","init"]
+      return $ Just $ RunToLogInput CabalSandbox (pCabalPath $ ssPaths ss) sand ("sandbox_init",logDir) ["sandbox","init"]
     
 
 -- | get the full path for the dist directory (where cabal will write its output)
@@ -54,7 +54,7 @@ getConfigureInput ::  StaticState -> CachedFileInfo -> Maybe RunToLogInput
 getConfigureInput ss (CachedFileInfo (Just cbl) (Just rootDir)) = 
   let dirs = ssDirectories ss
       logDir = dLogsDir dirs
-  in Just $ RunToLogInput (pCabalPath $ ssPaths ss) rootDir ("configure-" ++ dropExtension (takeFileName cbl),logDir) ["configure","--enable-tests", "--enable-benchmarks"]
+  in Just $ RunToLogInput CabalConfigure (pCabalPath $ ssPaths ss) rootDir ("configure-" ++ dropExtension (takeFileName cbl),logDir) ["configure","--enable-tests", "--enable-benchmarks"]
 getConfigureInput _ _ =Nothing
 
 -- | get the run input for build
@@ -65,7 +65,7 @@ getBuildInput ss (CachedFileInfo (Just cbl) (Just rootDir)) linking=
       opts   = (if linking 
                                 then []
                                 else ["--ghc-option=-c"])
-  in Just $ RunToLogInput (pCabalPath $ ssPaths ss) rootDir ("build-" ++ dropExtension (takeFileName cbl),logDir) ("build": opts)
+  in Just $ RunToLogInput CabalBuild (pCabalPath $ ssPaths ss) rootDir ("build-" ++ dropExtension (takeFileName cbl),logDir) ("build": opts)
 getBuildInput _ _ _ =Nothing
 
 

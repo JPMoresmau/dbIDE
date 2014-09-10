@@ -12,14 +12,19 @@ import Data.Default
 import Data.Functor
 import Control.Applicative
 import Control.Monad (filterM, liftM)
+import Graphics.UI.Threepenny.Core (MonadIO,liftIO)
 
 import Language.Haskell.HWide.Util
+import Language.Haskell.HWide.Internal.UniqueQueue
+import Reactive.Threepenny (Event)
 
 -- | State that doesn't changed during a session
 data StaticState = StaticState
   {
     ssPaths         :: Paths
   , ssDirectories   :: Directories
+  , ssRunQueue      :: UniqueQueue RunToLogInput
+  , ssRunEvent      :: Event (RunToLogInput,RunToLogResult)
   } deriving (Typeable)
 
 -- | Useful paths
@@ -143,3 +148,6 @@ adjustFile fp f es = es{esFileInfos=DM.adjust f fp $ esFileInfos es}
 -- | Set the current file
 setCurrent :: FilePath -> EditorState -> EditorState
 setCurrent fp es = es{esCurrent = fp}
+
+scheduleRun :: (MonadIO m) => StaticState -> RunToLogInput -> m ()
+scheduleRun ss = liftIO . pushUnique (ssRunQueue ss)
