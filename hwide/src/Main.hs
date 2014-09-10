@@ -189,6 +189,12 @@ setup w = do
 
 handleRunLog :: StaticState -> (RunToLogInput,RunToLogResult) -> UI()
 handleRunLog ss (i,r) = case rtliType i of
-  CabalConfigure -> return ()
-  CabalBuild   -> return ()
+  CabalConfigure cfi -> do
+    err <- liftIO $ readFile $ rtlrErrFile r
+    let msgs = parseCabalMessages ss cfi err
+    return ()
+  CabalBuild  cfi -> do
+    err <- liftIO $ readFile $ rtlrErrFile r
+    let msgs = parseBuildMessages ss cfi err
+    return ()
   _            -> return ()

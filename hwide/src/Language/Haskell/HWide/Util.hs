@@ -23,9 +23,8 @@ import Control.Concurrent (forkIO)
 import qualified Data.Map as DM
 
 import Language.Haskell.HWide.Internal.UniqueQueue
-import Control.Monad (forever, liftM)
-import Reactive.Threepenny (Handler)
 import Graphics.UI.Threepenny.Core 
+import Control.Monad (forever)
 
 -- | A File System item, wrapping the path
 data FSItem = 
@@ -157,6 +156,14 @@ getCabalFile fp = do
             (x:_) -> return $ Just $ dir </> x
             _      -> return $ Just $ dir </> head xs
 
+-- | Information for a single file
+data CachedFileInfo= CachedFileInfo
+  {
+    cfiCabalFile :: Maybe FilePath -- ^ Path to cabal file
+  , cfiRootPath  :: Maybe FilePath -- ^ Path to root folder (where the cabal file lives)
+  } deriving (Read,Show,Eq,Ord,Typeable)
+
+
 -- | Useful directories
 data Directories = Directories
   { dRootDir    :: FilePath
@@ -174,8 +181,11 @@ data RunToLogResult = RunToLogResult
   , rtlrExitCode :: ExitCode
   } deriving (Read,Show,Eq,Ord,Typeable)
 
-data RunToLogType = CabalSandbox | CabalConfigure | CabalBuild
-  deriving (Read,Show,Eq,Ord,Typeable,Bounded,Enum)
+data RunToLogType = 
+    CabalSandbox 
+  | CabalConfigure CachedFileInfo
+  | CabalBuild CachedFileInfo
+  deriving (Read,Show,Eq,Ord,Typeable)
 
 -- | Input to run a process into a log
 data RunToLogInput = RunToLogInput

@@ -11,12 +11,6 @@ import System.FilePath (takeDirectory)
 
 import Language.Haskell.HWide.Util
 
--- | Information for a single file
-data CachedFileInfo= CachedFileInfo
-  {
-    cfiCabalFile :: Maybe FilePath -- ^ Path to cabal file
-  , cfiRootPath  :: Maybe FilePath -- ^ Path to root folder (where the cabal file lives)
-  } deriving (Read,Show,Eq,Ord,Typeable)
 
 
 -- | The whole cached data
