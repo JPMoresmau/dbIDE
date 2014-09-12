@@ -129,7 +129,7 @@ parseBuildMessages ss (CachedFileInfo (Just cbl) (Just root)) s=let
                                        then (Just (jcn,l:msgs),ls)
                                        else (Nothing,ls++[makeNote jcn msgs])
                         --  | Just fp<-getBuiltPath l=(currentNote,ls,fp:fps)
-                        | Just n<-extractLocation l cf distDir=(Just (n,[bwnTitle n]),ls)
+                        | Just n<-extractLocation cf distDir l =(Just (n,[bwnTitle n]),ls)
                         | Just (bw,n)<- cabalErrorLine cf cabalExe l (not (any isBWNoteError ls))=(Just (bw,n),addCurrent currentNote ls)
                         | otherwise =(Nothing,ls)
                 extractLocation cf distDir el=let

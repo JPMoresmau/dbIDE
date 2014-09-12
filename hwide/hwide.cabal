@@ -11,8 +11,8 @@ Data-files:
                 wwwroot/index.html
 
 library 
-  hs-source-dirs:  src
-  build-depends:   
+  hs-source-dirs:   src
+  build-depends:    
                    base >= 4,
                    threepenny-gui >=0.4.2.1 && <0.5,
                    directory >=1.2.1 && <1.3,
@@ -26,8 +26,8 @@ library
                    process >=1.2.0 && <1.3,
                    mime-types >= 0.1.0.4 && < 0.2,
                    regex-tdfa
-  ghc-options:     -Wall -fno-warn-unused-do-bind
-  exposed-modules: 
+  ghc-options:      -Wall -fno-warn-unused-do-bind
+  exposed-modules:  
                    Language.Haskell.HWide.Cabal,
                    Language.Haskell.HWide.Cache,
                    Language.Haskell.HWide.Config,
@@ -59,3 +59,26 @@ executable hwide
                    regex-tdfa
   ghc-options:     -Wall -fno-warn-unused-do-bind -threaded -with-rtsopts=-N
 
+test-suite hwide-test
+  type:            exitcode-stdio-1.0
+  main-is:         hwide-test.hs
+  ghc-options:     -Wall -rtsopts
+  build-depends:   
+                   base >= 4, 
+                   HTF > 0.9,
+                   hwide,
+                   HUnit,
+                   directory >=1.2.1 && <1.3,
+                   filepath >=1.3.0 && <1.4,
+                   threepenny-gui
+  hs-source-dirs:  test
+  other-modules:   
+                   Language.Haskell.HWide.CabalTest,
+                   Language.Haskell.HWide.TestUtil
+
+    
+ 
+  
+  
+  
+ 

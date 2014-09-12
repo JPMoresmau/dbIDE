@@ -196,22 +196,20 @@ setup w = do
 
 handleRunLog :: StaticState -> Handler (Notes -> Notes) -> (RunToLogInput,RunToLogResult) -> UI()
 handleRunLog ss fireNoteCountChange (i,r) = case rtliType i of
-  CabalConfigure cfi -> do
-    err <- liftIO $ readFile $ rtlrErrFile r
+  CabalConfigure cfi -> liftIO $ do
+    err <- readFile $ rtlrErrFile r
     let msgs = parseCabalMessages ss cfi err
     case (cfiCabalFile cfi,cfiRootPath cfi) of
-      (Just c,Just r)-> liftIO $ fireNoteCountChange (addNotes r msgs . removeNotes r [c])
+      (Just c,Just root)-> fireNoteCountChange (addNotes root msgs . removeNotes root [c])
       _     -> return ()
     return ()
-  CabalBuild  cfi -> do
-    err <- liftIO $ readFile $ rtlrErrFile r
-    out <- liftIO $ readFile $ rtlrOutFile r
+  CabalBuild  cfi -> liftIO $ do
+    err <- readFile $ rtlrErrFile r
+    out <- readFile $ rtlrOutFile r
     let msgs = parseBuildMessages ss cfi err
     let fps=mapMaybe getBuiltPath (lines out)
-    writeToOut err
-    writeToOut msgs
     case cfiRootPath cfi of
-      Just r -> liftIO $ fireNoteCountChange (addNotes r msgs . removeNotes r fps)
+      Just root -> fireNoteCountChange (addNotes root msgs . removeNotes root fps)
       _      -> return ()
     return ()
   _            -> return ()
