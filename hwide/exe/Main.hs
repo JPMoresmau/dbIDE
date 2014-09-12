@@ -14,7 +14,7 @@ import Language.Haskell.HWide.UI.FileList
 import Language.Haskell.HWide.UI.PopupPane
 import Language.Haskell.HWide.UI.UIUtils
 import Language.Haskell.HWide.Util
-import System.Directory (canonicalizePath,getCurrentDirectory)
+import System.Directory (canonicalizePath,getCurrentDirectory, doesDirectoryExist)
 import System.FilePath ((</>))
 import qualified Data.Text as T
 
@@ -24,6 +24,7 @@ import Control.Monad (liftM, when)
 import Data.Default (def)
 import Data.Maybe (catMaybes, mapMaybe)
 
+import Paths_hwide
 
 -- | Main entry point.
 main :: IO ()
@@ -214,3 +215,15 @@ handleRunLog ss fireNoteCountChange (i,r) = case rtliType i of
       _      -> return ()
     return ()
   _            -> return ()
+
+  
+-- | Get directory where static resources are kept
+getStaticDir :: IO FilePath
+getStaticDir = do
+  d <- Paths_hwide.getDataFileName "wwwroot"
+  ex <- doesDirectoryExist d
+  if ex 
+    then return d
+    else do
+      cd <- getCurrentDirectory
+      return $ cd </> "wwwroot"

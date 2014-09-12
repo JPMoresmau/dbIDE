@@ -8,7 +8,6 @@ import Data.List (isPrefixOf)
 import Data.Typeable (Typeable)
 import Data.Char (toLower)
 import Data.Traversable (traverse)
-import Paths_hwide
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
 import qualified Data.ByteString as B
@@ -60,16 +59,7 @@ listFiles cd = do
         else Dir can
         
 
--- | Get directory where static resources are kept
-getStaticDir :: IO FilePath
-getStaticDir = do
-  d <- Paths_hwide.getDataFileName "wwwroot"
-  ex <- doesDirectoryExist d
-  if ex 
-    then return d
-    else do
-      cd <- getCurrentDirectory
-      return $ cd </> "wwwroot"
+
 
 
 -- | Extended mime map with haskell and YAML
