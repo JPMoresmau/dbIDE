@@ -88,13 +88,13 @@ parseCabalMessages ss (CachedFileInfo (Just cbl) _) s=let
         where 
                 parseCabalLine :: FilePath -> FilePath -> (Maybe (BWNote,[String]),[BWNote]) -> String ->(Maybe (BWNote,[String]),[BWNote])
                 parseCabalLine cf cabalExe (currentNote,ls) l 
-                        | "Error:" `isPrefixOf` l=(Just (BWNote BWError "" (mkEmptySpan cf 1 1),[dropWhile isSpace $ drop 6 l]),addCurrent currentNote ls)
+                        | "Error:" `isPrefixOf` l=(Just (BWNote BWError cf (mkEmptySpan cf 1 1),[dropWhile isSpace $ drop 6 l]),addCurrent currentNote ls)
                         | "Warning:" `isPrefixOf` l=let
                                 msg=(dropWhile isSpace $ drop 8 l)
                                 msg2=if cf `isPrefixOf` msg
                                         then dropWhile isSpace $ drop (length cf + 1) msg
                                         else msg
-                                in (Just (BWNote BWWarning "" (mkEmptySpan cf (extractLine msg2) 1),[msg2]),addCurrent currentNote ls)
+                                in (Just (BWNote BWWarning cf (mkEmptySpan cf (extractLine msg2) 1),[msg2]),addCurrent currentNote ls)
                         | Just (bw,n)<- cabalErrorLine cf cabalExe l (not (any isBWNoteError ls))=(Just (bw,n),addCurrent currentNote ls)
                         | Just (jcn,msgs)<-currentNote=
                                 if not $ null l
@@ -178,7 +178,7 @@ cabalErrorLine cf cabalExe l fstErr
                                 let 
                                         s2=dropWhile isSpace $ drop 1 s4 -- drop 1 for ":" that follows file name
                                 in if "At least the following" `isPrefixOf` s2
-                                                then Just (BWNote BWError "" (mkEmptySpan cf 1 1), [s2])
+                                                then Just (BWNote BWError cf (mkEmptySpan cf 1 1), [s2])
                                                 else 
                                                         let
                                                                 (loc1,_)=span (/= '\'') s2
@@ -194,7 +194,7 @@ cabalErrorLine cf cabalExe l fstErr
                                                                                         else if readInt line' (-1)==(-1)
                                                                                                 then (cf,"1",s2)
                                                                                                 else (loc,line',tail msg')
-                                                        in Just (BWNote BWError "" (mkEmptySpan realloc (readInt line 1) 1),[msg])
+                                                        in Just (BWNote BWError cf (mkEmptySpan realloc (readInt line 1) 1),[msg])
          | not fstErr=cabalErrorLine cf cabalExe (cabalExe ++ ":" ++ l) False
          | otherwise=Nothing   
  
@@ -226,4 +226,13 @@ makeNote bwn msgs=let
 stripPrefixIfNeeded :: String -> String -> Maybe String -> Maybe String
 stripPrefixIfNeeded _ _ j@(Just _)=j
 stripPrefixIfNeeded s3 prfx  _=stripPrefix prfx s3
-                
+      
+-- | get the path of a file getting compiled
+getBuiltPath :: String -- ^ the message line
+        -> Maybe FilePath -- ^ the path if we could parse it
+getBuiltPath line=let
+         (_,_,_,ls)=line =~ "\\[[0-9]+ of [0-9]+\\] Compiling .+\\( (.+), (.+)\\)" :: (String,String,String,[String])   
+         in case ls of
+                (src:_:[])->Just src
+                _ -> Nothing
+          

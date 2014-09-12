@@ -8,6 +8,7 @@ import Graphics.UI.Threepenny.Core
 import Language.Haskell.HWide.Cabal
 import Language.Haskell.HWide.Cache
 import Language.Haskell.HWide.Config
+import Language.Haskell.HWide.Notes
 import Language.Haskell.HWide.UI.FileBrowser
 import Language.Haskell.HWide.UI.FileList
 import Language.Haskell.HWide.UI.PopupPane
@@ -21,8 +22,7 @@ import qualified Data.Map as DM
 import Reactive.Threepenny (onChange)
 import Control.Monad (liftM, when)
 import Data.Default (def)
-import Data.Maybe (catMaybes)
--- import System.IO
+import Data.Maybe (catMaybes, mapMaybe)
 
 
 -- | Main entry point.
@@ -75,6 +75,9 @@ setup w = do
   (evtEditorStateCurrentChange,fireEditorStateCurrentChange) <- liftIO newEvent
   let evtEditorStateCurrentChange2 = fmap setCurrent evtEditorStateCurrentChange
   bEditorState <- accumB initState (unionWith (.) evtEditorStateChange evtEditorStateCurrentChange2)
+
+  (evtNoteCountChange,fireNoteCountChange) <- liftIO newEvent
+  bNoteCountChange <- accumB def evtNoteCountChange
 
   liftIO $ onChange bEditorState $ saveEditorState $ dWorkDir dirs
 
@@ -157,7 +160,7 @@ setup w = do
     mapM (scheduleRun ss) inputs
     )
   
-  onEvent (ssRunEvent ss) (handleRunLog ss)
+  onEvent (ssRunEvent ss) (handleRunLog ss fireNoteCountChange)
   
   let idEditor = "textArea"
   -- text area anchoring the code mirror editor
@@ -185,16 +188,29 @@ setup w = do
        liftIO $ fireEditorStateChange $ adjustFile fp setDirty
     )
    
+  liftIO $ onChange bNoteCountChange $ \v -> do
+    writeToOut $ nNoteCount v
+   
   return ()
 
-handleRunLog :: StaticState -> (RunToLogInput,RunToLogResult) -> UI()
-handleRunLog ss (i,r) = case rtliType i of
+handleRunLog :: StaticState -> Handler (Notes -> Notes) -> (RunToLogInput,RunToLogResult) -> UI()
+handleRunLog ss fireNoteCountChange (i,r) = case rtliType i of
   CabalConfigure cfi -> do
     err <- liftIO $ readFile $ rtlrErrFile r
     let msgs = parseCabalMessages ss cfi err
+    case (cfiCabalFile cfi,cfiRootPath cfi) of
+      (Just c,Just r)-> liftIO $ fireNoteCountChange (addNotes r msgs . removeNotes r [c])
+      _     -> return ()
     return ()
   CabalBuild  cfi -> do
     err <- liftIO $ readFile $ rtlrErrFile r
+    out <- liftIO $ readFile $ rtlrOutFile r
     let msgs = parseBuildMessages ss cfi err
+    let fps=mapMaybe getBuiltPath (lines out)
+    writeToOut err
+    writeToOut msgs
+    case cfiRootPath cfi of
+      Just r -> liftIO $ fireNoteCountChange (addNotes r msgs . removeNotes r fps)
+      _      -> return ()
     return ()
   _            -> return ()
