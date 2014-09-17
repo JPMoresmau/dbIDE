@@ -5,6 +5,7 @@ module Language.Haskell.HWide.Cache where
 import Data.Default
 import Data.Typeable (Typeable)
 import Graphics.UI.Threepenny.Core
+import qualified Data.Text as T
 
 import qualified Data.Map as DM
 import System.FilePath (takeDirectory)
@@ -29,7 +30,13 @@ setCachedFileInfo file cfi cd@CachedData{..} = cd{cdFileInfos = DM.insert file c
 
 -- | Create a file info for a file
 mkCachedFileInfo :: Maybe FilePath -> CachedFileInfo
-mkCachedFileInfo mCabalFile = CachedFileInfo mCabalFile $ fmap takeDirectory mCabalFile
+mkCachedFileInfo mCabalFile = CachedFileInfo mCabalFile (fmap takeDirectory mCabalFile) Nothing
+
+
+-- | Update cached contents for a file
+setCachedContents :: FilePath -> T.Text -> CachedData -> CachedData
+setCachedContents file cnts cd@CachedData{..} = cd{cdFileInfos =DM.adjust (\cfi->cfi{cfiContents=Just cnts}) file cdFileInfos}
+
 
 -- | Get cache file info, generate it if not found
 getCachedFileInfo :: FilePath -> Behavior CachedData -> Handler (CachedData -> CachedData) -> UI CachedFileInfo

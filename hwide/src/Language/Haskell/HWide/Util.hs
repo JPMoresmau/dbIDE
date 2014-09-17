@@ -151,6 +151,7 @@ data CachedFileInfo= CachedFileInfo
   {
     cfiCabalFile :: Maybe FilePath -- ^ Path to cabal file
   , cfiRootPath  :: Maybe FilePath -- ^ Path to root folder (where the cabal file lives)
+  , cfiContents  :: Maybe T.Text -- ^ The current contents (maybe unsaved to disk)
   } deriving (Read,Show,Eq,Ord,Typeable)
 
 

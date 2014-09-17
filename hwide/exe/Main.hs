@@ -20,9 +20,9 @@ import qualified Data.Text as T
 
 import qualified Data.Map as DM
 import Reactive.Threepenny (onChange)
-import Control.Monad (liftM, when)
+import Control.Monad (liftM, when, join)
 import Data.Default (def)
-import Data.Maybe (catMaybes, mapMaybe)
+import Data.Maybe (catMaybes, mapMaybe, fromMaybe)
 
 import Paths_hwide
 
@@ -122,17 +122,25 @@ setup w = do
       liftIO $ forceClose ()
       runFunction $ loadCode mode contents
       es <- currentValue bEditorState
+      getCachedFileInfo fp bCacheState fireCacheChange
       case DM.lookup fp $ esFileInfos es of
         Just FileInfo{fiDirty} -> setVisible saveFile fiDirty
         Nothing -> do
           setVisible saveFile False
           liftIO $ fireEditorStateChange $ addFile fp
+    getCachedContents fp= do
+      liftM (join . fmap cfiContents . DM.lookup fp . cdFileInfos) $ currentValue bCacheState
     showFile "" = do
       setVisible closeFile False
-      showContents "" "haskell" ""
+      cnts <- liftM (fromMaybe "") $ getCachedContents ""
+      showContents "" "haskell" cnts
     showFile fp = do
+      writeToOut fp
       setVisible closeFile True
-      s <- liftIO $ getFileContents fp
+      cached <- getCachedContents fp
+      s <- case cached of
+        Nothing -> liftIO $ getFileContents fp
+        Just c  -> return c
       showContents fp (getMIME fp) s
 
 
@@ -180,13 +188,17 @@ setup w = do
   getBody w # set children [layout]
   runFunction $ codeMirror (T.pack $ '#' : idEditor)
 
-  -- on each code mirror change, we set the current file to dirty
+  -- on each code mirror change, we set the current file to dirty, and keep the contents in cache
   on UI.sendValue changeTick (\_-> do
+    cnts <- callFunction getCode
     es <- currentValue bEditorState
     let fp = esCurrent es
-    when (not (null fp) && Just True /= fmap fiDirty (DM.lookup fp $ esFileInfos es)) $ do
-       setVisible saveFile True
-       liftIO $ fireEditorStateChange $ adjustFile fp setDirty
+    writeToOut fp
+    liftIO $ fireCacheChange $ setCachedContents fp cnts
+    when (not (null fp)) $ do
+      when (Just True /= fmap fiDirty (DM.lookup fp $ esFileInfos es)) $ do
+         setVisible saveFile True
+         liftIO $ fireEditorStateChange $ adjustFile fp setDirty
     )
    
   liftIO $ onChange bNoteCountChange $ \v -> do

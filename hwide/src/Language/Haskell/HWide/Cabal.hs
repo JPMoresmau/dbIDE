@@ -46,7 +46,7 @@ getSetupConfigFile d = d </> "setup-config"
 
 -- | do we need to configure
 needsConfigure :: MonadIO m => CachedFileInfo -> m Bool
-needsConfigure (CachedFileInfo (Just cbl) (Just rootDir)) = liftIO $ do
+needsConfigure (CachedFileInfo (Just cbl) (Just rootDir) _) = liftIO $ do
   let setupFile = getSetupConfigFile $ getDistDir rootDir
   setupFileExists <- doesFileExist setupFile
   if setupFileExists
@@ -56,7 +56,7 @@ needsConfigure _ = return False
 
 -- | get the run input for configure
 getConfigureInput ::  StaticState -> CachedFileInfo -> Maybe RunToLogInput
-getConfigureInput ss cfi@(CachedFileInfo (Just cbl) (Just rootDir)) = 
+getConfigureInput ss cfi@(CachedFileInfo (Just cbl) (Just rootDir) _) = 
   let dirs = ssDirectories ss
       logDir = dLogsDir dirs
   in Just $ RunToLogInput (CabalConfigure cfi) (pCabalPath $ ssPaths ss) rootDir ("configure-" ++ dropExtension (takeFileName cbl),logDir) ["configure","--enable-tests", "--enable-benchmarks"]
@@ -64,7 +64,7 @@ getConfigureInput _ _ =Nothing
 
 -- | get the run input for build
 getBuildInput ::  StaticState -> CachedFileInfo -> Bool -> Maybe RunToLogInput
-getBuildInput ss cfi@(CachedFileInfo (Just cbl) (Just rootDir)) linking= 
+getBuildInput ss cfi@(CachedFileInfo (Just cbl) (Just rootDir) _) linking= 
   let dirs = ssDirectories ss
       logDir = dLogsDir dirs
       opts   = (if linking 
@@ -78,7 +78,7 @@ getBuildInput _ _ _ =Nothing
 parseCabalMessages ::StaticState -> CachedFileInfo
         -> String -- ^ error output
         -> [BWNote]
-parseCabalMessages ss (CachedFileInfo (Just cbl) _) s=let
+parseCabalMessages ss (CachedFileInfo (Just cbl) _ _) s=let
         cf = takeFileName cbl
         cabalExe = takeFileName $ pCabalPath $ ssPaths ss
         (m,ls)=foldl (parseCabalLine cf cabalExe) (Nothing,[]) $ lines s
@@ -112,7 +112,7 @@ parseCabalMessages _ _ _ = []
 parseBuildMessages ::  StaticState -> CachedFileInfo
         -> String -- ^ the build output 
         -> [BWNote]
-parseBuildMessages ss (CachedFileInfo (Just cbl) (Just root)) s=let
+parseBuildMessages ss (CachedFileInfo (Just cbl) (Just root) _) s=let
         cf = takeFileName cbl
         cabalExe = takeFileName $ pCabalPath $ ssPaths ss
         distDir = getDistDir root
