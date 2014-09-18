@@ -9,6 +9,7 @@ import Language.Haskell.HWide.Cabal
 import Language.Haskell.HWide.Cache
 import Language.Haskell.HWide.Config
 import Language.Haskell.HWide.Notes
+import Language.Haskell.HWide.UI.NoteList
 import Language.Haskell.HWide.UI.FileBrowser
 import Language.Haskell.HWide.UI.FileList
 import Language.Haskell.HWide.UI.PopupPane
@@ -20,7 +21,7 @@ import qualified Data.Text as T
 
 import qualified Data.Map as DM
 import Reactive.Threepenny (onChange)
-import Control.Monad (liftM, when, join)
+import Control.Monad (liftM, when, void, unless)
 import Data.Default (def)
 import Data.Maybe (catMaybes, mapMaybe, fromMaybe)
 
@@ -99,6 +100,9 @@ setup w = do
   setVisible saveFile False
   
   noteCountUI <- UI.span #. "noteCount" # set UI.title__ "Errors and warnings"
+  (evtNoteSelected,fireNoteSelected) <- liftIO newEvent
+  noteList <- mkNoteList bNoteCountChange fireNoteSelected (dRootDir dirs)
+  popupPane noteCountUI Nothing noteList (void evtNoteSelected)
   
   fileListData <- fileList bEditorState fireEditorStateCurrentChange
   element (getElement fileListData) # set UI.title__ "Opened files"
@@ -115,9 +119,12 @@ setup w = do
     -- create code mirror
     codeMirror :: T.Text -> JSFunction ()
     codeMirror= ffi "initCM(%1)"
-    -- load code into code mirro
+    -- load code into code mirror
     loadCode :: T.Text -> T.Text -> JSFunction ()
     loadCode =  ffi "loadCM(%1,%2)"
+    -- load code into code mirror
+    markLine :: Int -> Bool -> String -> JSFunction ()
+    markLine =  ffi "mark(%1,%2,%3)"
     -- get current code from code mirror
     getCode :: JSFunction T.Text
     getCode =  ffi "getCMContents()"
@@ -147,6 +154,10 @@ setup w = do
 
 
   onEvent evtEditorStateCurrentChange showFile
+  onEvent evtNoteSelected (\bw->do
+    liftIO $ fireEditorStateChange $ addFile $ bwlSrc $ bwnLocation bw
+    runFunction $ markLine (bwlLine $ bwnLocation bw) (BWError == bwnStatus bw) (bwnTitle bw)
+    )
   
   -- close file
   on UI.click closeFile (\_ -> do
@@ -182,7 +193,7 @@ setup w = do
     mkLayout :: UI Element
     mkLayout =
       column
-        [row [column[element elFileBrowserIcon,element fb], element $ getElement fileListData, element closeFile, element saveFile, element noteCountUI]
+        [row [column[element elFileBrowserIcon,element fb], element fileListData, element closeFile, element saveFile, column[element noteCountUI, element noteList]]
         ,element elText,element changeTick]
 
   -- init
@@ -195,9 +206,9 @@ setup w = do
     cnts <- callFunction getCode
     es <- currentValue bEditorState
     let fp = esCurrent es
-    writeToOut fp
+    -- writeToOut fp
     liftIO $ fireCacheChange $ setCachedContents fp cnts
-    when (not (null fp)) $ do
+    unless (null fp) $
       when (Just True /= fmap fiDirty (DM.lookup fp $ esFileInfos es)) $ do
          setVisible saveFile True
          liftIO $ fireEditorStateChange $ adjustFile fp setDirty
@@ -205,8 +216,8 @@ setup w = do
     
   element noteCountUI # sink text (fmap (noteCountToString . nNoteCount) bNoteCountChange)
    
-  liftIO $ onChange bNoteCountChange $ \v -> do
-    writeToOut $ nNoteCount v
+--  liftIO $ onChange bNoteCountChange $ \v -> do
+--    writeToOut $ v
    
   return ()
 

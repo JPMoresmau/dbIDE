@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable,RecordWildCards #-}
+{-# LANGUAGE RecordWildCards #-}
 -- | List of opened files
 module Language.Haskell.HWide.UI.FileList where
 

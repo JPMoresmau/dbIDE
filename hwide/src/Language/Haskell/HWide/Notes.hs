@@ -32,6 +32,10 @@ instance Default NoteCount where
   def = NoteCount 0 0
 
 
+-- | Get all notes
+allNotes :: Notes -> [BWNote]
+allNotes = concatMap DS.toList . DM.elems . nByFiles
+
 -- | Dump note counts to a string
 noteCountToString :: NoteCount -> String
 noteCountToString (NoteCount errs warns) = printf "%d errors, %d warnings" errs warns
@@ -39,8 +43,16 @@ noteCountToString (NoteCount errs warns) = printf "%d errors, %d warnings" errs 
 -- | Add notes for a given file path 
 addNotes :: FilePath -> [BWNote] -> Notes -> Notes
 addNotes root bwns ns = let
-  nf = foldr (\bw->DM.insertWith DS.union (root </> bwlSrc (bwnLocation bw)) (DS.singleton bw)) (nByFiles ns) bwns
+  nf = foldr addBW (nByFiles ns) bwns
   in syncCount $ ns{nByFiles=nf}
+  where 
+    addBW bw = 
+      let (fp,absBw) = makeAbsoluteLocation bw
+      in DM.insertWith DS.union fp (DS.singleton absBw)
+    makeAbsoluteLocation bw= 
+      let loc = bwnLocation bw
+          absLoc = root </> bwlSrc loc
+      in (absLoc,bw{bwnLocation=loc{bwlSrc=absLoc}})
 
 --removeNotes :: FilePath -> Notes -> Notes
 --removeNotes fp ns = syncCount $ ns{nByFiles=DM.delete fp $ nByFiles ns}

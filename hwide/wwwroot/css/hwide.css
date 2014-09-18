@@ -72,3 +72,29 @@
 	color: red;
 	padding-left: 16px;	
 }
+
+.noteList {
+	display: table-cell;
+	vertical-align:top;
+	border: 1px solid black;
+	background-color: white;
+	z-index:10;
+	position:absolute;
+	display:none;
+}
+
+.noteError{
+	cursor: pointer;
+	background: url(../img/error.png) no-repeat;
+	padding-left: 16px;
+}
+
+.noteWarning {
+	cursor: pointer;
+	background: url(../img/warning.png) no-repeat;
+	padding-left: 16px;
+}
+
+.errorGutter {
+	width: 12px;
+}

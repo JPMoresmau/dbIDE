@@ -23,7 +23,7 @@ function tick(){
  * @param txt the text area id
  */
 function initCM(txt){
-	myCodeMirror = CodeMirror.fromTextArea($(txt)[0],{lineNumbers: true,mode: 'haskell'});
+	myCodeMirror = CodeMirror.fromTextArea($(txt)[0],{lineNumbers: true,mode: 'haskell',gutters: ['errorGutter']});
 	// we can't easily capture the code mirror change event in threepenny-gui, so use an intermediate field
 	myCodeMirror.on("change",function(cm){
 		tick();
@@ -50,4 +50,19 @@ function loadCM(mode,contents){
  */
 function getCMContents(){
 	return myCodeMirror.getDoc().getValue();
+}
+
+/**
+ * select position
+ * @param line
+ * @param col
+ * @returns
+ */
+function mark(line1,err,txt){
+	
+	var marker = document.createElement("img");
+	marker.src=err?'/static/img/error.png':'/static/img/warning.png';
+	marker.title=txt;
+	myCodeMirror.clearGutter('errorGutter');
+	myCodeMirror.setGutterMarker(line1-1,'errorGutter',marker);
 }

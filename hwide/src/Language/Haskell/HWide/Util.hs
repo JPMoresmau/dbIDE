@@ -189,8 +189,7 @@ data RunToLogInput = RunToLogInput
 
 -- | Run a program in a directory and arguments, writing output to the log file
 runToLog :: RunToLogInput -> IO RunToLogResult
-runToLog r@(RunToLogInput _ pgm dir (logName,logDir) args) = do
-  -- writeToOut r 
+runToLog (RunToLogInput _ pgm dir (logName,logDir) args) = do
   let outF = logDir </> addExtension (logName ++ "-out") "log"
   let errF = logDir </> addExtension (logName ++ "-err") "log"
   ex <- withFile outF WriteMode $ \outH ->
