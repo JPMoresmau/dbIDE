@@ -1,4 +1,8 @@
 # Hwide uses codemirror, but for the moment the code mirror source code has not be put under github.
 
 1. Download code mirror, and unzip it under wwwroot/js
-2. add index.html if you use a different version that the one referenced there.
+2. Edit index.html if you use a different version that the one referenced there.
+
+# Hwide is based on threepenny-gui
+
+At time of writing, a few fixes and enhancements were still in the pull request queue, so take my own version at https://github.com/JPMoresmau/threepenny-gui
