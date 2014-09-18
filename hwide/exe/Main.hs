@@ -24,6 +24,8 @@ import Control.Monad (liftM, when, join)
 import Data.Default (def)
 import Data.Maybe (catMaybes, mapMaybe, fromMaybe)
 
+
+
 import Paths_hwide
 
 -- | Main entry point.
@@ -96,13 +98,15 @@ setup w = do
   saveFile <- UI.span #. "fileSave" # set UI.title__ "Save current file"
   setVisible saveFile False
   
+  noteCountUI <- UI.span #. "noteCount" # set UI.title__ "Errors and warnings"
+  
   fileListData <- fileList bEditorState fireEditorStateCurrentChange
   element (getElement fileListData) # set UI.title__ "Opened files"
   
   -- force close event
   (eCloseFileBrowser,forceClose) <- liftIO newEvent
   -- popup pane for file browser
-  elFileBrowserIcon <- popupPane ("fileBrowserIcon-Closed","fileBrowserIcon-Opened") ("Open File Browser","Close File Browser") fb eCloseFileBrowser
+  elFileBrowserIcon <- popupSpan ("fileBrowserIcon-Closed","fileBrowserIcon-Opened") ("Open File Browser","Close File Browser") fb eCloseFileBrowser
   
   -- hidden input notified of code mirror changes
   changeTick <- UI.input # set UI.type_ "hidden" # set UI.id_ "changeTick"
@@ -128,16 +132,14 @@ setup w = do
         Nothing -> do
           setVisible saveFile False
           liftIO $ fireEditorStateChange $ addFile fp
-    getCachedContents fp= do
-      liftM (join . fmap cfiContents . DM.lookup fp . cdFileInfos) $ currentValue bCacheState
+    cachedContents fp= currentValue $ fmap (getCachedContents fp) bCacheState
     showFile "" = do
       setVisible closeFile False
-      cnts <- liftM (fromMaybe "") $ getCachedContents ""
+      cnts <- liftM (fromMaybe "") $ cachedContents ""
       showContents "" "haskell" cnts
     showFile fp = do
-      writeToOut fp
       setVisible closeFile True
-      cached <- getCachedContents fp
+      cached <- cachedContents fp
       s <- case cached of
         Nothing -> liftIO $ getFileContents fp
         Just c  -> return c
@@ -180,7 +182,7 @@ setup w = do
     mkLayout :: UI Element
     mkLayout =
       column
-        [row [column[element elFileBrowserIcon,element fb], element $ getElement fileListData, element closeFile, element saveFile]
+        [row [column[element elFileBrowserIcon,element fb], element $ getElement fileListData, element closeFile, element saveFile, element noteCountUI]
         ,element elText,element changeTick]
 
   -- init
@@ -200,6 +202,8 @@ setup w = do
          setVisible saveFile True
          liftIO $ fireEditorStateChange $ adjustFile fp setDirty
     )
+    
+  element noteCountUI # sink text (fmap (noteCountToString . nNoteCount) bNoteCountChange)
    
   liftIO $ onChange bNoteCountChange $ \v -> do
     writeToOut $ nNoteCount v

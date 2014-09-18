@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+-- | Notes about errors and warnings and their location
 module Language.Haskell.HWide.Notes where
 
 import qualified Data.Map as DM
@@ -6,38 +7,49 @@ import qualified Data.Set as DS
 import Data.Default
 import Data.Typeable
 import System.FilePath
+import Text.Printf
 
+-- | All notes
 data Notes = Notes
   {
     nByFiles :: DM.Map FilePath (DS.Set BWNote) 
   , nNoteCount :: NoteCount
   } deriving (Show,Read,Eq,Typeable)
 
+-- | Default instance
 instance Default Notes where
   def = Notes def def
 
+-- | Count of different types of notes
 data NoteCount = NoteCount
   {
     ncErrors   :: Int
   , ncWarnings :: Int  
   } deriving (Show,Read,Eq,Typeable)
 
+-- | Default instance
 instance Default NoteCount where
   def = NoteCount 0 0
 
 
+-- | Dump note counts to a string
+noteCountToString :: NoteCount -> String
+noteCountToString (NoteCount errs warns) = printf "%d errors, %d warnings" errs warns
+
+-- | Add notes for a given file path 
 addNotes :: FilePath -> [BWNote] -> Notes -> Notes
 addNotes root bwns ns = let
-  nf = foldr (\bw->DM.insertWith DS.union (root </> (bwlSrc $ bwnLocation bw)) (DS.singleton bw)) (nByFiles ns) bwns
+  nf = foldr (\bw->DM.insertWith DS.union (root </> bwlSrc (bwnLocation bw)) (DS.singleton bw)) (nByFiles ns) bwns
   in syncCount $ ns{nByFiles=nf}
 
 --removeNotes :: FilePath -> Notes -> Notes
 --removeNotes fp ns = syncCount $ ns{nByFiles=DM.delete fp $ nByFiles ns}
 
+-- | Remove notes for a given file path
 removeNotes :: FilePath -> [FilePath] -> Notes -> Notes
 removeNotes root fps ns = syncCount $ ns{nByFiles=foldr (\fp -> DM.delete (root </> fp)) (nByFiles ns) fps}
 
-
+-- | Ensure counts are synchronized with actual notes
 syncCount :: Notes -> Notes
 syncCount n = n{nNoteCount=go $ nByFiles n}
   where 

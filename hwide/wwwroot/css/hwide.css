@@ -66,3 +66,9 @@
 .table-cell {
 	vertical-align: top;
 }
+
+.noteCount {
+	text-align: right;
+	color: red;
+	padding-left: 16px;	
+}

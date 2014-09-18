@@ -11,6 +11,7 @@ import qualified Data.Map as DM
 import System.FilePath (takeDirectory)
 
 import Language.Haskell.HWide.Util
+import Control.Monad (join)
 
 
 
@@ -36,6 +37,10 @@ mkCachedFileInfo mCabalFile = CachedFileInfo mCabalFile (fmap takeDirectory mCab
 -- | Update cached contents for a file
 setCachedContents :: FilePath -> T.Text -> CachedData -> CachedData
 setCachedContents file cnts cd@CachedData{..} = cd{cdFileInfos =DM.adjust (\cfi->cfi{cfiContents=Just cnts}) file cdFileInfos}
+
+-- | Get cached contents if any
+getCachedContents :: FilePath -> CachedData -> Maybe T.Text
+getCachedContents fp = join . fmap cfiContents . DM.lookup fp . cdFileInfos
 
 
 -- | Get cache file info, generate it if not found
