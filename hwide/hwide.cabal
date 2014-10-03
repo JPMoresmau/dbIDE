@@ -14,7 +14,7 @@ library
   hs-source-dirs:   src
   build-depends:    
                    base >= 4,
-                   threepenny-gui >=0.4.2.1 && <0.5,
+                   threepenny-gui >=0.5,
                    directory,
                    filepath,
                    text,
@@ -46,7 +46,7 @@ executable hwide
   build-depends:   
                    hwide,
                    base >= 4,
-                   threepenny-gui >=0.4 && <0.5,
+                   threepenny-gui >0.5,
                    directory,
                    filepath,
                    text,
