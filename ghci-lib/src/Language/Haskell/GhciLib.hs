@@ -37,7 +37,7 @@ startGhci cmd directory = do
 
     lock <- newMVar () -- ensure only one person talks to ghci at a time
     let prefix = "#~GHC-LIB-START~#"
-    let finish = "#~GH-LIB-FINISH~#"
+    let finish = "#~GHC-LIB-FINISH~#"
     hPutStrLn inp $ ":set prompt " ++ prefix
 
     -- consume from a handle, produce an MVar with either Just and a message, or Nothing (stream closed)
