@@ -62,11 +62,14 @@ fileList bEs fireModify = do
       let fs = DM.assocs esFileInfos
       opts <- forM (map snd fs) (\fi -> UI.option # set value (fiFile fi) # set text (getFileText fi))
       void $ return sel # set children opts # set UI.selection (elemIndex esCurrent (map fst fs))
-  on UI.selectionValueChange sel $ liftIO . fireModify
+    fire _ = do
+      fs <- UI.get value sel
+      liftIO $ fireModify fs
+  on UI.selectionChange sel fire 
+    
   initFld <- currentValue bEs
   setFs initFld
   -- we need the full value to build the list, hence we listen on the behavior value change
   onChanges bEs setFs
-
   return $ FileList sel
   

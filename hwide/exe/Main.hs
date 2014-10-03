@@ -216,6 +216,8 @@ setup w = do
     
   element noteCountUI # sink text (fmap (noteCountToString . nNoteCount) bNoteCountChange)
    
+  showFile $ esCurrent initState
+   
 --  liftIO $ onChange bNoteCountChange $ \v -> do
 --    writeToOut $ v
    
