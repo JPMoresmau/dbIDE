@@ -18,6 +18,7 @@ import System.Process
 import System.Exit (ExitCode(..))
 import Network.Mime
 import Control.Concurrent (forkIO)
+import Language.Haskell.Ghcid
 
 import qualified Data.Map as DM
 
@@ -154,6 +155,15 @@ data CachedFileInfo= CachedFileInfo
   , cfiContents  :: Maybe T.Text -- ^ The current contents (maybe unsaved to disk)
   } deriving (Read,Show,Eq,Ord,Typeable)
 
+data ProjectInfo = ProjectInfo
+  { piHasSandboxInit :: Bool
+  , piGhci           :: Maybe Ghci -- ^ GHCi runtime info
+  } deriving (Typeable)
+
+data GHCiInfo = GHCInfo 
+  { giGhci :: Ghci
+  , giLoad :: DM.Map FilePath Load
+  }
 
 -- | Useful directories
 data Directories = Directories
@@ -161,6 +171,7 @@ data Directories = Directories
   , dWorkDir    :: FilePath
   , dLogsDir    :: FilePath
   , dSandboxDir :: FilePath
+  , dPackageDB  :: Maybe FilePath
   } deriving (Read,Show,Eq,Ord,Typeable)
         
 
@@ -174,6 +185,7 @@ data RunToLogResult = RunToLogResult
 
 data RunToLogType = 
     CabalSandbox 
+  | CabalSandboxProject FilePath
   | CabalConfigure CachedFileInfo
   | CabalBuild CachedFileInfo
   deriving (Read,Show,Eq,Ord,Typeable)

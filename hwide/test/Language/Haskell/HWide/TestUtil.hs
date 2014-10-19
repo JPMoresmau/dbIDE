@@ -15,7 +15,7 @@ getDirectories = do
   workDir <- getHWideWorkspaceDir cd
   logsDir <- getLogsDir workDir
   let sandboxDir = getSandboxDir workDir
-  return $ Directories cd workDir logsDir sandboxDir
+  return $ Directories cd workDir logsDir sandboxDir Nothing
   
 -- | Initialize things in the IO Monad
 getTestState :: IO (StaticState,EditorState)

@@ -25,7 +25,8 @@ library
                    hashable,
                    process,
                    mime-types,
-                   regex-tdfa
+                   regex-tdfa,
+                   ghcid >= 0.2
   ghc-options:      -Wall -fno-warn-unused-do-bind
   exposed-modules:  
                    Language.Haskell.HWide.Cabal,
@@ -39,6 +40,7 @@ library
                    Language.Haskell.HWide.UI.UIUtils,
                    Language.Haskell.HWide.Util,
                    Language.Haskell.HWide.UI.NoteList
+  other-modules:    Language.Haskell.HWide.GHCi
 
 executable hwide
   hs-source-dirs:  exe
@@ -57,7 +59,8 @@ executable hwide
                    hashable,
                    process,
                    mime-types,
-                   regex-tdfa
+                   regex-tdfa,
+                   ghcid
   ghc-options:     -Wall -fno-warn-unused-do-bind -threaded -with-rtsopts=-N
 
 test-suite hwide-test

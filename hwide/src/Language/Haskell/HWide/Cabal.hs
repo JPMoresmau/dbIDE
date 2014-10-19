@@ -44,6 +44,22 @@ getDistDir d= d </> "dist"
 getSetupConfigFile :: FilePath -> FilePath
 getSetupConfigFile d = d </> "setup-config"
 
+-- | do we need to init the sandbox for that project
+needsSandboxInit :: MonadIO m => CachedFileInfo -> m Bool
+needsSandboxInit (CachedFileInfo _ (Just rootDir) _) = liftIO $ do
+  let sandboxFile = rootDir </> "cabal.sandbox.config"
+  doesFileExist sandboxFile
+needsSandboxInit _ = return False
+
+-- | get the run input for sandbox init
+getSandboxInitInput :: StaticState -> CachedFileInfo -> Maybe RunToLogInput
+getSandboxInitInput ss (CachedFileInfo (Just cbl) (Just rootDir) _) = 
+  let dirs = ssDirectories ss
+      logDir = dLogsDir dirs
+      sand = dSandboxDir dirs
+  in Just $ RunToLogInput (CabalSandboxProject rootDir) (pCabalPath $ ssPaths ss) rootDir ("sandbox-init-" ++ dropExtension (takeFileName cbl),logDir) ["sandbox","init", "--sandbox",sand]
+getSandboxInitInput _ _ =Nothing
+
 -- | do we need to configure
 needsConfigure :: MonadIO m => CachedFileInfo -> m Bool
 needsConfigure (CachedFileInfo (Just cbl) (Just rootDir) _) = liftIO $ do

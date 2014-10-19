@@ -5,6 +5,9 @@ module Language.Haskell.HWide.Cache where
 import Data.Default
 import Data.Typeable (Typeable)
 import Graphics.UI.Threepenny.Core
+
+import Language.Haskell.Ghcid
+
 import qualified Data.Text as T
 
 import qualified Data.Map as DM
@@ -12,17 +15,18 @@ import System.FilePath (takeDirectory)
 
 import Language.Haskell.HWide.Util
 import Control.Monad (join)
-
+import Data.Maybe (fromMaybe)
 
 
 -- | The whole cached data
 data CachedData = CachedData 
-  { cdFileInfos :: DM.Map FilePath CachedFileInfo -- ^ File information
-  } deriving (Read,Show,Eq,Ord,Typeable)
+  { cdFileInfos    :: DM.Map FilePath CachedFileInfo -- ^ File information
+  , cdProjectInfos :: DM.Map FilePath ProjectInfo -- ^ project info
+  } deriving (Typeable)
   
 -- | Default instance
 instance Default CachedData where
-  def = CachedData DM.empty
+  def = CachedData DM.empty DM.empty
   
 
 -- | Set file info for a given file
@@ -56,4 +60,15 @@ getCachedFileInfo fp b fire = do
         fire $ setCachedFileInfo fp cfi
         return cfi
  
-      
+setSandboxInit :: FilePath -> CachedData -> CachedData
+setSandboxInit rootDir cd@CachedData{..} = let
+  mpi = DM.lookup rootDir cdProjectInfos
+  mpi2 = case mpi of
+    Nothing  -> ProjectInfo True Nothing
+    Just pif -> pif {piHasSandboxInit=True}
+  in cd{cdProjectInfos = DM.insert rootDir mpi2 cdProjectInfos}
+
+hasSandboxInit :: CachedFileInfo -> CachedData -> Bool
+hasSandboxInit (CachedFileInfo _ (Just rootDir) _) CachedData{..} = 
+  fromMaybe False $ piHasSandboxInit <$> DM.lookup rootDir cdProjectInfos
+hasSandboxInit _ _ = False

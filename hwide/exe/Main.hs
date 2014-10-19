@@ -2,6 +2,8 @@
 -- | Main entry point
 module Main where
 
+import Data.Traversable (traverse)
+
 import qualified Graphics.UI.Threepenny as UI
 import Graphics.UI.Threepenny.Core
 
@@ -42,7 +44,7 @@ getDirectories = do
   workDir <- getHWideWorkspaceDir cd
   logsDir <- getLogsDir workDir
   let sandboxDir = getSandboxDir workDir
-  return $ Directories cd workDir logsDir sandboxDir
+  return $ Directories cd workDir logsDir sandboxDir Nothing
 
 
 -- | Initialize things in the IO Monad
@@ -174,15 +176,25 @@ setup w = do
       fireEditorStateChange $ adjustFile fp setClean
     setVisible saveFile False
     cfi <- getCachedFileInfo fp bCacheState fireCacheChange
+    hasInit <- hasSandboxInit cfi `liftM` currentValue bCacheState
+    sinputs <- if (not hasInit) 
+      then do
+        ns <- needsSandboxInit cfi
+        if not ns 
+          then return [getSandboxInitInput ss cfi]
+          else do
+            traverse (liftIO . fireCacheChange . setSandboxInit) $ cfiRootPath cfi
+            return []
+      else return []
     nc <- needsConfigure cfi
     --let mli = if nc then getConfigureInput ss cfi else getBuildInput ss cfi False
     --traverse (scheduleRun ss) mli
-    let inputs = catMaybes $ [getConfigureInput ss cfi | nc]
+    let inputs = catMaybes $ sinputs ++ [getConfigureInput ss cfi | nc]
                   ++ [getBuildInput ss cfi False]
     mapM (scheduleRun ss) inputs
     )
   
-  onEvent (ssRunEvent ss) (handleRunLog ss fireNoteCountChange)
+  onEvent (ssRunEvent ss) (handleRunLog ss fireNoteCountChange fireCacheChange)
   
   let idEditor = "textArea"
   -- text area anchoring the code mirror editor
@@ -223,8 +235,8 @@ setup w = do
    
   return ()
 
-handleRunLog :: StaticState -> Handler (Notes -> Notes) -> (RunToLogInput,RunToLogResult) -> UI()
-handleRunLog ss fireNoteCountChange (i,r) = case rtliType i of
+handleRunLog :: StaticState -> Handler (Notes -> Notes) -> Handler (CachedData -> CachedData) -> (RunToLogInput,RunToLogResult) -> UI()
+handleRunLog ss fireNoteCountChange fireCacheChange (i,r) = case rtliType i of
   CabalConfigure cfi -> liftIO $ do
     err <- readFile $ rtlrErrFile r
     let msgs = parseCabalMessages ss cfi err
@@ -240,7 +252,8 @@ handleRunLog ss fireNoteCountChange (i,r) = case rtliType i of
     case cfiRootPath cfi of
       Just root -> fireNoteCountChange (addNotes root msgs . removeNotes root fps)
       _      -> return ()
-    return ()
+    return () 
+  CabalSandboxProject rootDir ->  liftIO $ fireCacheChange $ setSandboxInit rootDir
   _            -> return ()
 
   

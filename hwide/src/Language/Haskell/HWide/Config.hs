@@ -45,16 +45,13 @@ instance FromJSON Paths where
 -- | Writing to JSON/YAML
 instance ToJSON Paths where
   toJSON (Paths cb)=object ["cabal" .= cb]
-  
 
 -- | The state we keep in the editor
 data EditorState = EditorState 
   { esFileInfos :: DM.Map FilePath FileInfo 
   , esCurrent   :: FilePath
   , esPaths     :: Paths
-  } deriving (Show,Read,Eq,Ord,Typeable)
-
-
+  } deriving (Read,Show,Eq,Ord,Typeable)
 
 -- | Default value
 instance Default EditorState where
