@@ -168,14 +168,16 @@ setup w = do
   
   -- close file
   on UI.click closeFile (\_ -> do
-    fp <- liftM esCurrent $ currentValue bEditorState
+    fp <- liftM (head . esCurrent) $ currentValue bEditorState
     liftIO $ fireEditorStateChange $ removeFile fp
+    fp2 <- liftM (head . esCurrent) $ currentValue bEditorState
+    liftIO $ fireEditorStateCurrentChange fp2
     )
 
   -- save file
   on UI.click saveFile (\_ -> do
     cnts <- callFunction getCode
-    fp <- liftM esCurrent $ currentValue bEditorState
+    fp <- liftM (head . esCurrent) $ currentValue bEditorState
     liftIO $ do
       setFileContents fp cnts
       fireEditorStateChange $ adjustFile fp setClean
@@ -222,7 +224,7 @@ setup w = do
   on UI.sendValue changeTick (\_-> do
     cnts <- callFunction getCode
     es <- currentValue bEditorState
-    let fp = esCurrent es
+    let fp = head $ esCurrent es
     -- writeToOut fp
     liftIO $ fireCacheChange $ setCachedContents fp cnts
     unless (null fp) $
@@ -233,7 +235,7 @@ setup w = do
     
   element noteCountUI # sink text (fmap (noteCountToString . nNoteCount) bNoteCountChange)
    
-  showFile $ esCurrent initState
+  showFile $ head $ esCurrent initState
    
 --  liftIO $ onChange bNoteCountChange $ \v -> do
 --    writeToOut $ v

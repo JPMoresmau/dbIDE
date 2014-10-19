@@ -61,7 +61,7 @@ fileList bEs fireModify = do
     setFs (EditorState{..}) = do
       let fs = DM.assocs esFileInfos
       opts <- forM (map snd fs) (\fi -> UI.option # set value (fiFile fi) # set text (getFileText fi))
-      void $ return sel # set children opts # set UI.selection (elemIndex esCurrent (map fst fs))
+      void $ return sel # set children opts # set UI.selection (elemIndex (head esCurrent) (map fst fs))
     fire _ = do
       fs <- UI.get value sel
       liftIO $ fireModify fs

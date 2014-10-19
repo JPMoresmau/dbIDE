@@ -1,7 +1,8 @@
-{-# LANGUAGE DeriveDataTypeable, OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable, OverloadedStrings, RecordWildCards #-}
 -- | Configuration data
 module Language.Haskell.HWide.Config where
 
+import Data.List (delete, nub)
 import qualified Data.Map as DM
 import Data.Typeable (Typeable)
 import Data.Yaml
@@ -49,25 +50,25 @@ instance ToJSON Paths where
 -- | The state we keep in the editor
 data EditorState = EditorState 
   { esFileInfos :: DM.Map FilePath FileInfo 
-  , esCurrent   :: FilePath
+  , esCurrent   :: [FilePath]
   , esPaths     :: Paths
   } deriving (Read,Show,Eq,Ord,Typeable)
 
 -- | Default value
 instance Default EditorState where
-  def = EditorState (DM.singleton "" (defFileInfo "")) "" def
+  def = EditorState (DM.singleton "" (defFileInfo "")) [""] def
 
 -- | Reading from JSON/YAML
 instance FromJSON EditorState where
   parseJSON (Object v) = EditorState
     <$> ((DM.fromList . map (\x->(x,defFileInfo x)) . ("":)) <$> v .:? "files" .!= [])
-    <*> v .:? "current" .!= ""
+    <*> (v .:? "files" .!= [""])
     <*> v .:? "paths" .!= def
   parseJSON _ = fail "EditorState"
 
 -- | Writing to JSON/YAML
 instance ToJSON EditorState where
-  toJSON (EditorState fis c ps)=object ["files" .= filter (not . null) (DM.keys fis), "current" .= c, "paths" .= ps]
+  toJSON (EditorState fis c ps)=object ["files" .= c, "paths" .= ps]
 
 -- | Information about a file
 data FileInfo = FileInfo
@@ -107,12 +108,12 @@ mkEditorState cd = do
         Right es -> do
           remove <- filterM (liftM not . doesFileExist) $ filter (not . null) $ DM.keys $ esFileInfos es
           let es2 = foldr removeFile es remove
-          let c2 = if esCurrent es2 `elem` remove
+          let c2 = if (head $ esCurrent es2) `elem` remove
                       then 
                         let fs = filter (not . null) $ DM.keys $ esFileInfos es2
                         in if null fs then "" else head fs
-                      else esCurrent es2
-          return es2{esCurrent=c2}
+                      else head $ esCurrent es2
+          return es2{esCurrent=nub [c2,""]}
         Left s -> do
           putStrLn s
           return def
@@ -135,7 +136,8 @@ addFile fp es = es{esFileInfos=DM.insertWith (curry snd) fp (FileInfo fp False) 
 
 -- | Remove a file from the state
 removeFile:: FilePath -> EditorState -> EditorState
-removeFile fp es = es{esFileInfos=DM.delete fp $ esFileInfos es}
+removeFile fp es@EditorState{..}  = es{esFileInfos=DM.delete fp esFileInfos,
+  esCurrent = delete fp esCurrent}
 
 
 -- | Perform an operation on the FileInfo associated with the given file
@@ -144,7 +146,7 @@ adjustFile fp f es = es{esFileInfos=DM.adjust f fp $ esFileInfos es}
 
 -- | Set the current file
 setCurrent :: FilePath -> EditorState -> EditorState
-setCurrent fp es = es{esCurrent = fp}
+setCurrent fp es@EditorState{..} = es{esCurrent = fp : delete fp esCurrent}
 
 scheduleRun :: (MonadIO m) => StaticState -> RunToLogInput -> m ()
 scheduleRun ss = liftIO . pushUnique (ssRunQueue ss)
