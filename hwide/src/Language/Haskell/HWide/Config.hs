@@ -130,7 +130,7 @@ saveEditorState cd es = do
 
 -- | Add a new file to the state
 addFile :: FilePath -> EditorState -> EditorState
-addFile fp es = setCurrent fp $ es{esFileInfos=DM.insertWith (curry snd) fp (FileInfo fp False) $ esFileInfos es}
+addFile fp es = es{esFileInfos=DM.insertWith (curry snd) fp (FileInfo fp False) $ esFileInfos es}
 
 
 -- | Remove a file from the state

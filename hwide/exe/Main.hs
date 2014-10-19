@@ -93,8 +93,11 @@ setup w = do
   -- filebrowser component
   fb <- fileBrowser (dRootDir dirs) $ Just (dWorkDir dirs,"workspace")
   
-  on fbFileOpen fb $ liftIO . fireEditorStateChange . addFile
-  
+  on fbFileOpen fb $ \fp ->
+    liftIO $ do
+       fireEditorStateChange $ addFile fp
+       fireEditorStateCurrentChange fp
+    
   -- buttons
   closeFile <- UI.span #. "fileClose" # set UI.title__ "Close current file"
   setVisible closeFile False
@@ -113,6 +116,7 @@ setup w = do
   (eCloseFileBrowser,forceClose) <- liftIO newEvent
   -- popup pane for file browser
   elFileBrowserIcon <- popupSpan ("fileBrowserIcon-Closed","fileBrowserIcon-Opened") ("Open File Browser","Close File Browser") fb eCloseFileBrowser
+
   
   -- hidden input notified of code mirror changes
   changeTick <- UI.input # set UI.type_ "hidden" # set UI.id_ "changeTick"
@@ -136,6 +140,7 @@ setup w = do
       runFunction $ loadCode mode contents
       es <- currentValue bEditorState
       getCachedFileInfo fp bCacheState fireCacheChange
+      --  ensure file is known, set save button visibility
       case DM.lookup fp $ esFileInfos es of
         Just FileInfo{fiDirty} -> setVisible saveFile fiDirty
         Nothing -> do
