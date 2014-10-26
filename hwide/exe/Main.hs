@@ -71,10 +71,10 @@ setup w = do
   let dirs = ssDirectories ss
 
 
-  mSandBox <- initSandboxDir ss
-  case mSandBox of
-    Just s -> scheduleRun ss s
-    _      -> return ()
+  eSandBox <- initSandboxDir ss
+  mpkg <- case eSandBox of
+    Left s     -> scheduleRun ss s >> return Nothing
+    Right pkg  -> return $ Just pkg
 
   return w # set title "Haskell Web IDE"
   UI.addStyleSheet w "hwide.css"
@@ -91,7 +91,7 @@ setup w = do
   liftIO $ onChange bEditorState $ saveEditorState $ dWorkDir dirs
 
   (evtCacheChange,fireCacheChange) <- liftIO newEvent
-  bCacheState <- accumB def evtCacheChange
+  bCacheState <- accumB def{cdSandboxPkg=mpkg} evtCacheChange
 
   -- filebrowser component
   fb <- fileBrowser (dRootDir dirs) $ Just (dWorkDir dirs,"workspace")
@@ -264,7 +264,9 @@ handleRunLog ss fireNoteCountChange fireCacheChange (i,r) = case rtliType i of
       _      -> return ()
     return () 
   CabalSandboxProject rootDir ->  liftIO $ fireCacheChange $ setSandboxInit rootDir
-  _            -> return ()
+  CabalSandbox -> liftIO $ do
+    pkg <- getSandboxPackageDB $ dSandboxDir $ ssDirectories ss
+    fireCacheChange $ \cd -> cd{cdSandboxPkg=Just pkg}
 
   
 -- | Get directory where static resources are kept

@@ -22,11 +22,12 @@ import Data.Maybe (fromMaybe)
 data CachedData = CachedData 
   { cdFileInfos    :: DM.Map FilePath CachedFileInfo -- ^ File information
   , cdProjectInfos :: DM.Map FilePath ProjectInfo -- ^ project info
+  , cdSandboxPkg   :: Maybe FilePath -- ^ path to the sandboxed package database
   } deriving (Typeable)
   
 -- | Default instance
 instance Default CachedData where
-  def = CachedData DM.empty DM.empty
+  def = CachedData DM.empty DM.empty Nothing
   
 
 -- | Set file info for a given file

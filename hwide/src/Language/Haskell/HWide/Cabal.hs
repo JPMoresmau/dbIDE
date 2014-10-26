@@ -5,7 +5,7 @@ module Language.Haskell.HWide.Cabal where
 import System.Directory
 import System.FilePath
 
-
+import Control.Applicative
 import Language.Haskell.HWide.Config
 import Language.Haskell.HWide.Util
 import Graphics.UI.Threepenny.Core (MonadIO,liftIO)
@@ -17,23 +17,36 @@ import Data.Char (isSpace)
 
 -- | Get the directory for the Cabal sandbox, creating it and initializing it if needed
 getSandboxDir 
-  :: FilePath -- | Root directory
+  :: FilePath -- ^ Root directory
   -> FilePath
 getSandboxDir root = root </> "sandbox"
 
 
+-- | Get the path to the sandboxed package database
+getSandboxPackageDB :: FilePath -> IO FilePath
+getSandboxPackageDB sandboxDir = do
+    dbs <- extractDB <$> readSConfig
+    case dbs of
+      (db:_) -> return db
+      []     -> error "Cannot extract package db"
+  where field       = "package-db:"
+        len         = length field
+        readSConfig = readFile $ sandboxDir </> "cabal.sandbox.config"
+        extractDB   =  map (drop len) . filter (field `isPrefixOf`) . lines
+  
+
 -- | Create sandbox if it doesn't exist
-initSandboxDir :: MonadIO m => StaticState -> m (Maybe RunToLogInput)
+initSandboxDir :: MonadIO m => StaticState -> m (Either RunToLogInput FilePath)
 initSandboxDir ss = liftIO $ do
   let dirs = ssDirectories ss
   let sand = dSandboxDir dirs
   ex <- doesDirectoryExist sand
   if ex 
-    then return Nothing
+    then Right <$> getSandboxPackageDB sand
     else do
       let logDir = dLogsDir dirs
       createDirectory sand
-      return $ Just $ RunToLogInput CabalSandbox (pCabalPath $ ssPaths ss) sand ("sandbox_init",logDir) ["sandbox","init"]
+      return $ Left $ RunToLogInput CabalSandbox (pCabalPath $ ssPaths ss) sand ("sandbox_init",logDir) ["sandbox","init"]
     
 
 -- | get the full path for the dist directory (where cabal will write its output)
