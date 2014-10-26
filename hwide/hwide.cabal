@@ -68,13 +68,14 @@ test-suite hwide-test
   main-is:         hwide-test.hs
   ghc-options:     -Wall -rtsopts
   build-depends:   
-                   base >= 4, 
+                   base >= 4,
                    HTF > 0.9,
                    hwide,
                    HUnit,
                    directory,
                    filepath,
-                   threepenny-gui
+                   threepenny-gui,
+                   data-default >=0.5 && <0.6
   hs-source-dirs:  test
   other-modules:   
                    Language.Haskell.HWide.CabalTest,

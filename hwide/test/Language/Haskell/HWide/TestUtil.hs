@@ -7,6 +7,7 @@ import Language.Haskell.HWide.Cabal
 import Language.Haskell.HWide.Config
 import Language.Haskell.HWide.Util
 import Reactive.Threepenny (newEvent)
+import Data.Default (def)
 
 -- | Get the useful directories
 getDirectories :: IO Directories
@@ -27,5 +28,5 @@ getTestState = do
 
   runQueue <- startRunToLogQueue fireLogRun
   
-  let ss = StaticState (esPaths initState) dirs runQueue evtLogRun
+  let ss = StaticState def dirs runQueue evtLogRun
   return (ss,initState)

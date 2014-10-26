@@ -38,26 +38,29 @@ main = do
   startGUI defaultConfig {tpStatic = Just static,tpCustomHTML=Just $ static </> "index.html"} setup
 
 -- | Get the useful directories
-getDirectories :: IO Directories
+getDirectories :: IO (Directories,Configuration)
 getDirectories = do
   cd <- canonicalizePath =<< getCurrentDirectory
   workDir <- getHWideWorkspaceDir cd
   logsDir <- getLogsDir workDir
-  let sandboxDir = getSandboxDir workDir
-  return $ Directories cd workDir logsDir sandboxDir Nothing
+  c <- readConfig cd
+  let sandboxDir = case pSandboxPath $ cPaths c of
+                    Just d -> d
+                    _      -> getSandboxDir workDir
+  return (Directories cd workDir logsDir sandboxDir Nothing,c)
 
 
 -- | Initialize things in the IO Monad
 initIO :: IO (StaticState,EditorState)
 initIO = do
-  dirs <- getDirectories
+  (dirs,config) <- getDirectories
   initState <- mkEditorState $ dWorkDir dirs
     
   (evtLogRun,fireLogRun) <- newEvent
 
   runQueue <- startRunToLogQueue fireLogRun
   
-  let ss = StaticState (esPaths initState) dirs runQueue evtLogRun
+  let ss = StaticState (cPaths config) dirs runQueue evtLogRun
   return (ss,initState)
 
 
@@ -184,7 +187,7 @@ setup w = do
     setVisible saveFile False
     cfi <- getCachedFileInfo fp bCacheState fireCacheChange
     hasInit <- hasSandboxInit cfi `liftM` currentValue bCacheState
-    sinputs <- if (not hasInit) 
+    sinputs <- if not hasInit
       then do
         ns <- needsSandboxInit cfi
         if not ns 

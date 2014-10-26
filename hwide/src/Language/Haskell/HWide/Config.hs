@@ -21,54 +21,96 @@ import Reactive.Threepenny (Event)
 
 -- | State that doesn't changed during a session
 data StaticState = StaticState
-  {
-    ssPaths         :: Paths
+  { ssPaths         :: Paths
   , ssDirectories   :: Directories
   , ssRunQueue      :: UniqueQueue RunToLogInput
   , ssRunEvent      :: Event (RunToLogInput,RunToLogResult)
   } deriving (Typeable)
 
+-- | Config that changeable by the user
+data Configuration = Config
+  { cPaths :: Paths
+  } deriving (Read,Show,Eq,Ord,Typeable)
+
+-- | Default value
+instance Default Configuration where
+  def = Config def
+
+-- | Reading from JSON/YAML
+instance FromJSON Configuration where
+  parseJSON (Object v) = Config
+    <$> v .:? "paths" .!= def
+  parseJSON _ = fail "Paths"
+
+-- | Writing to JSON/YAML
+instance ToJSON Configuration where
+  toJSON (Config p)=object ["paths" .= p]
+
+-- | Get the user modifiable configuration file
+getConfigFile :: FilePath -> FilePath
+getConfigFile rootDir = rootDir </> ".hwide.yaml"
+
+-- | Read the configuration
+readConfig :: FilePath -> IO Configuration
+readConfig rootDir = do
+  let cFile = getConfigFile rootDir
+  readYAML cFile
+
+-- | Generic read YAML object, returning default if file is not found, etc.
+readYAML :: (Default b, FromJSON b) => FilePath -> IO b
+readYAML f= do
+  ex <- doesFileExist f
+  if ex 
+    then do
+      eC <- decodeEither <$> B.readFile f
+      case eC of
+        Right c -> return c
+        Left s -> do
+          writeToOut s
+          return def
+    else return def
+
 -- | Useful paths
 data Paths = Paths
-  { pCabalPath  :: FilePath
+  { pCabalPath   :: FilePath
+  , pSandboxPath :: Maybe FilePath
   } deriving (Read,Show,Eq,Ord,Typeable)
 
 -- | Default value
 instance Default Paths where
-  def = Paths "cabal"
+  def = Paths "cabal" Nothing
 
 -- | Reading from JSON/YAML
 instance FromJSON Paths where
   parseJSON (Object v) = Paths
     <$> v .:? "cabal" .!= def
+    <*> v .:? "sandbox"
   parseJSON _ = fail "Paths"
 
 -- | Writing to JSON/YAML
 instance ToJSON Paths where
-  toJSON (Paths cb)=object ["cabal" .= cb]
+  toJSON (Paths cb sb)=object ["cabal" .= cb, "sandbox" .= sb]
 
 -- | The state we keep in the editor
 data EditorState = EditorState 
   { esFileInfos :: DM.Map FilePath FileInfo 
   , esCurrent   :: [FilePath]
-  , esPaths     :: Paths
   } deriving (Read,Show,Eq,Ord,Typeable)
 
 -- | Default value
 instance Default EditorState where
-  def = EditorState (DM.singleton "" (defFileInfo "")) [""] def
+  def = EditorState (DM.singleton "" (defFileInfo "")) [""]
 
 -- | Reading from JSON/YAML
 instance FromJSON EditorState where
   parseJSON (Object v) = EditorState
     <$> ((DM.fromList . map (\x->(x,defFileInfo x)) . ("":)) <$> v .:? "files" .!= [])
     <*> (v .:? "files" .!= [""])
-    <*> v .:? "paths" .!= def
   parseJSON _ = fail "EditorState"
 
 -- | Writing to JSON/YAML
 instance ToJSON EditorState where
-  toJSON (EditorState fis c ps)=object ["files" .= c, "paths" .= ps]
+  toJSON (EditorState _ c)=object ["files" .= c]
 
 -- | Information about a file
 data FileInfo = FileInfo
@@ -91,40 +133,29 @@ setClean fi = fi {fiDirty=False}
 
 
 -- | get the configuration file
-getConfigFile :: FilePath -> FilePath
-getConfigFile cd = cd </> "hwide.yaml"
+getStateFile :: FilePath -> FilePath
+getStateFile cd = cd </> "hwide-state.yaml"
 
 
 -- | Create a new Editor state, reading from the config state if necessary
 mkEditorState :: FilePath -> IO EditorState
-mkEditorState cd = do
-  let cf = getConfigFile cd
-  ex <- doesFileExist cf
-  if ex 
-    then do
-      bs <- B.readFile cf
-      let eES = decodeEither bs
-      case eES of
-        Right es -> do
-          remove <- filterM (liftM not . doesFileExist) $ filter (not . null) $ DM.keys $ esFileInfos es
-          let es2 = foldr removeFile es remove
-          let c2 = if (head $ esCurrent es2) `elem` remove
-                      then 
-                        let fs = filter (not . null) $ DM.keys $ esFileInfos es2
-                        in if null fs then "" else head fs
-                      else head $ esCurrent es2
-          return es2{esCurrent=nub [c2,""]}
-        Left s -> do
-          putStrLn s
-          return def
-    else
-      return def
+mkEditorState rootDir = do
+  let cf = getStateFile rootDir
+  es <- readYAML cf
+  remove <- filterM (liftM not . doesFileExist) $ filter (not . null) $ DM.keys $ esFileInfos es
+  let es2 = foldr removeFile es remove
+      c2  = if head (esCurrent es2) `elem` remove
+              then 
+                let fs = filter (not . null) $ DM.keys $ esFileInfos es2
+                in if null fs then "" else head fs
+              else head $ esCurrent es2
+  return es2{esCurrent=nub [c2,""]}
 
 
 -- | save Editor State
 saveEditorState :: FilePath -> EditorState -> IO()
 saveEditorState cd es = do
-  let cf = getConfigFile cd
+  let cf = getStateFile cd
   let bs = encode es
   B.writeFile cf bs
 
