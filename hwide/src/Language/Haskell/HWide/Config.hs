@@ -139,8 +139,8 @@ getStateFile cd = cd </> "hwide-state.yaml"
 
 -- | Create a new Editor state, reading from the config state if necessary
 mkEditorState :: FilePath -> IO EditorState
-mkEditorState rootDir = do
-  let cf = getStateFile rootDir
+mkEditorState workDir = do
+  let cf = getStateFile workDir
   es <- readYAML cf
   remove <- filterM (liftM not . doesFileExist) $ filter (not . null) $ DM.keys $ esFileInfos es
   let es2 = foldr removeFile es remove
