@@ -42,8 +42,9 @@ getDirectories :: IO (Directories,Configuration)
 getDirectories = do
   cd <- canonicalizePath =<< getCurrentDirectory
   workDir <- getHWideWorkspaceDir cd
+  hwideDir <- getHWideDir
   logsDir <- getLogsDir workDir
-  c <- readConfig cd
+  c <- readConfig cd hwideDir
   let sandboxDir = case pSandboxPath $ cPaths c of
                     Just d -> d
                     _      -> getSandboxDir workDir

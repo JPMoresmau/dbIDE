@@ -50,11 +50,17 @@ instance ToJSON Configuration where
 getConfigFile :: FilePath -> FilePath
 getConfigFile rootDir = rootDir </> ".hwide.yaml"
 
--- | Read the configuration
-readConfig :: FilePath -> IO Configuration
-readConfig rootDir = do
+-- | Read the configuration: try the root dir first, then the workspace
+readConfig 
+  :: FilePath -- ^ root directory 
+  -> FilePath -- ^ app directory
+  -> IO Configuration
+readConfig rootDir hwideDir= do
   let cFile = getConfigFile rootDir
-  readYAML cFile
+  ex <- doesFileExist cFile
+  readYAML $ if ex
+    then cFile
+    else getConfigFile hwideDir
 
 -- | Generic read YAML object, returning default if file is not found, etc.
 readYAML :: (Default b, FromJSON b) => FilePath -> IO b
