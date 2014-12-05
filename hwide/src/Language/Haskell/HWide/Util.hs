@@ -157,10 +157,10 @@ data CachedFileInfo= CachedFileInfo
 
 data ProjectInfo = ProjectInfo
   { piHasSandboxInit :: Bool
-  , piGhci           :: Maybe Ghci -- ^ GHCi runtime info
+  , piGhci           :: Maybe GHCiInfo -- ^ GHCi runtime info
   } deriving (Typeable)
 
-data GHCiInfo = GHCInfo 
+data GHCiInfo = GHCiInfo 
   { giGhci :: Ghci
   , giLoad :: DM.Map FilePath Load
   }

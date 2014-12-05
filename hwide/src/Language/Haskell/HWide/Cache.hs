@@ -6,7 +6,6 @@ import Data.Default
 import Data.Typeable (Typeable)
 import Graphics.UI.Threepenny.Core
 
-import Language.Haskell.Ghcid
 
 import qualified Data.Text as T
 
@@ -73,3 +72,8 @@ hasSandboxInit :: CachedFileInfo -> CachedData -> Bool
 hasSandboxInit (CachedFileInfo _ (Just rootDir) _) CachedData{..} = 
   fromMaybe False $ piHasSandboxInit <$> DM.lookup rootDir cdProjectInfos
 hasSandboxInit _ _ = False
+
+setGHCiInfo :: FilePath -> GHCiInfo -> CachedData -> CachedData
+setGHCiInfo rootDir ghci cd@CachedData{..} = let
+  npi= ProjectInfo True (Just ghci)
+  in cd{cdProjectInfos = DM.insert rootDir npi cdProjectInfos}

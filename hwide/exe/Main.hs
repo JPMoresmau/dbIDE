@@ -10,6 +10,7 @@ import Graphics.UI.Threepenny.Core
 import Language.Haskell.HWide.Cabal
 import Language.Haskell.HWide.Cache
 import Language.Haskell.HWide.Config
+import Language.Haskell.HWide.GHCi
 import Language.Haskell.HWide.Notes
 import Language.Haskell.HWide.UI.NoteList
 import Language.Haskell.HWide.UI.FileBrowser
@@ -194,7 +195,7 @@ setup w = do
         if not ns 
           then return [getSandboxInitInput ss cfi]
           else do
-            traverse (liftIO . fireCacheChange . setSandboxInit) $ cfiRootPath cfi
+            traverse (liftIO . sandboxReady ss bCacheState fireCacheChange) $ cfiRootPath cfi
             return []
       else return []
     nc <- needsConfigure cfi
@@ -205,7 +206,7 @@ setup w = do
     mapM (scheduleRun ss) inputs
     )
   
-  onEvent (ssRunEvent ss) (handleRunLog ss fireNoteCountChange fireCacheChange)
+  onEvent (ssRunEvent ss) (handleRunLog ss fireNoteCountChange bCacheState fireCacheChange)
   
   let idEditor = "textArea"
   -- text area anchoring the code mirror editor
@@ -246,8 +247,8 @@ setup w = do
    
   return ()
 
-handleRunLog :: StaticState -> Handler (Notes -> Notes) -> Handler (CachedData -> CachedData) -> (RunToLogInput,RunToLogResult) -> UI()
-handleRunLog ss fireNoteCountChange fireCacheChange (i,r) = case rtliType i of
+handleRunLog :: StaticState -> Handler (Notes -> Notes) -> Behavior CachedData -> Handler (CachedData -> CachedData) -> (RunToLogInput,RunToLogResult) -> UI()
+handleRunLog ss fireNoteCountChange bCacheState fireCacheChange (i,r) = case rtliType i of
   CabalConfigure cfi -> liftIO $ do
     err <- readFile $ rtlrErrFile r
     let msgs = parseCabalMessages ss cfi err
@@ -264,7 +265,7 @@ handleRunLog ss fireNoteCountChange fireCacheChange (i,r) = case rtliType i of
       Just root -> fireNoteCountChange (addNotes root msgs . removeNotes root fps)
       _      -> return ()
     return () 
-  CabalSandboxProject rootDir ->  liftIO $ fireCacheChange $ setSandboxInit rootDir
+  CabalSandboxProject rootDir ->  liftIO $ sandboxReady ss bCacheState fireCacheChange rootDir
   CabalSandbox -> liftIO $ do
     pkg <- getSandboxPackageDB $ dSandboxDir $ ssDirectories ss
     fireCacheChange $ \cd -> cd{cdSandboxPkg=Just pkg}

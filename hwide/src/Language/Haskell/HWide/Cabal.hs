@@ -103,7 +103,7 @@ getBuildInput ss cfi@(CachedFileInfo (Just cbl) (Just rootDir) _) linking=
 getBuildInput _ _ _ =Nothing
 
      
--- | parse cabal error messages and transform them in notre
+-- | parse cabal error messages and transform them in notes
 parseCabalMessages ::StaticState -> CachedFileInfo
         -> String -- ^ error output
         -> [BWNote]
