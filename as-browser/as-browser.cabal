@@ -1,0 +1,62 @@
+name:           as-browser
+version:        0.1
+cabal-version:  >=1.2
+build-type:     Simple
+author:         jpmoresmau
+
+library
+  hs-source-dirs:  src
+  build-depends:   
+                   base >= 4,
+                   safecopy,
+                   acid-state,
+                   ixset,
+                   text,
+                   Cabal,
+                   time,
+                   data-default,
+                   mtl
+  ghc-options:     -Wall
+  other-modules:   
+                   Language.Haskell.ASBrowser.Types,
+                   Language.Haskell.ASBrowser.Operations.Packages,
+                   Language.Haskell.ASBrowser.Utils,
+                   Language.Haskell.ASBrowser.Database,
+                   Language.Haskell.ASBrowser.Operations.Modules
+
+executable as-browser
+  hs-source-dirs:  exe
+  main-is:         Main.hs
+  build-depends:   
+                   base >= 4,
+                   safecopy,
+                   acid-state,
+                   ixset,
+                   text,
+                   Cabal
+  ghc-options:     -Wall
+
+test-suite as-browser-test
+  type:            exitcode-stdio-1.0
+  main-is:         as-browser-test.hs
+  ghc-options:     -Wall -rtsopts
+  build-depends:   
+                   base >= 4,
+                   tasty > 0.10,
+                   tasty-hunit,
+                   HUnit,
+                   directory,
+                   filepath
+  other-modules:   
+                  Language.Haskell.ASBrowser.Operations.Packages,
+                  Language.Haskell.ASBrowser.Operations.PackagesTest,
+                  Language.Haskell.ASBrowser.Utils,
+                  Language.Haskell.ASBrowser.UtilsTest,
+                  Language.Haskell.ASBrowser.Database,
+                  Language.Haskell.ASBrowser.TestHarness,
+                  Language.Haskell.ASBrowser.Operations.Modules,
+                  Language.Haskell.ASBrowser.Operations.ModulesTest
+  hs-source-dirs:  
+                  test,
+                  src
+

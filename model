@@ -1,0 +1,58 @@
+maps : structure that supports acid-state, exact lookup and prefix lookup!-> ixset?
+	packages
+		map name -> package
+
+	modules
+		map full name
+			-> map package/version
+				-> module
+
+	decls
+		map name -> 
+			map module ->
+				map package/version
+					-> decl
+
+	types?
+		type -> decls?
+
+data
+	package
+		- name
+		- version
+		- local?
+		- doc
+		- all metadata (license, author, etc.)
+		- component names
+	component
+		- name
+		- type (library/executable/test/benchmark)
+		- module names		
+	module
+		- name
+		- package
+		- version
+		- component names
+		- local?
+		- doc
+		- decls names
+		- reexported modules/decls
+	decl
+		- name
+		- module
+		- package
+		- version
+		- parent decl name
+		- child decls name	
+		- local?
+		- exposed?
+		- type of data (function, type, constructor, etc)
+		- type signature
+		- flags
+		- source
+		- doc
+		- uses -> map (name in code) -> qualified name (package, module, name, version range?)
+		- usedBy -> list of qualified names (package, module, name, version range?)
+		- related -> map type of relation -> list of qualified names (package, module, name, version range?)
+
+	
