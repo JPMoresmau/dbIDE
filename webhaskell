@@ -1,6 +1,6 @@
 left pane: browser output (all packages) + all projects, with option to show/hide each and search
 right pane: names in scope, click show doc below (+ keywords?)
-middle: open projects(+new)->open files (+new)->outline(+new)
+middle: open projects(+new)->open files (+new -> path?)->outline(+new)
         if function: type (with marker: inferred|explicit)
  	exported check box 
 	text box with current high level function/type

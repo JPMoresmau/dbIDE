@@ -2,7 +2,7 @@ Core:
 - store code in memory/graph db
 	- graph-db or acid-state.
 	- storage is controlled by it
-	- what about SCM integration then?
+	- what about SCM integration then? -> consistent source export
 - store code as AST
 	- typed lambda calculus + extensions
 	- some kind of "simple" language
@@ -19,7 +19,7 @@ Core:
 UI:
 - use Web UI
 	- threepennygui + other javascript library?
-	- other?
+	- web services API implemented in Haskell + Javascript client
 - search list
 	- like hoogle search
 	- nothing: list local projects
@@ -40,6 +40,8 @@ UI:
 	- code how?
 	- add sugar
 	- references
+	- flags necessary
+	- related instances
 	- link to used functions/types definitions
 	- if source code know, replace function invocation by code
 - edit code
