@@ -16,7 +16,7 @@ import Data.IxSet
 packageTests :: TestTree
 packageTests = testGroup "Package Tests" 
   [ testCase "Write/Get/Delete" $
-      withTempAcid $ \acid -> do
+      withTestAcid $ \acid -> do
         pkg1 <- update acid $ WritePackage testPkg1
         pkg1 @?= testPkg1
         mpkg1 <- query acid $ GetPackage testPkgKey1
@@ -35,7 +35,7 @@ packageTests = testGroup "Package Tests"
         mpkg2'' <- query acid $ GetPackage testPkgKey2
         mpkg2'' @?= Just testPkg2
   , testCase "Prefix" $
-      withTempAcid $ \acid -> do
+      withTestAcid $ \acid -> do
         _ <- update acid $ WritePackage testPkg1
         _ <- update acid $ WritePackage testPkg2
         pkgs1 <- query acid $ FindPackages ""

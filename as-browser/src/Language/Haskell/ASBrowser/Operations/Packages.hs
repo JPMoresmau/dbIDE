@@ -5,6 +5,7 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Data.Acid
 import Data.IxSet
+import Data.List
 
 import qualified Data.Text as T
 
@@ -16,6 +17,12 @@ writePackage pkg = do
   db@Database{..} <- get
   put $ db{dPackages=updateIx (pkgKey pkg) pkg dPackages}
   return pkg
+
+writePackages :: [Package] -> Update Database ()
+writePackages pkgs = do
+  db@Database{..} <- get
+  put $ db{dPackages=foldl' (\ix pkg->updateIx (pkgKey pkg) pkg ix) dPackages pkgs}
+  return ()
 
 deletePackage :: PackageKey -> Update Database ()
 deletePackage key = do

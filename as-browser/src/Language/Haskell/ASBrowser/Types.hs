@@ -36,7 +36,7 @@ deriveSafeCopy 0 'base ''Version
 deriveSafeCopy 0 'base ''VersionRange
 
 instance IsString Version where
-  fromString = fst . Prelude.head .readP_to_S parseVersion
+  fromString = fst . Prelude.head . Prelude.filter (\(_,rest)->Prelude.null rest). readP_to_S parseVersion
 
 data Local = Local | Packaged
   deriving (Show, Read, Eq, Ord, Bounded,Enum,Typeable,Data)
@@ -50,7 +50,7 @@ deriveSafeCopy 0 'base ''Expose
 
 
 data PackageMetaData = PackageMetaData
-  { pkgMDAuthor :: Text
+  { pkgMDAuthor :: !Text
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''PackageMetaData
@@ -58,11 +58,13 @@ deriveSafeCopy 0 'base ''PackageMetaData
 instance Default PackageMetaData where
   def = PackageMetaData ""
 
-newtype Doc = Doc {unDoc :: Text}
+data Doc = Doc 
+  { dShort :: !Text
+  , dLong :: !Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
     
 instance Default Doc where
-  def = Doc ""    
+  def = Doc "" ""
     
 deriveSafeCopy 0 'base ''Doc
 
@@ -81,8 +83,8 @@ data ComponentType = Library | Executable | Test | BenchMark
 deriveSafeCopy 0 'base ''ComponentType
 
 data Component = Component
- { cName :: ComponentName
- , cType :: ComponentType
+ { cName :: !ComponentName
+ , cType :: !ComponentType
  } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Component
@@ -118,19 +120,19 @@ deriveSafeCopy 0 'base ''WriteDate
 
 
 data PackageKey = PackageKey 
-  { pkgName       :: PackageName
-  , pkgVersion    :: Version
-  , pkgLocal      :: Local
+  { pkgName       :: !PackageName
+  , pkgVersion    :: !Version
+  , pkgLocal      :: !Local
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''PackageKey
   
 
 data Package = Package 
-  { pkgKey        :: PackageKey
-  , pkgDoc        :: Doc
-  , pkgMeta       :: PackageMetaData
-  , pkgComponents :: [Component]
+  { pkgKey        :: !PackageKey
+  , pkgDoc        :: !Doc
+  , pkgMeta       :: !PackageMetaData
+  , pkgComponents :: ![Component]
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Package

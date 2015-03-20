@@ -9,6 +9,7 @@ import Language.Haskell.ASBrowser.Operations.Packages
 
 $(makeAcidic ''Database
   [ 'writePackage
+  , 'writePackages
   , 'deletePackage
   , 'getPackage
   , 'findPackages

@@ -15,14 +15,24 @@ library
                    Cabal,
                    time,
                    data-default,
-                   mtl
-  ghc-options:     -Wall
+                   mtl,
+                   conduit,
+                   conduit-extra,
+                   http-conduit,
+                   bytestring,
+                   zlib,
+                   tar,
+                   utf8-string,
+                   parallel-io
+  ghc-options:     -Wall -O2
   other-modules:   
                    Language.Haskell.ASBrowser.Types,
                    Language.Haskell.ASBrowser.Operations.Packages,
                    Language.Haskell.ASBrowser.Utils,
                    Language.Haskell.ASBrowser.Database,
-                   Language.Haskell.ASBrowser.Operations.Modules
+                   Language.Haskell.ASBrowser.Operations.Modules,
+                   Language.Haskell.ASBrowser.Integration.Cabal,
+                   Language.Haskell.ASBrowser.Integration.Files
 
 executable as-browser
   hs-source-dirs:  exe
@@ -39,14 +49,22 @@ executable as-browser
 test-suite as-browser-test
   type:            exitcode-stdio-1.0
   main-is:         as-browser-test.hs
-  ghc-options:     -Wall -rtsopts
+  ghc-options:     -Wall -rtsopts -threaded -O2
   build-depends:   
                    base >= 4,
                    tasty > 0.10,
                    tasty-hunit,
                    HUnit,
                    directory,
-                   filepath
+                   filepath,
+                   conduit,
+                   conduit-extra,
+                   http-conduit,
+                   bytestring,
+                   zlib,
+                   tar,
+                   utf8-string,
+                   parallel-io
   other-modules:   
                   Language.Haskell.ASBrowser.Operations.Packages,
                   Language.Haskell.ASBrowser.Operations.PackagesTest,
@@ -55,7 +73,12 @@ test-suite as-browser-test
                   Language.Haskell.ASBrowser.Database,
                   Language.Haskell.ASBrowser.TestHarness,
                   Language.Haskell.ASBrowser.Operations.Modules,
-                  Language.Haskell.ASBrowser.Operations.ModulesTest
+                  Language.Haskell.ASBrowser.Operations.ModulesTest,
+                  Language.Haskell.ASBrowser.Integration.Cabal,
+                  Language.Haskell.ASBrowser.Integration.Files,
+                  Language.Haskell.ASBrowser.Integration.CabalTest,
+                  Language.Haskell.ASBrowser.Integration.FilesTest,
+                  Language.Haskell.ASBrowser.TypesTest
   hs-source-dirs:  
                   test,
                   src

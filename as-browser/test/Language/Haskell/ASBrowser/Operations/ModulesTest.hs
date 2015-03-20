@@ -18,7 +18,7 @@ import Data.List
 moduleTests :: TestTree
 moduleTests = testGroup "Module Tests" 
   [ testCase "Write/Get/Delete" $
-      withTempAcid $ \acid -> do
+      withTestAcid $ \acid -> do
         mod1 <- update acid $ WriteModule testMod1
         mod1 @?= testMod1
         mmod1 <- query acid $ GetModule testModKey1
@@ -33,7 +33,7 @@ moduleTests = testGroup "Module Tests"
         mmod2'' <- query acid $ GetModule testModKey2
         mmod2'' @?= Just testMod2
   , testCase "List" $
-      withTempAcid $ \acid -> do
+      withTestAcid $ \acid -> do
         _ <- update acid $ WriteModule testMod1
         _ <- update acid $ WriteModule testMod2
         mods1 <- query acid $ ListModules testPkgKey1 Nothing
@@ -41,7 +41,7 @@ moduleTests = testGroup "Module Tests"
         mods2 <- query acid $ ListModules testPkgKey1 $ Just testComp1
         toList mods2 @?= [testMod1]
   , testCase "Find" $
-      withTempAcid $ \acid -> do
+      withTestAcid $ \acid -> do
         _ <- update acid $ WriteModule testMod1
         _ <- update acid $ WriteModule testMod2
         _ <- update acid $ WriteModule testMod3
