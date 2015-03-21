@@ -28,7 +28,7 @@ getModule key = do
   Database{..} <- ask
   return $ getOne $ dModules @= key
 
-listModules :: PackageKey -> Maybe Component -> Query Database (IxSet Module)
+listModules :: PackageKey -> Maybe ComponentName -> Query Database (IxSet Module)
 listModules key mcomp = do
   Database{..} <- ask
   case mcomp of

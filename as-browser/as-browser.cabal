@@ -32,7 +32,8 @@ library
                    Language.Haskell.ASBrowser.Database,
                    Language.Haskell.ASBrowser.Operations.Modules,
                    Language.Haskell.ASBrowser.Integration.Cabal,
-                   Language.Haskell.ASBrowser.Integration.Files
+                   Language.Haskell.ASBrowser.Integration.Files,
+                   Language.Haskell.ASBrowser.Operations.Components
 
 executable as-browser
   hs-source-dirs:  exe
@@ -71,15 +72,48 @@ test-suite as-browser-test
                   Language.Haskell.ASBrowser.Utils,
                   Language.Haskell.ASBrowser.UtilsTest,
                   Language.Haskell.ASBrowser.Database,
-                  Language.Haskell.ASBrowser.TestHarness,
                   Language.Haskell.ASBrowser.Operations.Modules,
                   Language.Haskell.ASBrowser.Operations.ModulesTest,
                   Language.Haskell.ASBrowser.Integration.Cabal,
                   Language.Haskell.ASBrowser.Integration.Files,
                   Language.Haskell.ASBrowser.Integration.CabalTest,
                   Language.Haskell.ASBrowser.Integration.FilesTest,
-                  Language.Haskell.ASBrowser.TypesTest
+                  Language.Haskell.ASBrowser.TypesTest,
+                  Language.Haskell.ASBrowser.Operations.Components,
+                  Language.Haskell.ASBrowser.Operations.ComponentsTest
   hs-source-dirs:  
                   test,
                   src
+
+test-suite as-browser-integration
+  type:            exitcode-stdio-1.0
+  main-is:         as-browser-integration.hs
+  ghc-options:     -Wall -rtsopts -threaded -O2
+  build-depends:   base >= 4,
+                   tasty > 0.10,
+                   tasty-hunit,
+                   HUnit,
+                   directory,
+                   filepath,
+                   conduit,
+                   conduit-extra,
+                   http-conduit,
+                   bytestring,
+                   zlib,
+                   tar,
+                   utf8-string,
+                   parallel-io
+  other-modules:   
+                  Language.Haskell.ASBrowser.Operations.Packages,
+                  Language.Haskell.ASBrowser.Utils,
+                  Language.Haskell.ASBrowser.Database,
+                  Language.Haskell.ASBrowser.Operations.Modules,
+                  Language.Haskell.ASBrowser.Integration.Cabal,
+                  Language.Haskell.ASBrowser.Integration.Files,
+                  Language.Haskell.ASBrowser.Integration.CabalTest,
+                  Language.Haskell.ASBrowser.TestHarness,
+                  Language.Haskell.ASBrowser.Operations.Components
+  hs-source-dirs:  
+                  src,
+                  integration
 

@@ -11,16 +11,16 @@ import Test.Tasty.HUnit
 
 filesTests :: TestTree
 filesTests = testGroup "Files Tests" 
-  [ testCase "unTarFileHandle" $ do
-      rep <- getCabalRepositories
-      f <- getIndexFile $ fromJust rep
-      let cnt fp _=return fp
-      c <- unTarFileHandle f cnt
-      length c > 100 @? "zero contents"
---  , testCase "unTarTGzipTemp" $ do
---      rep <- getCabalRepositories
---      f <- getIndexFile $ fromJust rep
---      let cnt = ((return . length) =<<) . getDirectoryContents
---      c <- unTarGzipTemp f cnt
---      c > 100 @? "zero contents"
+  [ testCase "unTarGzFileMap" $
+      testFileMap unTarGzFileMap
+  , testCase "unTarGzFileParMap" $
+      testFileMap unTarGzFileParMap
   ]
+  
+testFileMap :: (FilePath -> (a -> t -> IO a) -> IO [a1]) -> IO ()
+testFileMap fn = do
+      rep <- getCabalRepositories
+      idxFile <- getIndexFile $ fromJust rep
+      let cnt fp _ = return fp
+      c <- fn idxFile cnt
+      length c > 100 @? "zero contents"

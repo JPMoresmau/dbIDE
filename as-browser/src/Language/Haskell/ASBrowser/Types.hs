@@ -82,12 +82,50 @@ data ComponentType = Library | Executable | Test | BenchMark
 
 deriveSafeCopy 0 'base ''ComponentType
 
+data PackageKey = PackageKey 
+  { pkgName       :: !PackageName
+  , pkgVersion    :: !Version
+  , pkgLocal      :: !Local
+  } deriving (Show,Read,Eq,Ord,Typeable,Data)
+
+deriveSafeCopy 0 'base ''PackageKey
+
+data PackageRef = PackageRef
+  { prName :: !PackageName
+  , prRange :: !VersionRange
+  } deriving (Show,Read,Eq,Typeable,Data)
+
+deriveSafeCopy 0 'base ''PackageRef
+
+instance Ord PackageRef where
+  compare (PackageRef name1 range1) (PackageRef name2 range2) = 
+    case compare name1 name2 of
+      EQ -> compare (show range1) (show range2)
+      c  -> c
+
+data ComponentKey = ComponentKey
+  { cPackageKey :: !PackageKey
+  , cName  :: !ComponentName
+  } deriving (Show,Read,Eq,Ord,Typeable,Data)
+
+
+deriveSafeCopy 0 'base ''ComponentKey
+
 data Component = Component
- { cName :: !ComponentName
+ { cKey  :: !ComponentKey
  , cType :: !ComponentType
+ , cRefs :: [PackageRef]
  } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Component
+
+
+instance Indexable Component where
+  empty = ixSet
+    [ ixFun $ \c -> [ cPackageKey $ cKey c ]
+    , ixFun $ \c -> [ cKey c ]
+    , ixFun $ \c -> Prelude.map prName $ cRefs c
+    ]
 
 newtype ModuleName = ModuleName {unModName :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
@@ -96,8 +134,6 @@ deriveSafeCopy 0 'base ''ModuleName
 
 instance IsString ModuleName where
   fromString = ModuleName . pack
-
-
 
 newtype DeclName = DeclName {unDeclName :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
@@ -119,23 +155,16 @@ data WriteDate = WriteDate
 deriveSafeCopy 0 'base ''WriteDate
 
 
-data PackageKey = PackageKey 
-  { pkgName       :: !PackageName
-  , pkgVersion    :: !Version
-  , pkgLocal      :: !Local
-  } deriving (Show,Read,Eq,Ord,Typeable,Data)
-
-deriveSafeCopy 0 'base ''PackageKey
-  
 
 data Package = Package 
   { pkgKey        :: !PackageKey
   , pkgDoc        :: !Doc
   , pkgMeta       :: !PackageMetaData
-  , pkgComponents :: ![Component]
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Package
+
+
 
 instance Indexable Package where
   empty = ixSet
@@ -154,32 +183,37 @@ data Module = Module
   { modKey        :: ModuleKey
   , modDoc        :: Doc
   , modExpose     :: Expose
-  , modComponents :: [Component]
+  , modComponents :: [ComponentName]
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Module
 
-data ComponentKey = ComponentKey
-  { cPackageKey :: PackageKey
-  , cComponent  :: Component
-  } deriving (Show,Read,Eq,Ord,Typeable,Data)
-
-deriveSafeCopy 0 'base ''ComponentKey
 
 instance Indexable Module where
   empty = ixSet
     [ ixFun $ \mo -> [ modPackageKey $ modKey mo ]
-    , ixFun $ \mo -> Prelude.map (ComponentKey (modPackageKey $ modKey mo)) $ modComponents mo 
+    , ixFun $ \mo -> Prelude.map (ComponentKey $ modPackageKey $ modKey mo) $ modComponents mo 
     , ixFun $ \mo -> [ modName $ modKey mo ]
     , ixFun $ \mo -> [ modKey mo ]
     ]
 
+data FullPackage = FullPackage
+  { fpPackage :: !Package
+  , fpComponents :: ![Component]
+  , fpModules :: ![Module]
+  } deriving (Show,Read,Eq,Ord,Typeable,Data)
+
+
+deriveSafeCopy 0 'base ''FullPackage
+
 data Database = Database
   { dPackages :: IxSet Package
+  , dComponents :: IxSet Component
   , dModules  :: IxSet Module
   } deriving (Data, Typeable)
 
 deriveSafeCopy 0 'base ''Database
 
 instance Default Database where
-  def = Database empty empty
+  def = Database empty empty empty
+

@@ -21,6 +21,7 @@ import qualified Data.Conduit as C
 
 import Language.Haskell.ASBrowser.Integration.Files
 import Data.Acid
+import Data.Acid.Advanced
 
 import Language.Haskell.ASBrowser.Database
 import Language.Haskell.ASBrowser.Types
@@ -99,7 +100,7 @@ updateFromCabal acid = do
     idxFile (Just rep) = Just <$> getIndexFile rep
     processIdx Nothing = return ()
     processIdx (Just fp) = do
-      _ <- unTarFileHandle fp processEntry
+      _ <- unTarGzFileParMap fp processEntry
       --let toInsert=catMaybes allPkgs
       --update acid $ WritePackages toInsert
       createCheckpoint acid
@@ -119,7 +120,7 @@ updateFromCabal acid = do
             let pd=flattenPackageDescription gpd
                 pkg = packageFromDescription pd Packaged
             -- print $ pkgKey pkg
-            _ <- update acid $ WritePackage pkg
+            _ <- scheduleUpdate acid $ WriteFullPackage pkg
             return ()
             --return $ Just pkg
           _ -> return ()
@@ -156,19 +157,20 @@ updateFromCabal acid = do
 --        else return m
 --    toText (Dependency (PackageName name) range)=(T.pack name,T.pack $ show range)
 
-packageFromDescription :: PackageDescription -> Local -> Package
+packageFromDescription :: PackageDescription -> Local -> FullPackage
 packageFromDescription PackageDescription{..} loc =
   let Cabal.PackageName name = Cabal.pkgName package
       version = Cabal.pkgVersion package
       pkgKey = PackageKey (PackageName $ T.pack name) version loc
       doc = Doc (T.pack synopsis) (T.pack description)
       md = PackageMetaData (T.pack author)
-      cps = maybe [] (const [Component "" Library]) library
+      cpnKey = ComponentKey pkgKey
+      cps = maybe [] (const [Component (cpnKey "") Library []]) library
             ++ case loc of
                  Local ->
-                   map (\e-> Component (fromString $ exeName e) Executable) executables
-                   ++ map (\e-> Component (fromString $ testName e) Test) testSuites
-                   ++ map (\e-> Component (fromString $ benchmarkName e) BenchMark) benchmarks
+                   map (\e-> Component (cpnKey $ fromString $ exeName e) Executable []) executables
+                   ++ map (\e-> Component (cpnKey $ fromString $ testName e) Test []) testSuites
+                   ++ map (\e-> Component (cpnKey $ fromString $ benchmarkName e) BenchMark []) benchmarks
                  _ -> []
-  in Package pkgKey doc md cps
+  in FullPackage (Package pkgKey doc md) cps []
       

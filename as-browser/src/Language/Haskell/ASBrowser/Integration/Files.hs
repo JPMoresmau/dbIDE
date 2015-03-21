@@ -23,18 +23,21 @@ unTarGzipTemp res f = do
               unTarGzip res tmpDir
               f tmpDir)
 
-unTarFileHandle :: FilePath -> (FilePath -> BS.ByteString -> IO a) -> IO [a]
-unTarFileHandle res f = do
---  walk =<< return . Tar.read . GZip.decompress =<< BS.readFile res
---  where
---    walk Tar.Done = return []
---    walk (Tar.Fail _) = return []
---    walk (Tar.Next e es) =
---      case Tar.entryContent e of
---        Tar.NormalFile bs _ -> do
---          r <- f (Tar.entryPath e) bs
---          (r:) <$> walk es
---        _ -> walk es      
+unTarGzFileMap :: FilePath -> (FilePath -> BS.ByteString -> IO a) -> IO [a]
+unTarGzFileMap res f = 
+  walk =<< return . Tar.read . GZip.decompress =<< BS.readFile res
+  where
+    walk Tar.Done = return []
+    walk (Tar.Fail _) = return []
+    walk (Tar.Next e es) =
+      case Tar.entryContent e of
+        Tar.NormalFile bs _ -> do
+          r <- f (Tar.entryPath e) bs
+          (r:) <$> walk es
+        _ -> walk es     
+       
+unTarGzFileParMap :: FilePath -> (FilePath -> BS.ByteString -> IO a) -> IO [a] 
+unTarGzFileParMap res f = do
   cnts <- BS.readFile res
   let ungzip  = GZip.decompress cnts
       entries = Tar.read ungzip

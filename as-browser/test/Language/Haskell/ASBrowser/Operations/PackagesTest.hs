@@ -50,21 +50,18 @@ packageTests = testGroup "Package Tests"
         toList pkgs3' @?= [testPkg1]
   ]
   
-testComp1 :: Component
-testComp1 = Component "" Library
 
-testComp2 :: Component
-testComp2 = Component "pkg1-test" Test  
   
 testPkgKey1 :: PackageKey
 testPkgKey1 = PackageKey "pkg1" "0.0.1" Packaged
 
 testPkg1 :: Package
-testPkg1 = Package testPkgKey1 def def [testComp1,testComp2]
+testPkg1 = Package testPkgKey1 def def
 
 testPkgKey2 :: PackageKey
 testPkgKey2 = PackageKey "mypkg" "0.0.1" Packaged
 
 testPkg2 :: Package
-testPkg2 = Package testPkgKey2 def def []
+testPkg2 = Package testPkgKey2 def def
+
 
