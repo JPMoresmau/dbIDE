@@ -12,6 +12,8 @@ import Test.Tasty.HUnit
 import Data.Acid
 import Data.Default
 import Data.IxSet
+import Data.List
+import Distribution.Version
 
 packageTests :: TestTree
 packageTests = testGroup "Package Tests" 
@@ -48,6 +50,58 @@ packageTests = testGroup "Package Tests"
         toList pkgs3 @?= [testPkg1]
         toList pkgs2' @?= [testPkg1]
         toList pkgs3' @?= [testPkg1]
+  , testCase "Versions" $
+      withTestAcid $ \acid -> do
+        _ <- update acid $ WritePackage testPkg1
+        mpkg1 <- query acid $ GetLatest $ pkgName $ pkgKey testPkg1
+        mpkg1 @?= Just testPkg1
+        ipkg1 <- query acid $ ListVersions $ pkgName $ pkgKey testPkg1
+        toList ipkg1 @?= [testPkg1]
+        let testPkgKey1_2 = PackageKey "pkg1" "0.0.2" Packaged
+            testPkg1_2 = Package testPkgKey1_2 def def
+        _ <- update acid $ WritePackage testPkg1_2
+        mpkg2 <- query acid $ GetLatest $ pkgName $ pkgKey testPkg1_2
+        mpkg2 @?= Just testPkg1_2
+        ipkg2 <- query acid $ ListVersions $ pkgName $ pkgKey testPkg1
+        sort (toList ipkg2) @?= [testPkg1,testPkg1_2]
+        mpkg3 <- query acid $ GetLatest "unknown"
+        mpkg3 @?= Nothing
+        ipkg3 <- query acid $ ListVersions "unknown"
+        toList ipkg3 @?= []
+  , testCase "Version references" $
+      withTestAcid $ \acid -> do
+        _ <- update acid $ WritePackage testPkg1
+        mpkg1 <- query acid $ GetLatestMatching (pkgName $ pkgKey testPkg1) anyVersion
+        mpkg1 @?= Just testPkg1
+        ipkg1 <- query acid $ ListMatching (pkgName $ pkgKey testPkg1) anyVersion
+        toList ipkg1 @?= [testPkg1]
+        mpkg1' <- query acid $ GetLatestMatching (pkgName $ pkgKey testPkg1) (thisVersion $ pkgVersion $ pkgKey testPkg1)
+        mpkg1' @?= Just testPkg1
+        ipkg1' <- query acid $ ListMatching (pkgName $ pkgKey testPkg1) (thisVersion $ pkgVersion $ pkgKey testPkg1)
+        toList ipkg1' @?= [testPkg1]
+        mpkg1'' <- query acid $ GetLatestMatching (pkgName $ pkgKey testPkg1) (laterVersion $ pkgVersion $ pkgKey testPkg1)
+        mpkg1'' @?= Nothing
+        ipkg1'' <- query acid $ ListMatching (pkgName $ pkgKey testPkg1) (laterVersion $ pkgVersion $ pkgKey testPkg1)
+        toList ipkg1'' @?= []
+        let testPkgKey1_2 = PackageKey "pkg1" "0.0.2" Packaged
+            testPkg1_2 = Package testPkgKey1_2 def def
+        _ <- update acid $ WritePackage testPkg1_2
+        mpkg2 <- query acid $ GetLatestMatching (pkgName $ pkgKey testPkg1) anyVersion
+        mpkg2 @?= Just testPkg1_2
+        ipkg2 <- query acid $ ListMatching (pkgName $ pkgKey testPkg1) anyVersion
+        sort (toList ipkg2) @?= [testPkg1,testPkg1_2]
+        mpkg2' <- query acid $ GetLatestMatching (pkgName $ pkgKey testPkg1) (thisVersion $ pkgVersion $ pkgKey testPkg1)
+        mpkg2' @?= Just testPkg1
+        ipkg2' <- query acid $ ListMatching (pkgName $ pkgKey testPkg1) (thisVersion $ pkgVersion $ pkgKey testPkg1)
+        toList ipkg2' @?= [testPkg1]
+        mpkg2'' <- query acid $ GetLatestMatching (pkgName $ pkgKey testPkg1) (laterVersion $ pkgVersion $ pkgKey testPkg1)
+        mpkg2'' @?= Just testPkg1_2
+        ipkg2'' <- query acid $ ListMatching (pkgName $ pkgKey testPkg1) (laterVersion $ pkgVersion $ pkgKey testPkg1)
+        toList ipkg2'' @?= [testPkg1_2]
+        mpkg2''' <- query acid $ GetLatestMatching (pkgName $ pkgKey testPkg1) (laterVersion $ pkgVersion $ pkgKey testPkg1_2)
+        mpkg2''' @?= Nothing
+        ipkg2''' <- query acid $ ListMatching (pkgName $ pkgKey testPkg1) (laterVersion $ pkgVersion $ pkgKey testPkg1_2)
+        toList ipkg2''' @?= []
   ]
   
 

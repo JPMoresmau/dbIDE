@@ -22,6 +22,10 @@ $(makeAcidic ''Database
   , 'deletePackage
   , 'getPackage
   , 'findPackages
+  , 'listVersions
+  , 'getLatest
+  , 'listMatching
+  , 'getLatestMatching
   , 'writeComponent
   , 'deleteComponent
   , 'getComponent

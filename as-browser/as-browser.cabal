@@ -55,6 +55,8 @@ test-suite as-browser-test
                    base >= 4,
                    tasty > 0.10,
                    tasty-hunit,
+                   tasty-quickcheck,
+                   QuickCheck,
                    HUnit,
                    directory,
                    filepath,

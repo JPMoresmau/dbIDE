@@ -1,6 +1,7 @@
 {-# LANGUAGE RecordWildCards #-}
 module Language.Haskell.ASBrowser.Operations.Packages where
 
+import Control.Applicative
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Acid
@@ -11,6 +12,8 @@ import qualified Data.Text as T
 
 import Language.Haskell.ASBrowser.Types
 import Language.Haskell.ASBrowser.Utils
+
+import Distribution.Version
 
 writePackage :: Package -> Update Database Package
 writePackage pkg = do
@@ -40,5 +43,20 @@ findPackages prf = do
   Database{..} <- ask
   if T.null prf 
     then return dPackages
-    else return $ dPackages @>=< (textTupleToPackageNameCI $ prefixInterval $ unPkgNameCI $ textToPackageNameCI prf)
- 
+    else return $ dPackages @>=< textTupleToPackageNameCI (prefixInterval $ unPkgNameCI $ textToPackageNameCI prf)
+
+listVersions :: PackageName -> Query Database (IxSet Package)
+listVersions nm = do 
+  Database{..} <- ask
+  return $ dPackages @= nm
+
+getLatest :: PackageName -> Query Database (Maybe Package)
+getLatest = (lastInSet (pkgVersion . pkgKey) <$>) . listVersions
+
+listMatching :: PackageName -> VersionRange -> Query Database (IxSet Package)
+listMatching nm vr = do
+  ix <- listVersions nm
+  return $ fromList $ filter (\p-> withinRange (pkgVersion$ pkgKey p) vr) $ toList ix
+
+getLatestMatching :: PackageName -> VersionRange -> Query Database (Maybe Package)
+getLatestMatching nm = (lastInSet (pkgVersion . pkgKey) <$>) . listMatching nm
