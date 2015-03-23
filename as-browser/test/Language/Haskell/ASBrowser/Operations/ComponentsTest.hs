@@ -53,10 +53,10 @@ testCompKey1 :: ComponentKey
 testCompKey1 = ComponentKey testPkgKey1 ""
 
 testComp1 :: Component
-testComp1 = Component testCompKey1 Library [PackageRef "base" anyVersion,PackageRef "text" anyVersion]
+testComp1 = Component testCompKey1 Library [PackageRef "base" anyVersion,PackageRef "text" anyVersion] []
 
 testCompKey2 :: ComponentKey
 testCompKey2 = ComponentKey testPkgKey1 "pkg1-test"
 
 testComp2 :: Component
-testComp2 = Component testCompKey2 Test  [PackageRef "base" anyVersion]
+testComp2 = Component testCompKey2 Test  [PackageRef "base" anyVersion] []

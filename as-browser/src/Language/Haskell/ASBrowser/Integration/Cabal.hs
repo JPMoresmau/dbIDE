@@ -13,6 +13,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Data.Maybe
 import Data.List
+import Data.ByteString.Lazy (ByteString)
 import Data.ByteString.Lazy.UTF8 (toString)
 
 import Data.Conduit.Binary (sinkFile)
@@ -24,15 +25,16 @@ import Data.Acid
 import Data.Acid.Advanced
 
 import Language.Haskell.ASBrowser.Database
-import Language.Haskell.ASBrowser.Types
+import Language.Haskell.ASBrowser.Types as Typ
 import Control.Monad
 
 import qualified Distribution.Package as Cabal
-import Distribution.PackageDescription (PackageDescription(..),exeName,testName,benchmarkName)
+import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
 import Distribution.Verbosity
 import Distribution.PackageDescription.Configuration (flattenPackageDescription)
 import Data.Default
+import Distribution.Text (display)
 
 data CabalRepositories = CabalRepositories
   { crCachePath :: FilePath
@@ -113,16 +115,9 @@ updateFromCabal acid = do
       let pkgKey = PackageKey (fromString pkg) (fromString ver) Packaged
       mPkg <- query acid $ GetPackage pkgKey
       when (isNothing mPkg) $ processVersion cnts
-    processVersion cnts = do
-        let pr=parsePackageDescription $ toString cnts
-        case pr of
-          ParseOk _ gpd -> do
-            let pd=flattenPackageDescription gpd
-                pkg = packageFromDescription pd Packaged
-            -- print $ pkgKey pkg
-            _ <- scheduleUpdate acid $ WriteFullPackage pkg
-            return ()
-            --return $ Just pkg
+    processVersion cnts = 
+      case packageFromDescriptionBS cnts Packaged of
+          Just pkg -> void $ scheduleUpdate acid $ WriteFullPackage pkg
           _ -> return ()
 --    processPackage folder d = do
 --      vrss <- getSubDirs $ folder </> d
@@ -157,6 +152,12 @@ updateFromCabal acid = do
 --        else return m
 --    toText (Dependency (PackageName name) range)=(T.pack name,T.pack $ show range)
 
+packageFromDescriptionBS :: ByteString -> Local -> Maybe FullPackage
+packageFromDescriptionBS cnts loc = 
+        case parsePackageDescription $ toString cnts of
+          ParseOk _ gpd -> Just $ packageFromDescription (flattenPackageDescription gpd) loc
+          _ -> Nothing
+
 packageFromDescription :: PackageDescription -> Local -> FullPackage
 packageFromDescription PackageDescription{..} loc =
   let Cabal.PackageName name = Cabal.pkgName package
@@ -164,13 +165,18 @@ packageFromDescription PackageDescription{..} loc =
       pkgKey = PackageKey (PackageName $ T.pack name) version loc
       doc = Doc (T.pack synopsis) (T.pack description)
       md = PackageMetaData (T.pack author)
-      cpnKey = ComponentKey pkgKey
-      cps = maybe [] (const [Component (cpnKey "") Library []]) library
+      cpnKey = ComponentKey pkgKey . fromString
+      cps = maybe [] ((:[]) . componentFromBuildInfo (const $ cpnKey "") Typ.Library libBuildInfo) library
             ++ case loc of
                  Local ->
-                   map (\e-> Component (cpnKey $ fromString $ exeName e) Executable []) executables
-                   ++ map (\e-> Component (cpnKey $ fromString $ testName e) Test []) testSuites
-                   ++ map (\e-> Component (cpnKey $ fromString $ benchmarkName e) BenchMark []) benchmarks
+                      map (componentFromBuildInfo (cpnKey . exeName) Typ.Executable buildInfo) executables
+                   ++ map (componentFromBuildInfo (cpnKey . testName) Test testBuildInfo) testSuites
+                   ++ map (componentFromBuildInfo (cpnKey . benchmarkName) BenchMark benchmarkBuildInfo) benchmarks
                  _ -> []
   in FullPackage (Package pkgKey doc md) cps []
       
+componentFromBuildInfo :: (e -> ComponentKey) -> ComponentType -> (e -> BuildInfo) -> e -> Component
+componentFromBuildInfo key typ bi e=let
+  exts=map (T.pack . display) $ defaultExtensions (bi e)
+  in Component (key e) typ [] exts
+

@@ -35,6 +35,7 @@ deriveSafeCopy 0 'base ''PackageNameCI
 deriveSafeCopy 0 'base ''Version
 deriveSafeCopy 0 'base ''VersionRange
 
+
 instance IsString Version where
   fromString = fst . Prelude.head . Prelude.filter (\(_,rest)->Prelude.null rest). readP_to_S parseVersion
 
@@ -112,9 +113,10 @@ data ComponentKey = ComponentKey
 deriveSafeCopy 0 'base ''ComponentKey
 
 data Component = Component
- { cKey  :: !ComponentKey
- , cType :: !ComponentType
- , cRefs :: [PackageRef]
+ { cKey        :: !ComponentKey
+ , cType       :: !ComponentType
+ , cRefs       :: [PackageRef]
+ , cExtensions :: [Text] -- don't use the Extension type since it only got Ord instance recently, etc
  } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Component
