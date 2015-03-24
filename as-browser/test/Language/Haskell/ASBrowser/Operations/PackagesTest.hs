@@ -102,6 +102,16 @@ packageTests = testGroup "Package Tests"
         mpkg2''' @?= Nothing
         ipkg2''' <- query acid $ ListMatching (pkgName $ pkgKey testPkg1) (laterVersion $ pkgVersion $ pkgKey testPkg1_2)
         toList ipkg2''' @?= []
+  , testCase "By Local" $
+      withTestAcid $ \acid -> do
+        _ <- update acid $ WritePackage testPkg1
+        let pkgKeyLoc = PackageKey "mypkg" "0.0.1" Local
+            pkgLoc = Package pkgKeyLoc def def
+        _ <- update acid $ WritePackage pkgLoc
+        locs <- query acid $ ListByLocal Local
+        toList locs @?= [pkgLoc]
+        pks <- query acid $ ListByLocal Packaged
+        toList pks @?= [testPkg1]
   ]
   
 

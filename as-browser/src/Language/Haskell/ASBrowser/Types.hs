@@ -172,6 +172,7 @@ instance Indexable Package where
   empty = ixSet
     [ ixFun $ \pkg -> [ pkgKey pkg ]
     , ixFun $ \pkg -> [ pkgName $ pkgKey pkg ]
+    , ixFun $ \pkg -> [ pkgLocal $ pkgKey pkg ]
     , ixFun $ \pkg -> [ textToPackageNameCI $ unPkgName $ pkgName $ pkgKey pkg ]
     ]
 

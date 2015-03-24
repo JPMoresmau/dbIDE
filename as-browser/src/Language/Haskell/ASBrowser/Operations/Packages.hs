@@ -60,3 +60,8 @@ listMatching nm vr = do
 
 getLatestMatching :: PackageName -> VersionRange -> Query Database (Maybe Package)
 getLatestMatching nm = (lastInSet (pkgVersion . pkgKey) <$>) . listMatching nm
+
+listByLocal :: Local ->  Query Database (IxSet Package)
+listByLocal loc = do
+  Database{..} <- ask
+  return $ dPackages @= loc

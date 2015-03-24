@@ -26,6 +26,7 @@ $(makeAcidic ''Database
   , 'getLatest
   , 'listMatching
   , 'getLatestMatching
+  , 'listByLocal
   , 'writeComponent
   , 'deleteComponent
   , 'getComponent
