@@ -9,6 +9,7 @@ import Data.Maybe
 import System.Directory
 import Data.ByteString.Lazy (ByteString)
 import Data.String
+import Distribution.Version
 
 cabalTests :: TestTree
 cabalTests = testGroup "Cabal Tests" 
@@ -43,6 +44,7 @@ cabalTests = testGroup "Cabal Tests"
       cPackageKey (cKey lib) @?= pkgKey pkg
       cName (cKey lib) @?= ""
       cExtensions lib @?= ["CPP","OverloadedStrings"]
+      cRefs lib @?= [PackageRef (PackageName "base") ">=4 && <5"]
   ]
   
 cabalFile1 :: ByteString

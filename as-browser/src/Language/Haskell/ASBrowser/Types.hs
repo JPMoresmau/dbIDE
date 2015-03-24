@@ -7,12 +7,14 @@ import Data.Data
 import Data.SafeCopy hiding (Version)
 import Data.Text hiding (empty)
 import Distribution.Version
+import Distribution.Text (simpleParse)
 import Data.IxSet
 import Data.Time
 import Data.Default
 import Data.String
 import Data.Version
 import Text.ParserCombinators.ReadP (readP_to_S)
+import Data.Maybe
 
 newtype PackageName = PackageName {unPkgName :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
@@ -38,6 +40,10 @@ deriveSafeCopy 0 'base ''VersionRange
 
 instance IsString Version where
   fromString = fst . Prelude.head . Prelude.filter (\(_,rest)->Prelude.null rest). readP_to_S parseVersion
+
+instance IsString VersionRange where
+  fromString = fromJust . simpleParse
+
 
 data Local = Local | Packaged
   deriving (Show, Read, Eq, Ord, Bounded,Enum,Typeable,Data)

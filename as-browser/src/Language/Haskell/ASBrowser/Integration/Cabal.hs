@@ -36,6 +36,7 @@ import Distribution.PackageDescription.Configuration (flattenPackageDescription)
 import Data.Default
 import Distribution.Text (display)
 
+
 data CabalRepositories = CabalRepositories
   { crCachePath :: FilePath
   , crRemoteRepoName :: T.Text
@@ -166,17 +167,22 @@ packageFromDescription PackageDescription{..} loc =
       doc = Doc (T.pack synopsis) (T.pack description)
       md = PackageMetaData (T.pack author)
       cpnKey = ComponentKey pkgKey . fromString
-      cps = maybe [] ((:[]) . componentFromBuildInfo (const $ cpnKey "") Typ.Library libBuildInfo) library
+      fromBi = componentFromBuildInfo buildDepends
+      cps = maybe [] ((:[]) . fromBi (const $ cpnKey "") Typ.Library libBuildInfo) library
             ++ case loc of
                  Local ->
-                      map (componentFromBuildInfo (cpnKey . exeName) Typ.Executable buildInfo) executables
-                   ++ map (componentFromBuildInfo (cpnKey . testName) Test testBuildInfo) testSuites
-                   ++ map (componentFromBuildInfo (cpnKey . benchmarkName) BenchMark benchmarkBuildInfo) benchmarks
+                      map (fromBi (cpnKey . exeName) Typ.Executable buildInfo) executables
+                   ++ map (fromBi (cpnKey . testName) Test testBuildInfo) testSuites
+                   ++ map (fromBi (cpnKey . benchmarkName) BenchMark benchmarkBuildInfo) benchmarks
                  _ -> []
   in FullPackage (Package pkgKey doc md) cps []
       
-componentFromBuildInfo :: (e -> ComponentKey) -> ComponentType -> (e -> BuildInfo) -> e -> Component
-componentFromBuildInfo key typ bi e=let
-  exts=map (T.pack . display) $ defaultExtensions (bi e)
-  in Component (key e) typ [] exts
+componentFromBuildInfo :: [Cabal.Dependency] -> (e -> ComponentKey) -> ComponentType -> (e -> BuildInfo) -> e -> Component
+componentFromBuildInfo deps key typ fbi e=let
+  bi = fbi e
+  allDeps = map packageRefFromDependency $ targetBuildDepends bi ++ deps
+  exts=map (T.pack . display) $ defaultExtensions bi
+  in Component (key e) typ allDeps exts
 
+packageRefFromDependency :: Cabal.Dependency -> PackageRef
+packageRefFromDependency (Cabal.Dependency (Cabal.PackageName name) range) = PackageRef (PackageName $ T.pack name) range
