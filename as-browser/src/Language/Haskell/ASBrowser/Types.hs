@@ -50,8 +50,8 @@ data Local = Local | Packaged
 
 deriveSafeCopy 0 'base ''Local
 
-data Expose = Exposed | Included | Main
-  deriving (Show, Read, Eq, Ord, Bounded,Enum,Typeable,Data)
+data Expose = Exposed | Included | Main FilePath
+  deriving (Show, Read, Eq, Ord, Typeable,Data)
 
 deriveSafeCopy 0 'base ''Expose
 
@@ -189,11 +189,17 @@ data ModuleKey = ModuleKey
 
 deriveSafeCopy 0 'base ''ModuleKey
 
+data ModuleInclusion = ModuleInclusion
+  { miComponent :: ComponentName
+  , miExpose    :: Expose
+  } deriving (Show,Read,Eq,Ord,Typeable,Data)
+
+deriveSafeCopy 0 'base ''ModuleInclusion
+
 data Module = Module
   { modKey        :: ModuleKey
   , modDoc        :: Doc
-  , modExpose     :: Expose
-  , modComponents :: [ComponentName]
+  , modComponents :: [ModuleInclusion]
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Module
@@ -202,7 +208,7 @@ deriveSafeCopy 0 'base ''Module
 instance Indexable Module where
   empty = ixSet
     [ ixFun $ \mo -> [ modPackageKey $ modKey mo ]
-    , ixFun $ \mo -> Prelude.map (ComponentKey $ modPackageKey $ modKey mo) $ modComponents mo 
+    , ixFun $ \mo -> Prelude.map ((ComponentKey $ modPackageKey $ modKey mo) . miComponent) $ modComponents mo 
     , ixFun $ \mo -> [ modName $ modKey mo ]
     , ixFun $ \mo -> [ modKey mo ]
     ]

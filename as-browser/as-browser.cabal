@@ -23,7 +23,8 @@ library
                    zlib,
                    tar,
                    utf8-string,
-                   parallel-io
+                   parallel-io,
+                   containers
   ghc-options:     -Wall -O2
   other-modules:   
                    Language.Haskell.ASBrowser.Types,
@@ -67,7 +68,8 @@ test-suite as-browser-test
                    zlib,
                    tar,
                    utf8-string,
-                   parallel-io
+                   parallel-io,
+                   containers
   other-modules:   
                   Language.Haskell.ASBrowser.Operations.Packages,
                   Language.Haskell.ASBrowser.Operations.PackagesTest,
@@ -91,7 +93,8 @@ test-suite as-browser-integration
   type:            exitcode-stdio-1.0
   main-is:         as-browser-integration.hs
   ghc-options:     -Wall -rtsopts -threaded -O2
-  build-depends:   base >= 4,
+  build-depends:   
+                   base >= 4,
                    tasty > 0.10,
                    tasty-hunit,
                    HUnit,
@@ -104,7 +107,8 @@ test-suite as-browser-integration
                    zlib,
                    tar,
                    utf8-string,
-                   parallel-io
+                   parallel-io,
+                   containers
   other-modules:   
                   Language.Haskell.ASBrowser.Operations.Packages,
                   Language.Haskell.ASBrowser.Utils,

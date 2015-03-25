@@ -6,6 +6,7 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Data.Acid
 import Data.IxSet
+import qualified Data.Map as DM
 
 import qualified Data.Text as T
 
@@ -45,3 +46,11 @@ findModules keys prf = do
               "" -> dModules
               _  -> dModules @>=< join (***) ModuleName (prefixInterval prf)
   return $ ix1 &&& ix2
+
+mergeModules :: [Module] -> [Module]
+mergeModules  = DM.elems . foldr addMod DM.empty 
+  where
+    addMod mo = DM.insertWith merge (modKey mo) mo
+    merge m1 m2=m1{modComponents=modComponents m1 ++ modComponents m2}
+ 
+  

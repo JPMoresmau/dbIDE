@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, RecordWildCards, DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings, RecordWildCards, DeriveDataTypeable, PatternGuards #-}
 module Language.Haskell.ASBrowser.Integration.Cabal where
 
 import System.FilePath
@@ -11,6 +11,7 @@ import Data.Monoid
 import Data.String
 import qualified Data.Text as T
 import qualified Data.Text.IO as T
+import qualified Data.Map as DM
 import Data.Maybe
 import Data.List
 import Data.ByteString.Lazy (ByteString)
@@ -29,12 +30,15 @@ import Language.Haskell.ASBrowser.Types as Typ
 import Control.Monad
 
 import qualified Distribution.Package as Cabal
+import qualified Distribution.ModuleName as Cabal
 import Distribution.PackageDescription
 import Distribution.PackageDescription.Parse
 import Distribution.Verbosity
 import Distribution.PackageDescription.Configuration (flattenPackageDescription)
 import Data.Default
 import Distribution.Text (display)
+import Language.Haskell.ASBrowser.Operations.Modules
+import Distribution.Version
 
 
 data CabalRepositories = CabalRepositories
@@ -103,22 +107,37 @@ updateFromCabal acid = do
     idxFile (Just rep) = Just <$> getIndexFile rep
     processIdx Nothing = return ()
     processIdx (Just fp) = do
-      _ <- unTarGzFileParMap fp processEntry
+      toAdd <- unTarGzFileParMap fp processEntry
+      let lasts=DM.fromListWith max $ catMaybes toAdd
       --let toInsert=catMaybes allPkgs
       --update acid $ WritePackages toInsert
+      _ <- unTarGzFileParMap fp $ processEntry2 lasts
       createCheckpoint acid
-    processEntry fp cnts = do
+    processEntry fp _ = do
       let dirs = splitDirectories fp
       case dirs of
-        [pkg,ver,_] -> processCabal pkg ver cnts
-        _ -> return ()
-    processCabal pkg ver cnts = do
+        [pkg,ver,_] -> checkCabal pkg ver
+        _ -> return Nothing
+    checkCabal pkg ver = do
       let pkgKey = PackageKey (fromString pkg) (fromString ver) Packaged
       mPkg <- query acid $ GetPackage pkgKey
-      when (isNothing mPkg) $ processVersion cnts
-    processVersion cnts = 
+      if isNothing mPkg
+        then return $ Just (pkg,(fromString ver)::Version)
+        else return Nothing
+    processEntry2 dm fp cnts = do
+      let dirs = splitDirectories fp
+      case dirs of
+        [pkg,ver,_] 
+          | Just ver2 <- DM.lookup pkg dm 
+            -> processVersion cnts (fromString ver == ver2)
+        _ -> return ()
+    processVersion cnts isLast = 
       case packageFromDescriptionBS cnts Packaged of
-          Just pkg -> void $ scheduleUpdate acid $ WriteFullPackage pkg
+          Just pkg -> if isLast 
+                          then -- do
+                            -- when ("acid-state" == pkgName (pkgKey $ fpPackage pkg)) $ print pkg
+                            void $ scheduleUpdate acid $ WriteFullPackage pkg
+                          else void $ scheduleUpdate acid $ WritePackage (fpPackage pkg)
           _ -> return ()
 --    processPackage folder d = do
 --      vrss <- getSubDirs $ folder </> d
@@ -166,23 +185,51 @@ packageFromDescription PackageDescription{..} loc =
       pkgKey = PackageKey (PackageName $ T.pack name) version loc
       doc = Doc (T.pack synopsis) (T.pack description)
       md = PackageMetaData (T.pack author)
-      cpnKey = ComponentKey pkgKey . fromString
-      fromBi = componentFromBuildInfo buildDepends
-      cps = maybe [] ((:[]) . fromBi (const $ cpnKey "") Typ.Library libBuildInfo) library
-            ++ case loc of
-                 Local ->
-                      map (fromBi (cpnKey . exeName) Typ.Executable buildInfo) executables
-                   ++ map (fromBi (cpnKey . testName) Test testBuildInfo) testSuites
-                   ++ map (fromBi (cpnKey . benchmarkName) BenchMark benchmarkBuildInfo) benchmarks
-                 _ -> []
-  in FullPackage (Package pkgKey doc md) cps []
+      fromBi = componentFromBuildInfo pkgKey buildDepends
+      (cps,mods) = unzip $ maybe [] ((:[]) . fromBi (const "") Typ.Library libBuildInfo libToModule) library
+                    ++ case loc of
+                         Local ->
+                              map (fromBi exeName Typ.Executable buildInfo exeToModule) executables
+                           ++ map (fromBi testName Test testBuildInfo testToModule) testSuites
+                           ++ map (fromBi benchmarkName BenchMark benchmarkBuildInfo benchToModule) benchmarks
+                         _ -> []
+  in FullPackage (Package pkgKey doc md) cps (mergeModules $ concat mods)
       
-componentFromBuildInfo :: [Cabal.Dependency] -> (e -> ComponentKey) -> ComponentType -> (e -> BuildInfo) -> e -> Component
-componentFromBuildInfo deps key typ fbi e=let
+componentFromBuildInfo :: PackageKey -> [Cabal.Dependency] -> (e -> String) -> ComponentType -> (e -> BuildInfo) -> (e -> PackageKey -> ComponentName -> [Module]) -> e -> (Component,[Module])
+componentFromBuildInfo pkgKey deps key typ fbi fmods e=let
   bi = fbi e
+  cpnKey = ComponentKey pkgKey . fromString
   allDeps = map packageRefFromDependency $ targetBuildDepends bi ++ deps
   exts=map (T.pack . display) $ defaultExtensions bi
-  in Component (key e) typ allDeps exts
+  k = cpnKey $ key e
+  allMods=fmods e pkgKey (cName k) ++  map (toModule Included pkgKey (cName k)) (otherModules bi)
+  in (Component k typ allDeps exts,allMods)
 
 packageRefFromDependency :: Cabal.Dependency -> PackageRef
 packageRefFromDependency (Cabal.Dependency (Cabal.PackageName name) range) = PackageRef (PackageName $ T.pack name) range
+
+toModule ::  Expose -> PackageKey -> ComponentName -> Cabal.ModuleName -> Module
+toModule exp pkgKey name mn = toNamedModule exp pkgKey name (toMN mn)
+ where
+  toMN = ModuleName . T.intercalate "." . map T.pack . Cabal.components
+
+toNamedModule ::  Expose -> PackageKey -> ComponentName -> ModuleName -> Module
+toNamedModule exp pkgKey name mn = Module (ModuleKey mn pkgKey) def [ModuleInclusion name exp]
+
+
+libToModule :: Library -> PackageKey -> ComponentName -> [Module]
+libToModule lib pkg c = map (toModule Exposed pkg c) $ exposedModules lib
+
+exeToModule :: Executable -> PackageKey -> ComponentName -> [Module]
+exeToModule exe pkg c = [toNamedModule (Main $ modulePath exe) pkg c "Main"]
+
+testToModule :: TestSuite -> PackageKey -> ComponentName -> [Module]
+testToModule ts pkg c
+  | (TestSuiteExeV10 _ fp) <- testInterface ts =[toNamedModule (Main fp) pkg c "Main"]
+  | (TestSuiteLibV09 _ mn) <- testInterface ts =[toModule Exposed pkg c mn]
+  | otherwise = []
+  
+benchToModule :: Benchmark -> PackageKey -> ComponentName -> [Module]
+benchToModule ts pkg c
+  | (BenchmarkExeV10 _ fp) <- benchmarkInterface ts =[toNamedModule (Main fp) pkg c "Main"]
+  | otherwise = []

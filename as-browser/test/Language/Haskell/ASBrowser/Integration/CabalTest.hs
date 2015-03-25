@@ -10,6 +10,7 @@ import System.Directory
 import Data.ByteString.Lazy (ByteString)
 import Data.String
 import Distribution.Version
+import Data.Default
 
 cabalTests :: TestTree
 cabalTests = testGroup "Cabal Tests" 
@@ -45,6 +46,8 @@ cabalTests = testGroup "Cabal Tests"
       cName (cKey lib) @?= ""
       cExtensions lib @?= ["CPP","OverloadedStrings"]
       cRefs lib @?= [PackageRef (PackageName "base") ">=4 && <5"]
+      length (fpModules fp) @?= 2
+      fpModules fp @?= [modA,modBC]
   ]
   
 cabalFile1 :: ByteString
@@ -61,3 +64,11 @@ cabalFile1 = fromString $ unlines
   , "  build-depends:  base >=4 && <5"
   , "  default-extensions: CPP, OverloadedStrings"
   ]
+  
+modA :: Module
+modA=Module (ModuleKey "A" (PackageKey "Pkg1" "0.1" Packaged)) def
+          [ModuleInclusion "" Exposed]
+
+modBC :: Module
+modBC=Module (ModuleKey "B.C" (PackageKey "Pkg1" "0.1" Packaged)) def
+          [ModuleInclusion "" Included]
