@@ -1,16 +1,20 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Language.Haskell.ASBrowser.Integration.CabalTest where
 
+import Control.Applicative ((<$>))
+
 import Language.Haskell.ASBrowser.Integration.Cabal
 import Language.Haskell.ASBrowser.Database
 import Language.Haskell.ASBrowser.Types
 import Language.Haskell.ASBrowser.TestHarness
+import Language.Haskell.ASBrowser.Operations.Packages
 
 import Data.Acid
 import Test.Tasty
 import Test.Tasty.HUnit
 import Data.Maybe
 import Data.IxSet
+import Control.Monad
 
 cabalTests :: TestTree
 cabalTests = testGroup "Cabal Tests" 
@@ -30,4 +34,7 @@ cabalTests = testGroup "Cabal Tests"
         let dam = filter (("Data.Acid" ==) . modName . modKey) $ toList mods
         assertEqual "not 1 Data.Acid module" 1 (length dam)
         modComponents (head dam) @?= [ModuleInclusion "" Exposed]
+        allPkgs <- liftM onlyLastVersions $ query acid $ ListByLocal Packaged
+        let l=length allPkgs
+        l >= 7793 && l < 9000 @? "wrong number of packages: " ++ show l
   ]

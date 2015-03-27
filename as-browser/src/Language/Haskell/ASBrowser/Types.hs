@@ -128,13 +128,6 @@ data Component = Component
 deriveSafeCopy 0 'base ''Component
 
 
-instance Indexable Component where
-  empty = ixSet
-    [ ixFun $ \c -> [ cPackageKey $ cKey c ]
-    , ixFun $ \c -> [ cKey c ]
-    , ixFun $ \c -> Prelude.map prName $ cRefs c
-    ]
-
 newtype ModuleName = ModuleName {unModName :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
 
@@ -174,14 +167,6 @@ deriveSafeCopy 0 'base ''Package
 
 
 
-instance Indexable Package where
-  empty = ixSet
-    [ ixFun $ \pkg -> [ pkgKey pkg ]
-    , ixFun $ \pkg -> [ pkgName $ pkgKey pkg ]
-    , ixFun $ \pkg -> [ pkgLocal $ pkgKey pkg ]
-    , ixFun $ \pkg -> [ textToPackageNameCI $ unPkgName $ pkgName $ pkgKey pkg ]
-    ]
-
 data ModuleKey = ModuleKey 
   { modName       :: ModuleName
   , modPackageKey :: PackageKey
@@ -205,13 +190,6 @@ data Module = Module
 deriveSafeCopy 0 'base ''Module
 
 
-instance Indexable Module where
-  empty = ixSet
-    [ ixFun $ \mo -> [ modPackageKey $ modKey mo ]
-    , ixFun $ \mo -> Prelude.map ((ComponentKey $ modPackageKey $ modKey mo) . miComponent) $ modComponents mo 
-    , ixFun $ \mo -> [ modName $ modKey mo ]
-    , ixFun $ \mo -> [ modKey mo ]
-    ]
 
 data FullPackage = FullPackage
   { fpPackage :: !Package
@@ -221,6 +199,31 @@ data FullPackage = FullPackage
 
 
 deriveSafeCopy 0 'base ''FullPackage
+
+
+instance Indexable Component where
+  empty = ixSet
+    [ ixFun $ \c -> [ cPackageKey $ cKey c ]
+    , ixFun $ \c -> [ cKey c ]
+    , ixFun $ \c -> Prelude.map prName $ cRefs c
+    ]
+
+
+instance Indexable Package where
+  empty = ixSet
+    [ ixFun $ \pkg -> [ pkgKey pkg ]
+    , ixFun $ \pkg -> [ pkgName $ pkgKey pkg ]
+    , ixFun $ \pkg -> [ pkgLocal $ pkgKey pkg ]
+    , ixFun $ \pkg -> [ textToPackageNameCI $ unPkgName $ pkgName $ pkgKey pkg ]
+    ]
+    
+instance Indexable Module where
+  empty = ixSet
+    [ ixFun $ \mo -> [ modPackageKey $ modKey mo ]
+    , ixFun $ \mo -> Prelude.map ((ComponentKey $ modPackageKey $ modKey mo) . miComponent) $ modComponents mo 
+    , ixFun $ \mo -> [ modName $ modKey mo ]
+    , ixFun $ \mo -> [ modKey mo ]
+    ]  
 
 data Database = Database
   { dPackages :: IxSet Package
@@ -232,4 +235,3 @@ deriveSafeCopy 0 'base ''Database
 
 instance Default Database where
   def = Database empty empty empty
-

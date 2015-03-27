@@ -2,6 +2,7 @@
 module Language.Haskell.ASBrowser.Operations.PackagesTest where
 
 import Language.Haskell.ASBrowser.Database
+import Language.Haskell.ASBrowser.Operations.Packages
 import Language.Haskell.ASBrowser.Types
 
 import Language.Haskell.ASBrowser.TestHarness
@@ -68,6 +69,9 @@ packageTests = testGroup "Package Tests"
         mpkg3 @?= Nothing
         ipkg3 <- query acid $ ListVersions "unknown"
         toList ipkg3 @?= []
+        allPkgs <- query acid $ FindPackages "pkg1"
+        toList allPkgs @?= [testPkg1,testPkg1_2]
+        onlyLastVersions allPkgs @?= [testPkg1_2]
   , testCase "Version references" $
       withTestAcid $ \acid -> do
         _ <- update acid $ WritePackage testPkg1
