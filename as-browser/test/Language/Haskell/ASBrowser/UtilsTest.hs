@@ -7,7 +7,7 @@ import Language.Haskell.ASBrowser.Utils
 import Test.Tasty
 import Test.Tasty.HUnit
 import qualified Test.Tasty.QuickCheck as QC
-import Test.QuickCheck
+
 import Data.Maybe
 
 utilsTests :: TestTree

@@ -1,13 +1,14 @@
 {-# LANGUAGE DeriveDataTypeable, TemplateHaskell, OverloadedStrings #-}
 module Language.Haskell.ASBrowser.Types where
 
+import Control.Applicative hiding (empty)
 import Control.Arrow
 import Control.Monad
 import Data.Data 
 import Data.SafeCopy hiding (Version)
 import Data.Text hiding (empty)
 import Distribution.Version
-import Distribution.Text (simpleParse)
+import Distribution.Text (simpleParse, display)
 import Data.IxSet
 import Data.Time
 import Data.Default
@@ -16,14 +17,21 @@ import Data.Version
 import Text.ParserCombinators.ReadP (readP_to_S)
 import Data.Maybe
 
+import Data.Aeson
+import Data.Aeson.TH
+
 newtype PackageName = PackageName {unPkgName :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
+
+$(deriveJSON defaultOptions{unwrapUnaryRecords=True} ''PackageName)
 
 instance IsString PackageName where
   fromString = PackageName . pack
 
 newtype PackageNameCI = PackageNameCI {unPkgNameCI :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
+
+$(deriveJSON defaultOptions{unwrapUnaryRecords=True} ''PackageNameCI)
 
 textToPackageNameCI :: Text -> PackageNameCI
 textToPackageNameCI = PackageNameCI . toLower
@@ -38,12 +46,26 @@ deriveSafeCopy 0 'base ''Version
 deriveSafeCopy 0 'base ''VersionRange
 
 
+
 instance IsString Version where
   fromString = fst . Prelude.head . Prelude.filter (\(_,rest)->Prelude.null rest). readP_to_S parseVersion
 
+instance ToJSON Version where
+  toJSON = String . pack . showVersion 
+
+instance FromJSON Version where
+  parseJSON (String v)=pure $ fromString $ unpack v
+  parseJSON _ = fail "Version"
+
 instance IsString VersionRange where
   fromString = fromJust . simpleParse
+  
+instance ToJSON VersionRange where
+  toJSON = String . pack . display
 
+instance FromJSON VersionRange where
+  parseJSON (String v)=pure $ fromString $ unpack v
+  parseJSON _ = fail "VersionRange"
 
 data Local = Local | Packaged
   deriving (Show, Read, Eq, Ord, Bounded,Enum,Typeable,Data)

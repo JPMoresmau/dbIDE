@@ -24,7 +24,8 @@ library
                    tar,
                    utf8-string,
                    parallel-io,
-                   containers
+                   containers,
+                   aeson
   ghc-options:     -Wall -O2
   other-modules:   
                    Language.Haskell.ASBrowser.Types,
@@ -58,6 +59,7 @@ test-suite as-browser-test
                    tasty-hunit,
                    tasty-quickcheck,
                    QuickCheck,
+                   quickcheck-instances,
                    HUnit,
                    directory,
                    filepath,
@@ -69,7 +71,9 @@ test-suite as-browser-test
                    tar,
                    utf8-string,
                    parallel-io,
-                   containers
+                   containers,
+                   aeson,
+                   attoparsec
   other-modules:   
                   Language.Haskell.ASBrowser.Operations.Packages,
                   Language.Haskell.ASBrowser.Operations.PackagesTest,
@@ -108,7 +112,8 @@ test-suite as-browser-integration
                    tar,
                    utf8-string,
                    parallel-io,
-                   containers
+                   containers,
+                   aeson
   other-modules:   
                   Language.Haskell.ASBrowser.Operations.Packages,
                   Language.Haskell.ASBrowser.Utils,
