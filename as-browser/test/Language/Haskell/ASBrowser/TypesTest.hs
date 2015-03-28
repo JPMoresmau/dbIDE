@@ -27,6 +27,15 @@ typesTests = testGroup "Types Tests"
       , QC.testProperty "PackageNameCI" (roundTripJSON:: PackageNameCI -> Bool)
       , QC.testProperty "Version" (roundTripJSON:: Version -> Bool)
       , QC.testProperty "VersionRange" (roundTripJSON:: VersionRange -> Bool)
+      , QC.testProperty "ComponentName" (roundTripJSON:: ComponentName -> Bool)
+      , QC.testProperty "ComponentType" (roundTripJSON:: ComponentType -> Bool)
+      , QC.testProperty "ModuleName" (roundTripJSON:: ModuleName -> Bool)
+      , QC.testProperty "DeclName" (roundTripJSON:: DeclName -> Bool)
+      , QC.testProperty "DeclType" (roundTripJSON:: DeclType -> Bool)
+      , QC.testProperty "Local" (roundTripJSON:: Local -> Bool)
+      , QC.testProperty "Expose" (roundTripJSON:: Expose -> Bool)
+      , QC.testProperty "PackageMetaData" (roundTripJSON:: PackageMetaData -> Bool)
+      , QC.testProperty "Doc" (roundTripJSON:: Doc -> Bool)
       ]
   ]
   
@@ -51,28 +60,55 @@ instance Arbitrary Version where
     Version <$> (vectorOf n $ suchThat arbitrary (>=0)) <*> pure [] -- no tags
 
 instance Arbitrary VersionRange where
-  arbitrary = do
-    n <- choose (0, 10) :: Gen Int
-    simplifyVersionRange <$> case n of
-      0 -> return anyVersion
-      1 -> return noVersion
-      2 -> thisVersion <$> arbitrary
-      3 -> notThisVersion <$> arbitrary
-      4 -> laterVersion <$> arbitrary
-      5 -> earlierVersion <$> arbitrary
-      6 -> orLaterVersion <$> arbitrary
-      7 -> orEarlierVersion <$> arbitrary
-      8 -> unionVersionRanges <$> simpleVersionRange <*> simpleVersionRange
-      9 -> intersectVersionRanges <$> simpleVersionRange <*> simpleVersionRange
-      10 -> withinVersion <$> arbitrary
+  arbitrary = simplifyVersionRange <$> oneof 
+    [ return anyVersion
+    , return noVersion
+    , thisVersion <$> arbitrary
+    , notThisVersion <$> arbitrary
+    , laterVersion <$> arbitrary
+    , earlierVersion <$> arbitrary
+    , orLaterVersion <$> arbitrary
+    , orEarlierVersion <$> arbitrary
+    , unionVersionRanges <$> simpleVersionRange <*> simpleVersionRange
+    , intersectVersionRanges <$> simpleVersionRange <*> simpleVersionRange
+    , withinVersion <$> arbitrary
+    ]
 
-simpleVersionRange = do
-  n <- choose (0, 6) :: Gen Int
-  case n of
-    0 -> thisVersion <$> arbitrary
-    1 -> notThisVersion <$> arbitrary
-    2 -> laterVersion <$> arbitrary
-    3 -> earlierVersion <$> arbitrary
-    4 -> orLaterVersion <$> arbitrary
-    5 -> orEarlierVersion <$> arbitrary
-    6 -> withinVersion <$> arbitrary
+
+simpleVersionRange :: Gen VersionRange
+simpleVersionRange = simplifyVersionRange <$> elements
+  [thisVersion, notThisVersion, laterVersion, earlierVersion,
+   orLaterVersion, orEarlierVersion, withinVersion]
+    `ap` arbitrary
+
+
+instance Arbitrary ComponentName where
+  arbitrary = ComponentName <$> arbitrary 
+
+instance Arbitrary ComponentType where
+  arbitrary = elements [minBound..maxBound]
+  
+instance Arbitrary ModuleName where
+  arbitrary = ModuleName <$> arbitrary
+
+instance Arbitrary DeclName where
+  arbitrary = DeclName <$> arbitrary
+  
+instance Arbitrary DeclType where
+  arbitrary = elements [minBound..maxBound] 
+
+
+instance Arbitrary Local where
+  arbitrary = elements [minBound..maxBound]
+  
+
+instance Arbitrary Expose where
+  arbitrary = oneof [return Exposed,return Included,Main <$> arbitrary]
+ 
+
+instance Arbitrary PackageMetaData where
+  arbitrary = PackageMetaData <$> arbitrary
+  
+
+instance Arbitrary Doc where
+  arbitrary = Doc <$> arbitrary <*> arbitrary

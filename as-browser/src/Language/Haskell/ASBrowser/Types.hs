@@ -71,18 +71,21 @@ data Local = Local | Packaged
   deriving (Show, Read, Eq, Ord, Bounded,Enum,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Local
+$(deriveJSON defaultOptions ''Local)
 
 data Expose = Exposed | Included | Main FilePath
   deriving (Show, Read, Eq, Ord, Typeable,Data)
 
 deriveSafeCopy 0 'base ''Expose
-
+$(deriveJSON defaultOptions ''Expose)
 
 data PackageMetaData = PackageMetaData
   { pkgMDAuthor :: !Text
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''PackageMetaData
+
+$(deriveJSON defaultOptions{fieldLabelModifier=Prelude.drop 3} ''PackageMetaData)
 
 instance Default PackageMetaData where
   def = PackageMetaData ""
@@ -91,6 +94,8 @@ data Doc = Doc
   { dShort :: !Text
   , dLong :: !Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
+    
+$(deriveJSON defaultOptions{fieldLabelModifier=Prelude.drop 1} ''Doc)
     
 instance Default Doc where
   def = Doc "" ""
@@ -106,10 +111,14 @@ deriveSafeCopy 0 'base ''ComponentName
 instance IsString ComponentName where
   fromString = ComponentName . pack
 
+$(deriveJSON defaultOptions{unwrapUnaryRecords=True} ''ComponentName)
+
 data ComponentType = Library | Executable | Test | BenchMark
     deriving (Show,Read,Eq,Ord,Bounded,Enum,Typeable,Data)
 
 deriveSafeCopy 0 'base ''ComponentType
+
+$(deriveJSON defaultOptions ''ComponentType)
 
 data PackageKey = PackageKey 
   { pkgName       :: !PackageName
@@ -155,6 +164,8 @@ newtype ModuleName = ModuleName {unModName :: Text}
 
 deriveSafeCopy 0 'base ''ModuleName
 
+$(deriveJSON defaultOptions{unwrapUnaryRecords=True} ''ModuleName)
+
 instance IsString ModuleName where
   fromString = ModuleName . pack
 
@@ -163,11 +174,15 @@ newtype DeclName = DeclName {unDeclName :: Text}
 
 deriveSafeCopy 0 'base ''DeclName
 
+$(deriveJSON defaultOptions{unwrapUnaryRecords=True} ''DeclName)
+
 data DeclType = DeclData | DeclNewType | DeclClass | DeclInstance | DeclType 
     | DeclDataFamily | DeclTypeFamily | DeclDataInstance | DeclTypeInstance
     deriving (Show, Read, Eq, Ord, Bounded,Enum,Typeable,Data)
 
 deriveSafeCopy 0 'base ''DeclType
+
+$(deriveJSON defaultOptions{unwrapUnaryRecords=True} ''DeclType)
 
 data WriteDate = WriteDate
   { wdCreated :: UTCTime
