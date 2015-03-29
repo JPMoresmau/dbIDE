@@ -36,6 +36,16 @@ typesTests = testGroup "Types Tests"
       , QC.testProperty "Expose" (roundTripJSON:: Expose -> Bool)
       , QC.testProperty "PackageMetaData" (roundTripJSON:: PackageMetaData -> Bool)
       , QC.testProperty "Doc" (roundTripJSON:: Doc -> Bool)
+      , QC.testProperty "PackageKey" (roundTripJSON:: PackageKey -> Bool)
+      , QC.testProperty "PackageRef" (roundTripJSON:: PackageRef -> Bool)
+      , QC.testProperty "ComponentKey" (roundTripJSON:: ComponentKey -> Bool)
+      , QC.testProperty "Component" (roundTripJSON:: Component -> Bool)  
+      , QC.testProperty "Package" (roundTripJSON:: Package -> Bool)          
+      , QC.testProperty "ModuleKey" (roundTripJSON:: ModuleKey -> Bool)
+      , QC.testProperty "ModuleInclusion" (roundTripJSON:: ModuleInclusion -> Bool)  
+      , QC.testProperty "Module" (roundTripJSON:: Module -> Bool)          
+      , QC.testProperty "FullPackage" (roundTripJSON:: FullPackage -> Bool)
+            
       ]
   ]
   
@@ -112,3 +122,35 @@ instance Arbitrary PackageMetaData where
 
 instance Arbitrary Doc where
   arbitrary = Doc <$> arbitrary <*> arbitrary
+
+instance Arbitrary PackageKey where
+  arbitrary = PackageKey <$> arbitrary <*> arbitrary <*> arbitrary
+
+instance Arbitrary PackageRef where
+  arbitrary = PackageRef <$> arbitrary <*> arbitrary
+
+instance Arbitrary ComponentKey where
+  arbitrary = ComponentKey <$> arbitrary <*> arbitrary  
+
+instance Arbitrary Component where
+  arbitrary = Component <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
+
+instance Arbitrary Package where
+  arbitrary = Package <$> arbitrary <*> arbitrary <*> arbitrary  
+  
+instance Arbitrary ModuleKey where
+  arbitrary = ModuleKey <$> arbitrary <*> arbitrary  
+
+instance Arbitrary ModuleInclusion where
+  arbitrary = ModuleInclusion <$> arbitrary <*> arbitrary  
+
+instance Arbitrary Module where
+  arbitrary = do
+    m <- choose (1, 4) :: Gen Int
+    Module <$> arbitrary <*> arbitrary <*> (vectorOf m arbitrary)  
+
+instance Arbitrary FullPackage where
+  arbitrary = do
+    m <- choose (1, 4) :: Gen Int
+    n <- choose (1, 10) :: Gen Int
+    FullPackage <$> arbitrary <*> (vectorOf m arbitrary) <*> (vectorOf n arbitrary) 

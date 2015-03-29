@@ -1,12 +1,14 @@
 {-# LANGUAGE DeriveDataTypeable, TemplateHaskell, OverloadedStrings #-}
 module Language.Haskell.ASBrowser.Types where
 
+import Language.Haskell.ASBrowser.Utils
+
 import Control.Applicative hiding (empty)
 import Control.Arrow
 import Control.Monad
 import Data.Data 
 import Data.SafeCopy hiding (Version)
-import Data.Text hiding (empty)
+import Data.Text hiding (empty,map,drop)
 import Distribution.Version
 import Distribution.Text (simpleParse, display)
 import Data.IxSet
@@ -20,10 +22,12 @@ import Data.Maybe
 import Data.Aeson
 import Data.Aeson.TH
 
+
+
 newtype PackageName = PackageName {unPkgName :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
 
-$(deriveJSON defaultOptions{unwrapUnaryRecords=True} ''PackageName)
+deriveJSON defaultOptions{unwrapUnaryRecords=True} ''PackageName
 
 instance IsString PackageName where
   fromString = PackageName . pack
@@ -31,10 +35,10 @@ instance IsString PackageName where
 newtype PackageNameCI = PackageNameCI {unPkgNameCI :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
 
-$(deriveJSON defaultOptions{unwrapUnaryRecords=True} ''PackageNameCI)
+deriveJSON defaultOptions{unwrapUnaryRecords=True} ''PackageNameCI
 
 textToPackageNameCI :: Text -> PackageNameCI
-textToPackageNameCI = PackageNameCI . toLower
+textToPackageNameCI = PackageNameCI . Data.Text.toLower
 
 textTupleToPackageNameCI :: (Text,Text) -> (PackageNameCI,PackageNameCI)
 textTupleToPackageNameCI = join (***) textToPackageNameCI
@@ -44,6 +48,7 @@ deriveSafeCopy 0 'base ''PackageNameCI
 
 deriveSafeCopy 0 'base ''Version
 deriveSafeCopy 0 'base ''VersionRange
+
 
 
 
@@ -71,13 +76,13 @@ data Local = Local | Packaged
   deriving (Show, Read, Eq, Ord, Bounded,Enum,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Local
-$(deriveJSON defaultOptions ''Local)
+deriveJSON defaultOptions ''Local
 
 data Expose = Exposed | Included | Main FilePath
   deriving (Show, Read, Eq, Ord, Typeable,Data)
 
 deriveSafeCopy 0 'base ''Expose
-$(deriveJSON defaultOptions ''Expose)
+deriveJSON defaultOptions ''Expose
 
 data PackageMetaData = PackageMetaData
   { pkgMDAuthor :: !Text
@@ -85,7 +90,7 @@ data PackageMetaData = PackageMetaData
 
 deriveSafeCopy 0 'base ''PackageMetaData
 
-$(deriveJSON defaultOptions{fieldLabelModifier=Prelude.drop 3} ''PackageMetaData)
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 3} ''PackageMetaData
 
 instance Default PackageMetaData where
   def = PackageMetaData ""
@@ -95,7 +100,7 @@ data Doc = Doc
   , dLong :: !Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
     
-$(deriveJSON defaultOptions{fieldLabelModifier=Prelude.drop 1} ''Doc)
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''Doc
     
 instance Default Doc where
   def = Doc "" ""
@@ -111,14 +116,14 @@ deriveSafeCopy 0 'base ''ComponentName
 instance IsString ComponentName where
   fromString = ComponentName . pack
 
-$(deriveJSON defaultOptions{unwrapUnaryRecords=True} ''ComponentName)
+deriveJSON defaultOptions{unwrapUnaryRecords=True} ''ComponentName
 
 data ComponentType = Library | Executable | Test | BenchMark
     deriving (Show,Read,Eq,Ord,Bounded,Enum,Typeable,Data)
 
 deriveSafeCopy 0 'base ''ComponentType
 
-$(deriveJSON defaultOptions ''ComponentType)
+deriveJSON defaultOptions ''ComponentType
 
 data PackageKey = PackageKey 
   { pkgName       :: !PackageName
@@ -127,6 +132,7 @@ data PackageKey = PackageKey
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''PackageKey
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 3} ''PackageKey
 
 data PackageRef = PackageRef
   { prName :: !PackageName
@@ -134,6 +140,7 @@ data PackageRef = PackageRef
   } deriving (Show,Read,Eq,Typeable,Data)
 
 deriveSafeCopy 0 'base ''PackageRef
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 2} ''PackageRef
 
 instance Ord PackageRef where
   compare (PackageRef name1 range1) (PackageRef name2 range2) = 
@@ -148,6 +155,7 @@ data ComponentKey = ComponentKey
 
 
 deriveSafeCopy 0 'base ''ComponentKey
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''ComponentKey
 
 data Component = Component
  { cKey        :: !ComponentKey
@@ -157,14 +165,13 @@ data Component = Component
  } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Component
-
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''Component
 
 newtype ModuleName = ModuleName {unModName :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''ModuleName
-
-$(deriveJSON defaultOptions{unwrapUnaryRecords=True} ''ModuleName)
+deriveJSON defaultOptions{unwrapUnaryRecords=True} ''ModuleName
 
 instance IsString ModuleName where
   fromString = ModuleName . pack
@@ -173,8 +180,7 @@ newtype DeclName = DeclName {unDeclName :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''DeclName
-
-$(deriveJSON defaultOptions{unwrapUnaryRecords=True} ''DeclName)
+deriveJSON defaultOptions{unwrapUnaryRecords=True} ''DeclName
 
 data DeclType = DeclData | DeclNewType | DeclClass | DeclInstance | DeclType 
     | DeclDataFamily | DeclTypeFamily | DeclDataInstance | DeclTypeInstance
@@ -182,7 +188,7 @@ data DeclType = DeclData | DeclNewType | DeclClass | DeclInstance | DeclType
 
 deriveSafeCopy 0 'base ''DeclType
 
-$(deriveJSON defaultOptions{unwrapUnaryRecords=True} ''DeclType)
+deriveJSON defaultOptions{unwrapUnaryRecords=True} ''DeclType
 
 data WriteDate = WriteDate
   { wdCreated :: UTCTime
@@ -201,7 +207,7 @@ data Package = Package
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Package
-
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 3} ''Package
 
 
 data ModuleKey = ModuleKey 
@@ -210,6 +216,7 @@ data ModuleKey = ModuleKey
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''ModuleKey
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 3} ''ModuleKey
 
 data ModuleInclusion = ModuleInclusion
   { miComponent :: ComponentName
@@ -217,6 +224,7 @@ data ModuleInclusion = ModuleInclusion
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''ModuleInclusion
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 2} ''ModuleInclusion
 
 data Module = Module
   { modKey        :: ModuleKey
@@ -225,7 +233,7 @@ data Module = Module
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Module
-
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 3} ''Module
 
 
 data FullPackage = FullPackage
@@ -236,7 +244,7 @@ data FullPackage = FullPackage
 
 
 deriveSafeCopy 0 'base ''FullPackage
-
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 2} ''FullPackage
 
 instance Indexable Component where
   empty = ixSet

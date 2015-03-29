@@ -6,6 +6,7 @@ import qualified Data.Text as T
 import Data.IxSet
 import Data.List
 import Data.Ord
+import Data.Char
 
 prefixInterval :: T.Text -> (T.Text,T.Text)
 prefixInterval "" = ("","")
@@ -27,3 +28,7 @@ lastInSet f = safeLast . sortBy (comparing f) . toList
 
 firstInSet :: (Ord a, Ord b) => (a -> b) -> IxSet a -> Maybe a
 firstInSet f = safeHead . sortBy (comparing f) . toList
+
+
+jsonField :: Int -> String -> String
+jsonField n = map toLower . drop n
