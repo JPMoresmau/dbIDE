@@ -7,6 +7,7 @@ import Snap.Http.Server
 import Snap.Core
 import Snap.Util.FileServe
 
+import Data.Acid as A (openLocalStateFrom,closeAcidState)
 
 import Language.Haskell.AsBrowser
 import Snap.Snaplet
@@ -21,7 +22,7 @@ import Control.Monad
 import Control.Monad.IO.Class
 import System.Directory
 import System.FilePath
-
+import Control.Concurrent
 
 dataDir :: IO FilePath
 dataDir = liftM (</> "resources") getDataDir
@@ -43,17 +44,17 @@ instance HasAcid App Database where
      getAcidStore = view (acid . snapletValue)
 
      
-appInit :: SnapletInit App App
-appInit = makeSnaplet "as-browser" "ASBrowser Snap app" (Just dataDir) $ do
-  dbdir <- liftIO dbDir
-  ac <- nestSnaplet "asb" acid $ acidInit' dbdir def
+appInit :: AcidState Database -> SnapletInit App App
+appInit st = makeSnaplet "as-browser" "ASBrowser Snap app" (Just dataDir) $ do
+  onUnload (A.closeAcidState st)
+  ac <- nestSnaplet "asb" acid $ acidInitManual st
   addRoutes 
     [ ("/json", with acid jsonH)
     ]
   return $ App ac
 
 jsonH :: Handler App (Acid Database) ()
-jsonH= method GET $
+jsonH= method GET $ do
   writeJSON =<< onlyLastVersions <$> query AllPackages
 
 writeJSON :: (ToJSON a) => a -> Handler b c ()
@@ -64,8 +65,11 @@ writeJSON obj = do
 main :: IO ()
 main = do
   ldir <- logDir
+  dbdir <- liftIO dbDir
+  state <- openLocalStateFrom dbdir def
+  _ <- forkIO $ updateFromCabal state
   createDirectoryIfMissing True ldir
   let cfg = setAccessLog (ConfigFileLog (ldir </> "access.log"))
               $ setErrorLog (ConfigFileLog (ldir </> "error.log"))
                 defaultConfig
-  serveSnaplet cfg appInit
+  serveSnaplet cfg $ appInit state
