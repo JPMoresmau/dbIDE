@@ -1,6 +1,6 @@
 name:           as-browser
 version:        0.1
-cabal-version:  >=1.2
+cabal-version:  >=1.8
 build-type:     Simple
 author:         jpmoresmau
 
@@ -8,6 +8,8 @@ library
   hs-source-dirs:  src
   build-depends:   
                    base >= 4,
+                   directory,
+                   filepath,
                    safecopy,
                    acid-state,
                    ixset,
@@ -36,18 +38,41 @@ library
                    Language.Haskell.ASBrowser.Integration.Cabal,
                    Language.Haskell.ASBrowser.Integration.Files,
                    Language.Haskell.ASBrowser.Operations.Components
+  exposed-modules: Language.Haskell.AsBrowser
 
 executable as-browser
   hs-source-dirs:  exe
   main-is:         Main.hs
   build-depends:   
                    base >= 4,
+                   as-browser,
+                   directory,
+                   filepath,
                    safecopy,
                    acid-state,
                    ixset,
                    text,
-                   Cabal
-  ghc-options:     -Wall
+                   Cabal,
+                   time,
+                   data-default,
+                   mtl,
+                   conduit,
+                   conduit-extra,
+                   http-conduit,
+                   bytestring,
+                   zlib,
+                   tar,
+                   utf8-string,
+                   parallel-io,
+                   containers,
+                   aeson,
+                   snap-core,
+                   snap-server,
+                   snaplet-acid-state,
+                   snap,
+                   lens,
+                   transformers
+  ghc-options:     -Wall -rtsopts -threaded -O2
 
 test-suite as-browser-test
   type:            exitcode-stdio-1.0
@@ -61,12 +86,20 @@ test-suite as-browser-test
                    QuickCheck,
                    quickcheck-instances,
                    HUnit,
+                   Cabal,
+                   acid-state,
+                   ixset,
+                   safecopy,
+                   text,
+                   time,
+                   data-default,
                    directory,
                    filepath,
                    conduit,
                    conduit-extra,
                    http-conduit,
                    bytestring,
+                   mtl,
                    zlib,
                    tar,
                    utf8-string,
@@ -88,7 +121,8 @@ test-suite as-browser-test
                   Language.Haskell.ASBrowser.Integration.FilesTest,
                   Language.Haskell.ASBrowser.TypesTest,
                   Language.Haskell.ASBrowser.Operations.Components,
-                  Language.Haskell.ASBrowser.Operations.ComponentsTest
+                  Language.Haskell.ASBrowser.Operations.ComponentsTest,
+                  Language.Haskell.AsBrowser
   hs-source-dirs:  
                   test,
                   src
@@ -104,10 +138,18 @@ test-suite as-browser-integration
                    HUnit,
                    directory,
                    filepath,
+                   Cabal,
+                   safecopy,
+                   acid-state,
+                   ixset,
+                   text,
+                   time,
+                   data-default,
                    conduit,
                    conduit-extra,
                    http-conduit,
                    bytestring,
+                   mtl,
                    zlib,
                    tar,
                    utf8-string,
@@ -123,7 +165,8 @@ test-suite as-browser-integration
                   Language.Haskell.ASBrowser.Integration.Files,
                   Language.Haskell.ASBrowser.Integration.CabalTest,
                   Language.Haskell.ASBrowser.TestHarness,
-                  Language.Haskell.ASBrowser.Operations.Components
+                  Language.Haskell.ASBrowser.Operations.Components,
+                  Language.Haskell.AsBrowser
   hs-source-dirs:  
                   src,
                   integration

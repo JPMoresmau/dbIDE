@@ -68,3 +68,8 @@ listByLocal loc = do
 
 onlyLastVersions :: IxSet Package -> [Package]
 onlyLastVersions = map (last . snd) . (groupAscBy::IxSet Package -> [(PackageName, [Package])])
+
+allPackages :: Query Database  (IxSet Package)
+allPackages =  do
+  Database{..} <- ask
+  return dPackages
