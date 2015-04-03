@@ -97,8 +97,8 @@ instance Default PackageMetaData where
 
 data Doc = Doc 
   { dShort :: !Text
-  , dLong :: !Text}
-  deriving (Show,Read,Eq,Ord,Typeable,Data)
+  , dLong :: !Text
+  } deriving (Show,Read,Eq,Ord,Typeable,Data)
     
 deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''Doc
     
@@ -124,6 +124,28 @@ data ComponentType = Library | Executable | Test | BenchMark
 deriveSafeCopy 0 'base ''ComponentType
 
 deriveJSON defaultOptions ''ComponentType
+
+newtype URL = URL {unURLName :: Text}
+  deriving (Show,Read,Eq,Ord,Typeable,Data)
+
+deriveSafeCopy 0 'base ''URL
+
+instance IsString URL where
+  fromString = URL . pack
+
+deriveJSON defaultOptions{unwrapUnaryRecords=True} ''URL
+
+data URLs = URLs
+  { uSrcURL :: !(Maybe URL)
+  , uDocURL :: !(Maybe URL)
+  } deriving (Show,Read,Eq,Ord,Typeable,Data)
+  
+deriveSafeCopy 0 'base ''URLs
+
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''URLs
+
+instance Default URLs where
+  def = URLs Nothing Nothing
 
 data PackageKey = PackageKey 
   { pkgName       :: !PackageName
@@ -204,6 +226,7 @@ data Package = Package
   { pkgKey        :: !PackageKey
   , pkgDoc        :: !Doc
   , pkgMeta       :: !PackageMetaData
+  , pkgURLs       :: !URLs
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Package
@@ -230,6 +253,7 @@ data Module = Module
   { modKey        :: ModuleKey
   , modDoc        :: Doc
   , modComponents :: [ModuleInclusion]
+  , modURLs       :: URLs
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Module

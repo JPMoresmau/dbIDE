@@ -27,7 +27,8 @@ library
                    utf8-string,
                    parallel-io,
                    containers,
-                   aeson
+                   aeson,
+                   network-uri
   ghc-options:     -Wall -O2
   other-modules:   
                    Language.Haskell.ASBrowser.Types,
@@ -71,7 +72,8 @@ executable as-browser
                    snaplet-acid-state,
                    snap,
                    lens,
-                   transformers
+                   transformers,
+                   network-uri
   ghc-options:     -Wall -rtsopts -threaded -O2
 
 test-suite as-browser-test
@@ -106,7 +108,8 @@ test-suite as-browser-test
                    parallel-io,
                    containers,
                    aeson,
-                   attoparsec
+                   attoparsec,
+                   network-uri
   other-modules:   
                   Language.Haskell.ASBrowser.Operations.Packages,
                   Language.Haskell.ASBrowser.Operations.PackagesTest,
@@ -155,7 +158,8 @@ test-suite as-browser-integration
                    utf8-string,
                    parallel-io,
                    containers,
-                   aeson
+                   aeson,
+                   network-uri
   other-modules:   
                   Language.Haskell.ASBrowser.Operations.Packages,
                   Language.Haskell.ASBrowser.Utils,

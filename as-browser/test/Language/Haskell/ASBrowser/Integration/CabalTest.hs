@@ -33,13 +33,15 @@ cabalTests = testGroup "Cabal Tests"
       ex <- doesFileExist f
       ex @? "indexFile does not exist"
   , testCase "FullPackageWithLibrary" $ do
-      let mfp = packageFromDescriptionBS cabalFile1 Packaged
+      rep <- getCabalRepositories
+      let mfp = packageFromDescriptionBS cabalFile1 $ remotePackageLocation $ fromJust rep
       isJust mfp @? "mfp is nothing"
       let Just fp = mfp
       let pkg= fpPackage fp
       pkgName (pkgKey pkg) @?= "Pkg1"
       pkgVersion (pkgKey pkg) @?= "0.1"
       pkgLocal (pkgKey pkg) @?= Packaged
+      pkgURLs pkg @?= URLs Nothing (Just $ URL "http://hackage.haskell.org/package/Pkg1-0.1") 
       length (fpComponents fp) @?= 1
       let lib = head $ fpComponents fp
       cPackageKey (cKey lib) @?= pkgKey pkg
@@ -67,8 +69,8 @@ cabalFile1 = fromString $ unlines
   
 modA :: Module
 modA=Module (ModuleKey "A" (PackageKey "Pkg1" "0.1" Packaged)) def
-          [ModuleInclusion "" Exposed]
+          [ModuleInclusion "" Exposed] (URLs (Just (URL "docs/src/A.html")) (Just (URL "docs/A.html")))
 
 modBC :: Module
 modBC=Module (ModuleKey "B.C" (PackageKey "Pkg1" "0.1" Packaged)) def
-          [ModuleInclusion "" Included]
+          [ModuleInclusion "" Included] (URLs (Just (URL "docs/src/B-C.html")) Nothing)

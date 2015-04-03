@@ -136,7 +136,7 @@ instance Arbitrary Component where
   arbitrary = Component <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
 
 instance Arbitrary Package where
-  arbitrary = Package <$> arbitrary <*> arbitrary <*> arbitrary  
+  arbitrary = Package <$> arbitrary <*> arbitrary <*> arbitrary  <*> arbitrary
   
 instance Arbitrary ModuleKey where
   arbitrary = ModuleKey <$> arbitrary <*> arbitrary  
@@ -147,7 +147,13 @@ instance Arbitrary ModuleInclusion where
 instance Arbitrary Module where
   arbitrary = do
     m <- choose (1, 4) :: Gen Int
-    Module <$> arbitrary <*> arbitrary <*> (vectorOf m arbitrary)  
+    Module <$> arbitrary <*> arbitrary <*> (vectorOf m arbitrary) <*> arbitrary
+
+instance Arbitrary URLs where
+  arbitrary = URLs <$> arbitrary <*> arbitrary  
+
+instance Arbitrary URL where
+  arbitrary = URL <$> arbitrary
 
 instance Arbitrary FullPackage where
   arbitrary = do

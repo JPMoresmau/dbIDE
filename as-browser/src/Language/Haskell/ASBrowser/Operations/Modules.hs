@@ -51,6 +51,10 @@ mergeModules :: [Module] -> [Module]
 mergeModules  = DM.elems . foldr addMod DM.empty 
   where
     addMod mo = DM.insertWith merge (modKey mo) mo
-    merge m1 m2=m1{modComponents=modComponents m1 ++ modComponents m2}
+    merge m1 m2=m1{modComponents=modComponents m1 ++ modComponents m2,modURLs=mergeURLs (modURLs m1) (modURLs m2)}
+    mergeURLs (URLs a b) (URLs c d)=URLs (mergeURL a c) (mergeURL b d)
+    mergeURL Nothing a = a
+    mergeURL a _ = a
  
-  
+toDocURL :: ModuleName -> T.Text
+toDocURL (ModuleName mn) = T.intercalate "-" $ T.splitOn "." mn
