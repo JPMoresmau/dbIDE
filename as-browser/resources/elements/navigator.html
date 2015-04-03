@@ -1,0 +1,48 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-list/core-list.html">
+<link rel="import" href="../bower_components/core-ajax/core-ajax.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="nav_package.html">
+
+<polymer-element name="as-navigator">
+  <template>
+  	<div vertical style="height:100%">
+	  	<core-ajax url="/json" response="{{data}}" handleAs="json" auto></core-ajax>
+	  	<paper-input label="Type name prefix" value="{{filt}}"></paper-input>
+		  <core-list data="{{data | keyNameStartsWith(filt) | keyNameSort()}}" height="20" style="height:100%">
+		    <template>
+		     <as-nav-package pkg="{{model}}">
+		     </as-nav-package>
+		    </template>
+	    </core-list>
+    </div>
+	<!-- <div layout vertical>
+
+  	<template repeat="{{pkg in data}}">
+  		<as-nav-package pkg="{{pkg}}"></as-nav-package>
+  	</template>
+	</div> -->
+
+  </template>
+  <script>
+	Polymer({
+		filt:"",
+		keyNameStartsWith : function (input, prefix) {
+		  if (!input || !prefix){
+			  return input;
+		  }
+			return input.filter(function(item){
+		    return item.key.name.toLowerCase().startsWith(prefix.toLowerCase());
+		  });
+		},
+		keyNameSort : function (input){
+			if (!input){
+				return input;
+			}
+			return input.sort(function(a,b){
+				return a.key.name.localeCompare(b.key.name);
+			});
+		}
+	});
+  </script>
+</polymer-element>

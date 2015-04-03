@@ -50,6 +50,7 @@ appInit st = makeSnaplet "as-browser" "ASBrowser Snap app" (Just dataDir) $ do
   ac <- nestSnaplet "asb" acid $ acidInitManual st
   addRoutes 
     [ ("/json", with acid jsonH)
+    , ("/static/", serveDirectory "resources")
     ]
   return $ App ac
 

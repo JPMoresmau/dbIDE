@@ -3,6 +3,37 @@ version:        0.1
 cabal-version:  >=1.8
 build-type:     Simple
 author:         jpmoresmau
+license:        BSD3
+license-file:   LICENSE
+data-files:     
+                resources/bower_components/core-component-page/bowager-logo.png, 
+                resources/bower_components/core-component-page/bower.json, 
+                resources/bower_components/core-component-page/core-component-page.html, 
+                resources/bower_components/core-component-page/demo.html, 
+                resources/bower_components/core-component-page/index.html, 
+                resources/bower_components/core-component-page/README.md, 
+                resources/bower_components/polymer/bower.json, 
+                resources/bower_components/polymer/build.log, 
+                resources/bower_components/polymer/layout.html, 
+                resources/bower_components/polymer/polymer.html, 
+                resources/bower_components/polymer/polymer.js, 
+                resources/bower_components/polymer/polymer.min.js, 
+                resources/bower_components/polymer/README.md, 
+                resources/bower_components/webcomponentsjs/bower.json, 
+                resources/bower_components/webcomponentsjs/build.log, 
+                resources/bower_components/webcomponentsjs/CustomElements.js, 
+                resources/bower_components/webcomponentsjs/CustomElements.min.js, 
+                resources/bower_components/webcomponentsjs/HTMLImports.js, 
+                resources/bower_components/webcomponentsjs/HTMLImports.min.js, 
+                resources/bower_components/webcomponentsjs/package.json, 
+                resources/bower_components/webcomponentsjs/README.md, 
+                resources/bower_components/webcomponentsjs/ShadowDOM.js, 
+                resources/bower_components/webcomponentsjs/ShadowDOM.min.js, 
+                resources/bower_components/webcomponentsjs/webcomponents-lite.js, 
+                resources/bower_components/webcomponentsjs/webcomponents-lite.min.js, 
+                resources/bower_components/webcomponentsjs/webcomponents.js, 
+                resources/bower_components/webcomponentsjs/webcomponents.min.js, 
+                resources/bower.json
 
 library
   hs-source-dirs:  src

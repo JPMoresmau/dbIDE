@@ -1,0 +1,20 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-icon/core-icon.html">
+
+
+<polymer-element name="as-nav-package" attributes="pkg">
+	<template>
+	<style>
+	.small {
+    	height: 16px;
+    	width: 16px;
+  	}
+	</style>
+		<div title="{{pkg.doc.short}}"><span><core-icon src="../images/package.png" class="small"></core-icon>{{pkg.key.name}}</span></div>
+	</template>
+	<script>
+		Polymer({
+			pkg:{}
+		});
+	</script>
+</polymer-element>
