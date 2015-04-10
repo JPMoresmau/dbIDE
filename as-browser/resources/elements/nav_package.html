@@ -6,14 +6,14 @@
 	<template>
 		<link rel="stylesheet" type="text/css" href="../style/as-browser.css">
 		<template id="withDoc">
-			<a href="{{pkg.urls.docurl}}" target="_new"><core-icon src="../images/package.png" class="small" title="Docs at {{pkg.urls.docurl}}" alt="Package with documentation"></core-icon></a>
+			<a href="{{pkg.docurl}}" target="_new"><core-icon src="../images/package.png" class="small" title="Docs at {{pkg.docurl}}" alt="Package with documentation"></core-icon></a>
 		</template>
 		<template id="withoutDoc">
 			<core-icon src="../images/package_gs.png" class="small" alt="Package without documentation"></core-icon>
 		</template>
 
 		<div title="{{pkg.doc.short}}" layout horizontal>
-			<template bind="{{}}" ref="{{pkg.urls.docurl?'withDoc':'withoutDoc'}}">
+			<template bind="{{}}" ref="{{pkg.docurl?'withDoc':'withoutDoc'}}">
 			</template>
 			<span on-click="{{selectPkg}}" class="link" flex>
 				{{pkg.key.name}}

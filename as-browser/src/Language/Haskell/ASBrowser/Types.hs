@@ -226,7 +226,7 @@ data Package = Package
   { pkgKey        :: !PackageKey
   , pkgDoc        :: !Doc
   , pkgMeta       :: !PackageMetaData
-  , pkgURLs       :: !URLs
+  , pkgDocURL     :: !(Maybe URL)
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Package

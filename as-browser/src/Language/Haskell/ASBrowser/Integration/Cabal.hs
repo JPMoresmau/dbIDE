@@ -178,24 +178,24 @@ updateFromCabal acid = do
 
 data PackageLocation = PackageLocation
   { plLocal      :: Local
-  , plPackageURL :: (PackageKey -> URLs)
+  , plPackageURL :: (PackageKey -> Maybe URL)
   , plModuleURL  :: (PackageKey -> Expose -> ModuleName -> URLs)
   }
 
 localPackageLocation :: PackageLocation
-localPackageLocation = PackageLocation Local (const $ URLs Nothing Nothing) (\_ _->const $ URLs Nothing Nothing) 
+localPackageLocation = PackageLocation Local (const Nothing) (\_ _->const $ URLs Nothing Nothing) 
 
 remotePackageLocation :: CabalRepositories -> PackageLocation
-remotePackageLocation CabalRepositories{..} = build $ parse
+remotePackageLocation CabalRepositories{..} = build parse
   where
     parse = parseURI $ T.unpack crRemoteRepoURL
     build Nothing = noop
     build (Just uri) = root (uriAuthority uri) uri
     root Nothing _ = noop
     root (Just _) uri = loc $ uri{uriQuery="", uriFragment=""}
-    noop = PackageLocation Packaged (const $ URLs Nothing Nothing) (\_ _ ->const $ URLs Nothing Nothing) 
+    noop = PackageLocation Packaged (const Nothing) (\_ _ ->const $ URLs Nothing Nothing) 
     loc uri = PackageLocation Packaged (locKey uri) (locMod uri)
-    locKey uri key = URLs Nothing (Just $ URL $ pkgRoot uri key)
+    locKey uri key = Just $ URL $ pkgRoot uri key
     pkgRoot uri key =  
       let
         pn = T.unpack $ unPkgName $ pkgName key

@@ -41,7 +41,7 @@ cabalTests = testGroup "Cabal Tests"
       pkgName (pkgKey pkg) @?= "Pkg1"
       pkgVersion (pkgKey pkg) @?= "0.1"
       pkgLocal (pkgKey pkg) @?= Packaged
-      pkgURLs pkg @?= URLs Nothing (Just $ URL "http://hackage.haskell.org/package/Pkg1-0.1") 
+      pkgDocURL pkg @?= (Just $ URL "http://hackage.haskell.org/package/Pkg1-0.1")
       length (fpComponents fp) @?= 1
       let lib = head $ fpComponents fp
       cPackageKey (cKey lib) @?= pkgKey pkg
@@ -69,8 +69,8 @@ cabalFile1 = fromString $ unlines
   
 modA :: Module
 modA=Module (ModuleKey "A" (PackageKey "Pkg1" "0.1" Packaged)) def
-          [ModuleInclusion "" Exposed] (URLs (Just (URL "docs/src/A.html")) (Just (URL "docs/A.html")))
+          [ModuleInclusion "" Exposed] (URLs (Just (URL "http://hackage.haskell.org/package/Pkg1-0.1/docs/src/A.html")) (Just (URL "http://hackage.haskell.org/package/Pkg1-0.1/docs/A.html")))
 
 modBC :: Module
 modBC=Module (ModuleKey "B.C" (PackageKey "Pkg1" "0.1" Packaged)) def
-          [ModuleInclusion "" Included] (URLs (Just (URL "docs/src/B-C.html")) Nothing)
+          [ModuleInclusion "" Included] (URLs (Just (URL "http://hackage.haskell.org/package/Pkg1-0.1/docs/src/B-C.html")) Nothing)
