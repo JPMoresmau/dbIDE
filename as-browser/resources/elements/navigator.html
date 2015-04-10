@@ -2,31 +2,45 @@
 <link rel="import" href="../bower_components/core-list/core-list.html">
 <link rel="import" href="../bower_components/core-ajax/core-ajax.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/core-signals/core-signals.html">
 <link rel="import" href="nav_package.html">
+<link rel="import" href="nav_module.html">
 
 <polymer-element name="as-navigator">
   <template>
-  	<div vertical style="height:100%">
-	  	<core-ajax url="/json" response="{{data}}" handleAs="json" auto></core-ajax>
-	  	<paper-input label="Type name prefix" value="{{filt}}"></paper-input>
-		  <core-list data="{{data | keyNameStartsWith(filt) | keyNameSort()}}" height="20" style="height:100%">
-		    <template>
-		     <as-nav-package pkg="{{model}}">
-		     </as-nav-package>
-		    </template>
-	    </core-list>
-    </div>
-	<!-- <div layout vertical>
-
-  	<template repeat="{{pkg in data}}">
-  		<as-nav-package pkg="{{pkg}}"></as-nav-package>
+  	<template id="pkgTemplate">
+  			 <as-nav-package pkg="{{model}}">
+		      </as-nav-package>
   	</template>
-	</div> -->
+  	<template id="modlTemplate">
+  				<as-nav-module modl="{{model}}">
+		      </as-nav-module>
+  	</template>
+  	
+  	
+		<div vertical style="height:100%">
+	  	<core-ajax url="/json/packages" response="{{data}}" handleAs="json" id="ajax"></core-ajax>
+	  	<core-signals on-core-signal-selected-package="{{selectedPackage}}"></core-signals>
+	  	<paper-input label="Type name prefix" value="{{filt}}" id="prefixFilter"></paper-input>
+		  <core-list data="{{data | keyNameStartsWith(filt) | keyNameSort()}}" height="20" style="height:100%" id="list">
+		    	<template>
+        	<div>
+          	<template bind ref="{{data[0]['key']['packagekey']?'modlTemplate':'pkgTemplate'}}">
+				    </template>
+				   </div>
+				   </template>
+	 	  </core-list>
+		   
+    </div>
 
   </template>
   <script>
 	Polymer({
 		filt:"",
+		data:[],
+		ready: function(){
+			this.$.ajax.go();
+		},
 		keyNameStartsWith : function (input, prefix) {
 		  if (!input || !prefix){
 			  return input;
@@ -42,6 +56,15 @@
 			return input.sort(function(a,b){
 				return a.key.name.localeCompare(b.key.name);
 			});
+		},
+		selectedPackage : function (e, detail, sender){
+			var s=JSON.stringify({"key":JSON.stringify(detail)});
+			var aj=this.$.ajax;
+			aj.abort();
+			aj.params=s;
+			aj.url="/json/modules";
+			this.$.prefixFilter.value="";
+			aj.go();
 		}
 	});
   </script>

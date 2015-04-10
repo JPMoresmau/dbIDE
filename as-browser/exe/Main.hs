@@ -8,6 +8,8 @@ import Snap.Core
 import Snap.Util.FileServe
 
 import Data.Acid as A (openLocalStateFrom,closeAcidState)
+import Data.ByteString (ByteString)
+import Data.ByteString.Lazy (fromStrict)
 
 import Language.Haskell.AsBrowser
 import Snap.Snaplet
@@ -23,6 +25,7 @@ import Control.Monad.IO.Class
 import System.Directory
 import System.FilePath
 import Control.Concurrent
+import Data.IxSet (toList)
 
 dataDir :: IO FilePath
 dataDir = liftM (</> "resources") getDataDir
@@ -49,14 +52,32 @@ appInit st = makeSnaplet "as-browser" "ASBrowser Snap app" (Just dataDir) $ do
   onUnload (A.closeAcidState st)
   ac <- nestSnaplet "asb" acid $ acidInitManual st
   addRoutes 
-    [ ("/json", with acid jsonH)
+    [ ("/json/packages", with acid packagesH)
+    , ("/json/modules", with acid modulesH)
     , ("/static/", serveDirectory "resources")
     ]
   return $ App ac
 
-jsonH :: Handler App (Acid Database) ()
-jsonH= method GET $ do
+packagesH :: Handler App (Acid Database) ()
+packagesH = method GET $
   writeJSON =<< onlyLastVersions <$> query AllPackages
+
+modulesH :: Handler App (Acid Database) ()
+modulesH = do
+  mkey <- getJSONParam "key"
+  method GET $
+    writeJSON =<<
+      maybe (return [])
+        (\ key -> toList <$> query (ListModules key Nothing))
+        mkey
+
+
+getJSONParam :: (FromJSON a, MonadSnap m) =>
+                  ByteString -> m (Maybe a)
+getJSONParam name = do
+  mkey <- getParam name
+  return $ maybe Nothing (decode . fromStrict) mkey
+
 
 writeJSON :: (ToJSON a) => a -> Handler b c ()
 writeJSON obj = do

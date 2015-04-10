@@ -179,11 +179,11 @@ updateFromCabal acid = do
 data PackageLocation = PackageLocation
   { plLocal      :: Local
   , plPackageURL :: (PackageKey -> URLs)
-  , plModuleURL  :: (Expose -> ModuleName -> URLs)
+  , plModuleURL  :: (PackageKey -> Expose -> ModuleName -> URLs)
   }
 
 localPackageLocation :: PackageLocation
-localPackageLocation = PackageLocation Local (const $ URLs Nothing Nothing) (\_->const $ URLs Nothing Nothing) 
+localPackageLocation = PackageLocation Local (const $ URLs Nothing Nothing) (\_ _->const $ URLs Nothing Nothing) 
 
 remotePackageLocation :: CabalRepositories -> PackageLocation
 remotePackageLocation CabalRepositories{..} = build $ parse
@@ -193,18 +193,22 @@ remotePackageLocation CabalRepositories{..} = build $ parse
     build (Just uri) = root (uriAuthority uri) uri
     root Nothing _ = noop
     root (Just _) uri = loc $ uri{uriQuery="", uriFragment=""}
-    noop = PackageLocation Packaged (const $ URLs Nothing Nothing) (\_->const $ URLs Nothing Nothing) 
-    loc uri = PackageLocation Packaged (locKey uri) (locMod) 
-    locKey uri key =
+    noop = PackageLocation Packaged (const $ URLs Nothing Nothing) (\_ _ ->const $ URLs Nothing Nothing) 
+    loc uri = PackageLocation Packaged (locKey uri) (locMod uri)
+    locKey uri key = URLs Nothing (Just $ URL $ pkgRoot uri key)
+    pkgRoot uri key =  
       let
         pn = T.unpack $ unPkgName $ pkgName key
         v = showVersion $ pkgVersion key
         uri2 = uri{uriPath="/package/"++pn++"-"++v}
-      in URLs Nothing (Just $ URL $ T.pack $ show uri2)
-    locMod e mn =URLs (src e mn) (doc e mn) 
-    src _ mn = Just $ URL $ T.concat ["docs/src/",toDocURL mn,".html"]
-    doc Exposed mn = Just $ URL $ T.concat ["docs/",toDocURL mn,".html"]
-    doc _ _ = Nothing
+      in T.pack $ show uri2
+    locMod uri pkg e mn = 
+      let
+        pkgR = pkgRoot uri pkg
+      in URLs (src pkgR e mn) (doc pkgR e mn) 
+    src pkgR _ mn = Just $ URL $ T.concat [pkgR,"/docs/src/",toDocURL mn,".html"]
+    doc pkgR Exposed mn = Just $ URL $ T.concat [pkgR,"/docs/",toDocURL mn,".html"]
+    doc _ _ _ = Nothing
     
 
 packageFromDescriptionBS :: ByteString -> PackageLocation -> Maybe FullPackage
@@ -222,7 +226,7 @@ packageFromDescription PackageDescription{..} loc =
       md = PackageMetaData (T.pack author)
       fromBi = componentFromBuildInfo loc pkgKey buildDepends
       (cps,mods) = unzip $ maybe [] ((:[]) . fromBi (const "") Typ.Library libBuildInfo libToModule) library
-                    ++ case (plLocal loc) of
+                    ++ case plLocal loc of
                          Local ->
                               map (fromBi exeName Typ.Executable buildInfo exeToModule) executables
                            ++ map (fromBi testName Test testBuildInfo testToModule) testSuites
@@ -249,7 +253,7 @@ toModule loc exp pkgKey name mn = toNamedModule loc exp pkgKey name (toMN mn)
   toMN = ModuleName . T.intercalate "." . map T.pack . Cabal.components
 
 toNamedModule :: PackageLocation -> Expose -> PackageKey -> ComponentName -> ModuleName -> Module
-toNamedModule loc exp pkgKey name mn = Module (ModuleKey mn pkgKey) def [ModuleInclusion name exp] (plModuleURL loc exp mn)
+toNamedModule loc exp pkgKey name mn = Module (ModuleKey mn pkgKey) def [ModuleInclusion name exp] (plModuleURL loc pkgKey exp mn)
 
 
 libToModule :: PackageLocation -> Library -> PackageKey -> ComponentName -> [Module]

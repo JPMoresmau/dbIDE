@@ -4,17 +4,28 @@
 
 <polymer-element name="as-nav-package" attributes="pkg">
 	<template>
-	<style>
-	.small {
-    	height: 16px;
-    	width: 16px;
-  	}
-	</style>
-		<div title="{{pkg.doc.short}}"><span><core-icon src="../images/package.png" class="small"></core-icon>{{pkg.key.name}}</span></div>
+		<link rel="stylesheet" type="text/css" href="../style/as-browser.css">
+		<template id="withDoc">
+			<a href="{{pkg.urls.docurl}}" target="_new"><core-icon src="../images/package.png" class="small" title="Docs at {{pkg.urls.docurl}}" alt="Package with documentation"></core-icon></a>
+		</template>
+		<template id="withoutDoc">
+			<core-icon src="../images/package_gs.png" class="small" alt="Package without documentation"></core-icon>
+		</template>
+
+		<div title="{{pkg.doc.short}}">
+			<template bind="{{}}" ref="{{pkg.urls.docurl?'withDoc':'withoutDoc'}}">
+			</template>
+			<span on-click="{{selectPkg}}" class="link">
+				{{pkg.key.name}}
+			</span>
+		</div>
 	</template>
 	<script>
 		Polymer({
-			pkg:{}
+			pkg:{},
+		  selectPkg:function(){
+			  this.fire('core-signal', {name: "selected-package", data: this.pkg.key});
+		  }
 		});
 	</script>
 </polymer-element>
