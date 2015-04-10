@@ -3,11 +3,13 @@
 <link rel="import" href="../bower_components/core-ajax/core-ajax.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/core-signals/core-signals.html">
+<link rel="import" href="../bower_components/core-icon/core-icon.html">
 <link rel="import" href="nav_package.html">
 <link rel="import" href="nav_module.html">
 
 <polymer-element name="as-navigator">
   <template>
+  	<link rel="stylesheet" type="text/css" href="../style/as-browser.css">
   	<template id="pkgTemplate">
   			 <as-nav-package pkg="{{model}}">
 		      </as-nav-package>
@@ -16,16 +18,31 @@
   				<as-nav-module modl="{{model}}">
 		      </as-nav-module>
   	</template>
-  	
+  	<template id="rootTemplate">
+  			
+  			<div class="link" on-click="{{selectedRoot}}">
+  				<core-icon src="../images/haskell.png" class="small" alt="All Packages"></core-icon>
+  				<span>All Packages</span></div>
+  	</template>
   	
 		<div vertical style="height:100%">
 	  	<core-ajax url="/json/packages" response="{{data}}" handleAs="json" id="ajax"></core-ajax>
 	  	<core-signals on-core-signal-selected-package="{{selectedPackage}}"></core-signals>
-	  	<paper-input label="Type name prefix" value="{{filt}}" id="prefixFilter"></paper-input>
+	  	
+	  	<div horizontal layout>
+	  		<template repeat="{{c in crumbs}}">
+	  			<div>
+	  			<template bind="{{c as model}}" ref="{{c.root?'rootTemplate':(c.key.packagekey?'modlTemplate':'pkgTemplate')}}">
+				    </template>
+					</div>
+	  		</template>
+	  	</div>
+	  	
+	  	<paper-input label="Type name prefix" value="{{filt}}" id="prefixFilter" style="width:100%"></paper-input>
 		  <core-list data="{{data | keyNameStartsWith(filt) | keyNameSort()}}" height="20" style="height:100%" id="list">
 		    	<template>
         	<div>
-          	<template bind ref="{{data[0]['key']['packagekey']?'modlTemplate':'pkgTemplate'}}">
+          	<template bind ref="{{model.key.packagekey?'modlTemplate':'pkgTemplate'}}">
 				    </template>
 				   </div>
 				   </template>
@@ -37,7 +54,12 @@
   <script>
 	Polymer({
 		filt:"",
+		filtersByLevel:["",""],
+		currentLevel:0,
 		data:[],
+		crumbs:[{
+				root:true
+			}],
 		ready: function(){
 			this.$.ajax.go();
 		},
@@ -57,14 +79,33 @@
 				return a.key.name.localeCompare(b.key.name);
 			});
 		},
-		selectedPackage : function (e, detail, sender){
-			var s=JSON.stringify({"key":JSON.stringify(detail)});
+		resetCrumbs : function(level){
+			if (this.currentLevel==level){
+				this.filt="";
+			}
+			this.filtersByLevel[this.currentLevel]=this.filt;
+			while (this.crumbs.length>Math.max(1,level)){
+				this.crumbs.pop();
+			}
+			this.filt=this.filtersByLevel[level];
+			this.currentLevel=level;
+		},
+		reload : function(url,params){
 			var aj=this.$.ajax;
 			aj.abort();
-			aj.params=s;
-			aj.url="/json/modules";
-			this.$.prefixFilter.value="";
+			aj.params=params;
+			aj.url=url;
 			aj.go();
+		},
+		selectedRoot : function (){
+			this.resetCrumbs(0);
+			this.reload("/json/packages",null);
+		},
+		selectedPackage : function (e, detail, sender){
+			this.resetCrumbs(1);
+			this.crumbs.push(detail);
+			var s=JSON.stringify({"key":JSON.stringify(detail.key)});
+			this.reload("/json/modules",s);
 		}
 	});
   </script>

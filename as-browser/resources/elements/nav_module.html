@@ -11,10 +11,10 @@
 		<template id="withoutDoc">
 			<core-icon src="../images/module_gs.png" class="small" alt="Module without documentation"></core-icon>
 		</template>
-		<div title="{{modl.key.name}}">
+		<div title="{{modl.key.name}}" layout horizontal>
 			<template bind="{{}}" ref="{{modl.urls.docurl?'withDoc':'withoutDoc'}}">
 			</template>
-			<span on-click="{{selectModl}}">
+			<span on-click="{{selectModl}}" flex>
 				{{modl.key.name}}
 			</span>
 		</div>

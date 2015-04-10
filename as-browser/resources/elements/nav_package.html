@@ -12,10 +12,10 @@
 			<core-icon src="../images/package_gs.png" class="small" alt="Package without documentation"></core-icon>
 		</template>
 
-		<div title="{{pkg.doc.short}}">
+		<div title="{{pkg.doc.short}}" layout horizontal>
 			<template bind="{{}}" ref="{{pkg.urls.docurl?'withDoc':'withoutDoc'}}">
 			</template>
-			<span on-click="{{selectPkg}}" class="link">
+			<span on-click="{{selectPkg}}" class="link" flex>
 				{{pkg.key.name}}
 			</span>
 		</div>
@@ -24,7 +24,7 @@
 		Polymer({
 			pkg:{},
 		  selectPkg:function(){
-			  this.fire('core-signal', {name: "selected-package", data: this.pkg.key});
+			  this.fire('core-signal', {name: "selected-package", data: this.pkg});
 		  }
 		});
 	</script>
