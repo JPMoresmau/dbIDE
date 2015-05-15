@@ -1,13 +1,16 @@
 <!doctype html>
 <head>
   <title>Haskell Web IDE</title>
-  <script src="driver/threepenny-gui.js"></script>
-  <link rel="stylesheet" type="text/css" href="driver/threepenny-gui.css"/>
+  <script src="haskell.js"></script>
+  <script type="text/javascript" charset="utf-8">
+      Haskell.initFFI();
+    </script>
+  <link rel="stylesheet" type="text/css" href="haskell.css"/>
   <link rel="stylesheet" type="text/css" href="static/js/codemirror-4.5/lib/codemirror.css">
   <script src="static/js/codemirror-4.5/lib/codemirror.js"></script>
   <script src="static/js/codemirror-4.5/mode/haskell/haskell.js"></script>
   <script src="static/js/codemirror-4.5/mode/yaml/yaml.js"></script>
-  <script src="static/js/codemirror-4.5/mode/javascript/javascript.js"></script>  
+  <script src="static/js/codemirror-4.5/mode/javascript/javascript.js"></script>
   <script src="static/js/hwide.js"></script>
 </head>
 <body>

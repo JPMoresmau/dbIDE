@@ -36,7 +36,7 @@ import Paths_hwide
 main :: IO ()
 main = do
   static <- getStaticDir
-  startGUI defaultConfig {tpStatic = Just static,tpCustomHTML=Just $ static </> "index.html"} setup
+  startGUI defaultConfig {jsStatic = Just static,jsCustomHTML=Just $ static </> "index.html"} setup
 
 -- | Get the useful directories
 getDirectories :: IO (Directories,Configuration)
@@ -57,11 +57,11 @@ initIO :: IO (StaticState,EditorState)
 initIO = do
   (dirs,config) <- getDirectories
   initState <- mkEditorState $ dWorkDir dirs
-    
+
   (evtLogRun,fireLogRun) <- newEvent
 
   runQueue <- startRunToLogQueue fireLogRun
-  
+
   let ss = StaticState (cPaths config) dirs runQueue evtLogRun
   return (ss,initState)
 
@@ -97,36 +97,36 @@ setup w = do
 
   -- filebrowser component
   fb <- fileBrowser (dRootDir dirs) $ Just (dWorkDir dirs,"workspace")
-  
+
   on fbFileOpen fb $ \fp ->
     liftIO $ do
        fireEditorStateChange $ addFile fp
        fireEditorStateCurrentChange fp
-    
+
   -- buttons
   closeFile <- UI.span #. "fileClose" # set UI.title__ "Close current file"
   setVisible closeFile False
   saveFile <- UI.span #. "fileSave" # set UI.title__ "Save current file"
   setVisible saveFile False
-  
+
   noteCountUI <- UI.span #. "noteCount" # set UI.title__ "Errors and warnings"
   (evtNoteSelected,fireNoteSelected) <- liftIO newEvent
   noteList <- mkNoteList bNoteCountChange fireNoteSelected (dRootDir dirs)
   popupPane noteCountUI Nothing noteList (void evtNoteSelected)
-  
+
   fileListData <- fileList bEditorState fireEditorStateCurrentChange
   element (getElement fileListData) # set UI.title__ "Opened files"
-  
+
   -- force close event
   (eCloseFileBrowser,forceClose) <- liftIO newEvent
   -- popup pane for file browser
   elFileBrowserIcon <- popupSpan ("fileBrowserIcon-Closed","fileBrowserIcon-Opened") ("Open File Browser","Close File Browser") fb eCloseFileBrowser
 
-  
+
   -- hidden input notified of code mirror changes
   changeTick <- UI.input # set UI.type_ "hidden" # set UI.id_ "changeTick"
 
-  let 
+  let
     -- create code mirror
     codeMirror :: T.Text -> JSFunction ()
     codeMirror= ffi "initCM(%1)"
@@ -170,7 +170,7 @@ setup w = do
     liftIO $ fireEditorStateChange $ addFile $ bwlSrc $ bwnLocation bw
     runFunction $ markLine (bwlLine $ bwnLocation bw) (BWError == bwnStatus bw) (bwnTitle bw)
     )
-  
+
   -- close file
   on UI.click closeFile (\_ -> do
     fp <- liftM (head . esCurrent) $ currentValue bEditorState
@@ -192,7 +192,7 @@ setup w = do
     sinputs <- if not hasInit
       then do
         ns <- needsSandboxInit cfi
-        if not ns 
+        if not ns
           then return [getSandboxInitInput ss cfi]
           else do
             traverse (liftIO . sandboxReady ss bCacheState fireCacheChange) $ cfiRootPath cfi
@@ -205,13 +205,13 @@ setup w = do
                   ++ [getBuildInput ss cfi False]
     mapM (scheduleRun ss) inputs
     )
-  
+
   onEvent (ssRunEvent ss) (handleRunLog ss fireNoteCountChange bCacheState fireCacheChange)
-  
+
   let idEditor = "textArea"
   -- text area anchoring the code mirror editor
   elText <- UI.textarea #. "codeEditor" # set UI.id_ idEditor
-  
+
 
   let
     mkLayout :: UI Element
@@ -237,14 +237,14 @@ setup w = do
          setVisible saveFile True
          liftIO $ fireEditorStateChange $ adjustFile fp setDirty
     )
-    
+
   element noteCountUI # sink text (fmap (noteCountToString . nNoteCount) bNoteCountChange)
-   
+
   showFile $ head $ esCurrent initState
-   
+
 --  liftIO $ onChange bNoteCountChange $ \v -> do
 --    writeToOut $ v
-   
+
   return ()
 
 handleRunLog :: StaticState -> Handler (Notes -> Notes) -> Behavior CachedData -> Handler (CachedData -> CachedData) -> (RunToLogInput,RunToLogResult) -> UI()
@@ -264,19 +264,19 @@ handleRunLog ss fireNoteCountChange bCacheState fireCacheChange (i,r) = case rtl
     case cfiRootPath cfi of
       Just root -> fireNoteCountChange (addNotes root msgs . removeNotes root fps)
       _      -> return ()
-    return () 
+    return ()
   CabalSandboxProject rootDir ->  liftIO $ sandboxReady ss bCacheState fireCacheChange rootDir
   CabalSandbox -> liftIO $ do
     pkg <- getSandboxPackageDB $ dSandboxDir $ ssDirectories ss
     fireCacheChange $ \cd -> cd{cdSandboxPkg=Just pkg}
 
-  
+
 -- | Get directory where static resources are kept
 getStaticDir :: IO FilePath
 getStaticDir = do
   d <- Paths_hwide.getDataFileName "wwwroot"
   ex <- doesDirectoryExist d
-  if ex 
+  if ex
     then return d
     else do
       cd <- getCurrentDirectory
