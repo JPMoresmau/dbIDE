@@ -69,8 +69,8 @@ cabalFile1 = fromString $ unlines
   
 modA :: Module
 modA=Module (ModuleKey "A" (PackageKey "Pkg1" "0.1" Packaged)) def
-          [ModuleInclusion "" Exposed] (URLs (Just (URL "http://hackage.haskell.org/package/Pkg1-0.1/docs/src/A.html")) (Just (URL "http://hackage.haskell.org/package/Pkg1-0.1/docs/A.html")))
+          [ModuleInclusion "" Exposed Nothing] (URLs (Just (URL "http://hackage.haskell.org/package/Pkg1-0.1/docs/src/A.html")) (Just (URL "http://hackage.haskell.org/package/Pkg1-0.1/docs/A.html")))
 
 modBC :: Module
 modBC=Module (ModuleKey "B.C" (PackageKey "Pkg1" "0.1" Packaged)) def
-          [ModuleInclusion "" Included] (URLs (Just (URL "http://hackage.haskell.org/package/Pkg1-0.1/docs/src/B-C.html")) Nothing)
+          [ModuleInclusion "" Included Nothing] (URLs (Just (URL "http://hackage.haskell.org/package/Pkg1-0.1/docs/src/B-C.html")) Nothing)

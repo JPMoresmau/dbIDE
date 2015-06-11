@@ -25,7 +25,7 @@ import Control.Monad.IO.Class
 import System.Directory
 import System.FilePath
 import Control.Concurrent
-import Data.IxSet (toList)
+import Data.IxSet.Typed (toList)
 
 dataDir :: IO FilePath
 dataDir = liftM (</> "resources") getDataDir
@@ -36,22 +36,22 @@ dbDir = liftM (</> "db") getDataDir
 
 logDir :: IO FilePath
 logDir = liftM (</> "log") getDataDir
-    
-data App = App 
+
+data App = App
   { _acid :: Snaplet (Acid Database)
   }
-  
+
 makeLenses ''App
-  
+
 instance HasAcid App Database where
      getAcidStore = view (acid . snapletValue)
 
-     
+
 appInit :: AcidState Database -> SnapletInit App App
 appInit st = makeSnaplet "as-browser" "ASBrowser Snap app" (Just dataDir) $ do
   onUnload (A.closeAcidState st)
   ac <- nestSnaplet "asb" acid $ acidInitManual st
-  addRoutes 
+  addRoutes
     [ ("/json/packages", with acid packagesH)
     , ("/json/modules", with acid modulesH)
     , ("/static/", serveDirectory "resources")
@@ -61,6 +61,7 @@ appInit st = makeSnaplet "as-browser" "ASBrowser Snap app" (Just dataDir) $ do
 packagesH :: Handler App (Acid Database) ()
 packagesH = method GET $
   writeJSON =<< onlyLastVersions <$> query AllPackages
+
 
 modulesH :: Handler App (Acid Database) ()
 modulesH = do

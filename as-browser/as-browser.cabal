@@ -5,45 +5,45 @@ build-type:     Simple
 author:         jpmoresmau
 license:        BSD3
 license-file:   LICENSE
-data-files:     
-                resources/bower_components/core-component-page/bowager-logo.png, 
-                resources/bower_components/core-component-page/bower.json, 
-                resources/bower_components/core-component-page/core-component-page.html, 
-                resources/bower_components/core-component-page/demo.html, 
-                resources/bower_components/core-component-page/index.html, 
-                resources/bower_components/core-component-page/README.md, 
-                resources/bower_components/polymer/bower.json, 
-                resources/bower_components/polymer/build.log, 
-                resources/bower_components/polymer/layout.html, 
-                resources/bower_components/polymer/polymer.html, 
-                resources/bower_components/polymer/polymer.js, 
-                resources/bower_components/polymer/polymer.min.js, 
-                resources/bower_components/polymer/README.md, 
-                resources/bower_components/webcomponentsjs/bower.json, 
-                resources/bower_components/webcomponentsjs/build.log, 
-                resources/bower_components/webcomponentsjs/CustomElements.js, 
-                resources/bower_components/webcomponentsjs/CustomElements.min.js, 
-                resources/bower_components/webcomponentsjs/HTMLImports.js, 
-                resources/bower_components/webcomponentsjs/HTMLImports.min.js, 
-                resources/bower_components/webcomponentsjs/package.json, 
-                resources/bower_components/webcomponentsjs/README.md, 
-                resources/bower_components/webcomponentsjs/ShadowDOM.js, 
-                resources/bower_components/webcomponentsjs/ShadowDOM.min.js, 
-                resources/bower_components/webcomponentsjs/webcomponents-lite.js, 
-                resources/bower_components/webcomponentsjs/webcomponents-lite.min.js, 
-                resources/bower_components/webcomponentsjs/webcomponents.js, 
-                resources/bower_components/webcomponentsjs/webcomponents.min.js, 
+data-files:
+                resources/bower_components/core-component-page/bowager-logo.png,
+                resources/bower_components/core-component-page/bower.json,
+                resources/bower_components/core-component-page/core-component-page.html,
+                resources/bower_components/core-component-page/demo.html,
+                resources/bower_components/core-component-page/index.html,
+                resources/bower_components/core-component-page/README.md,
+                resources/bower_components/polymer/bower.json,
+                resources/bower_components/polymer/build.log,
+                resources/bower_components/polymer/layout.html,
+                resources/bower_components/polymer/polymer.html,
+                resources/bower_components/polymer/polymer.js,
+                resources/bower_components/polymer/polymer.min.js,
+                resources/bower_components/polymer/README.md,
+                resources/bower_components/webcomponentsjs/bower.json,
+                resources/bower_components/webcomponentsjs/build.log,
+                resources/bower_components/webcomponentsjs/CustomElements.js,
+                resources/bower_components/webcomponentsjs/CustomElements.min.js,
+                resources/bower_components/webcomponentsjs/HTMLImports.js,
+                resources/bower_components/webcomponentsjs/HTMLImports.min.js,
+                resources/bower_components/webcomponentsjs/package.json,
+                resources/bower_components/webcomponentsjs/README.md,
+                resources/bower_components/webcomponentsjs/ShadowDOM.js,
+                resources/bower_components/webcomponentsjs/ShadowDOM.min.js,
+                resources/bower_components/webcomponentsjs/webcomponents-lite.js,
+                resources/bower_components/webcomponentsjs/webcomponents-lite.min.js,
+                resources/bower_components/webcomponentsjs/webcomponents.js,
+                resources/bower_components/webcomponentsjs/webcomponents.min.js,
                 resources/bower.json
 
 library
   hs-source-dirs:  src
-  build-depends:   
+  build-depends:
                    base >= 4,
                    directory,
                    filepath,
                    safecopy,
                    acid-state,
-                   ixset,
+                   ixset-typed,
                    text,
                    Cabal,
                    time,
@@ -59,9 +59,11 @@ library
                    parallel-io,
                    containers,
                    aeson,
-                   network-uri
+                   network-uri,
+                   xml-conduit,
+                   html-conduit
   ghc-options:     -Wall -O2
-  other-modules:   
+  other-modules:
                    Language.Haskell.ASBrowser.Types,
                    Language.Haskell.ASBrowser.Operations.Packages,
                    Language.Haskell.ASBrowser.Utils,
@@ -69,20 +71,21 @@ library
                    Language.Haskell.ASBrowser.Operations.Modules,
                    Language.Haskell.ASBrowser.Integration.Cabal,
                    Language.Haskell.ASBrowser.Integration.Files,
-                   Language.Haskell.ASBrowser.Operations.Components
+                   Language.Haskell.ASBrowser.Operations.Components,
+                   Language.Haskell.ASBrowser.Integration.Src
   exposed-modules: Language.Haskell.AsBrowser
 
 executable as-browser
   hs-source-dirs:  exe
   main-is:         Main.hs
-  build-depends:   
+  build-depends:
                    base >= 4,
                    as-browser,
                    directory,
                    filepath,
                    safecopy,
                    acid-state,
-                   ixset,
+                   ixset-typed,
                    text,
                    Cabal,
                    time,
@@ -104,14 +107,16 @@ executable as-browser
                    snap,
                    lens,
                    transformers,
-                   network-uri
+                   network-uri,
+                   xml-conduit,
+                   html-conduit
   ghc-options:     -Wall -rtsopts -threaded -O2
 
 test-suite as-browser-test
   type:            exitcode-stdio-1.0
   main-is:         as-browser-test.hs
   ghc-options:     -Wall -rtsopts -threaded -O2
-  build-depends:   
+  build-depends:
                    base >= 4,
                    tasty > 0.10,
                    tasty-hunit,
@@ -121,7 +126,7 @@ test-suite as-browser-test
                    HUnit,
                    Cabal,
                    acid-state,
-                   ixset,
+                   ixset-typed,
                    safecopy,
                    text,
                    time,
@@ -140,8 +145,10 @@ test-suite as-browser-test
                    containers,
                    aeson,
                    attoparsec,
-                   network-uri
-  other-modules:   
+                   network-uri,
+                   xml-conduit,
+                   html-conduit
+  other-modules:
                   Language.Haskell.ASBrowser.Operations.Packages,
                   Language.Haskell.ASBrowser.Operations.PackagesTest,
                   Language.Haskell.ASBrowser.Utils,
@@ -156,8 +163,10 @@ test-suite as-browser-test
                   Language.Haskell.ASBrowser.TypesTest,
                   Language.Haskell.ASBrowser.Operations.Components,
                   Language.Haskell.ASBrowser.Operations.ComponentsTest,
-                  Language.Haskell.AsBrowser
-  hs-source-dirs:  
+                  Language.Haskell.AsBrowser,
+                  Language.Haskell.ASBrowser.Integration.Src,
+                  Language.Haskell.ASBrowser.Integration.SrcTest
+  hs-source-dirs:
                   test,
                   src
 
@@ -165,7 +174,7 @@ test-suite as-browser-integration
   type:            exitcode-stdio-1.0
   main-is:         as-browser-integration.hs
   ghc-options:     -Wall -rtsopts -threaded -O2
-  build-depends:   
+  build-depends:
                    base >= 4,
                    tasty > 0.10,
                    tasty-hunit,
@@ -175,7 +184,7 @@ test-suite as-browser-integration
                    Cabal,
                    safecopy,
                    acid-state,
-                   ixset,
+                   ixset-typed,
                    text,
                    time,
                    data-default,
@@ -190,8 +199,10 @@ test-suite as-browser-integration
                    parallel-io,
                    containers,
                    aeson,
-                   network-uri
-  other-modules:   
+                   network-uri,
+                   xml-conduit,
+                   html-conduit
+  other-modules:
                   Language.Haskell.ASBrowser.Operations.Packages,
                   Language.Haskell.ASBrowser.Utils,
                   Language.Haskell.ASBrowser.Database,
@@ -201,8 +212,8 @@ test-suite as-browser-integration
                   Language.Haskell.ASBrowser.Integration.CabalTest,
                   Language.Haskell.ASBrowser.TestHarness,
                   Language.Haskell.ASBrowser.Operations.Components,
-                  Language.Haskell.AsBrowser
-  hs-source-dirs:  
+                  Language.Haskell.AsBrowser,
+                  Language.Haskell.ASBrowser.Integration.Src
+  hs-source-dirs:
                   src,
                   integration
-

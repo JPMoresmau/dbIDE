@@ -1,17 +1,20 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable, TemplateHaskell, OverloadedStrings #-}
 module Language.Haskell.ASBrowser.Types where
 
 import Language.Haskell.ASBrowser.Utils
 
-import Control.Applicative hiding (empty)
 import Control.Arrow
 import Control.Monad
-import Data.Data 
+import Data.Data
 import Data.SafeCopy hiding (Version)
 import Data.Text hiding (empty,map,drop)
 import Distribution.Version
 import Distribution.Text (simpleParse, display)
-import Data.IxSet
+import Data.IxSet.Typed
 import Data.Time
 import Data.Default
 import Data.String
@@ -27,7 +30,12 @@ import Data.Aeson.TH
 newtype PackageName = PackageName {unPkgName :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
 
-deriveJSON defaultOptions{unwrapUnaryRecords=True} ''PackageName
+-- deriveJSON defaultOptions{unwrapUnaryRecords=True} ''PackageName
+instance ToJSON PackageName where
+    toJSON = toJSON . unPkgName
+instance FromJSON PackageName where
+    parseJSON (String s) = pure $ PackageName s
+    parseJSON _          = mzero
 
 instance IsString PackageName where
   fromString = PackageName . pack
@@ -35,7 +43,14 @@ instance IsString PackageName where
 newtype PackageNameCI = PackageNameCI {unPkgNameCI :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
 
-deriveJSON defaultOptions{unwrapUnaryRecords=True} ''PackageNameCI
+--deriveJSON defaultOptions{unwrapUnaryRecords=True} ''PackageNameCI
+instance ToJSON PackageNameCI where
+    toJSON  = toJSON . unPkgNameCI
+instance FromJSON PackageNameCI where
+    parseJSON (String s) = pure $ PackageNameCI s
+    parseJSON _          = mzero
+
+
 
 textToPackageNameCI :: Text -> PackageNameCI
 textToPackageNameCI = PackageNameCI . Data.Text.toLower
@@ -56,7 +71,7 @@ instance IsString Version where
   fromString = fst . Prelude.head . Prelude.filter (\(_,rest)->Prelude.null rest). readP_to_S parseVersion
 
 instance ToJSON Version where
-  toJSON = String . pack . showVersion 
+  toJSON = String . pack . showVersion
 
 instance FromJSON Version where
   parseJSON (String v)=pure $ fromString $ unpack v
@@ -64,7 +79,7 @@ instance FromJSON Version where
 
 instance IsString VersionRange where
   fromString = fromJust . simpleParse
-  
+
 instance ToJSON VersionRange where
   toJSON = String . pack . display
 
@@ -95,16 +110,16 @@ deriveJSON defaultOptions{fieldLabelModifier=jsonField 3} ''PackageMetaData
 instance Default PackageMetaData where
   def = PackageMetaData ""
 
-data Doc = Doc 
+data Doc = Doc
   { dShort :: !Text
   , dLong :: !Text
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
-    
+
 deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''Doc
-    
+
 instance Default Doc where
   def = Doc "" ""
-    
+
 deriveSafeCopy 0 'base ''Doc
 
 newtype ComponentName = ComponentName {unCompName :: Text}
@@ -116,7 +131,12 @@ deriveSafeCopy 0 'base ''ComponentName
 instance IsString ComponentName where
   fromString = ComponentName . pack
 
-deriveJSON defaultOptions{unwrapUnaryRecords=True} ''ComponentName
+--deriveJSON defaultOptions{unwrapUnaryRecords=True} ''ComponentName
+instance ToJSON ComponentName where
+    toJSON = toJSON . unCompName
+instance FromJSON ComponentName where
+    parseJSON (String s) = pure $ ComponentName s
+    parseJSON _          = mzero
 
 data ComponentType = Library | Executable | Test | BenchMark
     deriving (Show,Read,Eq,Ord,Bounded,Enum,Typeable,Data)
@@ -133,13 +153,18 @@ deriveSafeCopy 0 'base ''URL
 instance IsString URL where
   fromString = URL . pack
 
-deriveJSON defaultOptions{unwrapUnaryRecords=True} ''URL
+--deriveJSON defaultOptions{unwrapUnaryRecords=True} ''URL
+instance ToJSON URL where
+    toJSON = toJSON . unURLName
+instance FromJSON URL where
+    parseJSON (String s) = pure $ URL s
+    parseJSON _          = mzero
 
 data URLs = URLs
   { uSrcURL :: !(Maybe URL)
   , uDocURL :: !(Maybe URL)
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
-  
+
 deriveSafeCopy 0 'base ''URLs
 
 deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''URLs
@@ -147,7 +172,7 @@ deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''URLs
 instance Default URLs where
   def = URLs Nothing Nothing
 
-data PackageKey = PackageKey 
+data PackageKey = PackageKey
   { pkgName       :: !PackageName
   , pkgVersion    :: !Version
   , pkgLocal      :: !Local
@@ -165,7 +190,7 @@ deriveSafeCopy 0 'base ''PackageRef
 deriveJSON defaultOptions{fieldLabelModifier=jsonField 2} ''PackageRef
 
 instance Ord PackageRef where
-  compare (PackageRef name1 range1) (PackageRef name2 range2) = 
+  compare (PackageRef name1 range1) (PackageRef name2 range2) =
     case compare name1 name2 of
       EQ -> compare (show range1) (show range2)
       c  -> c
@@ -193,36 +218,85 @@ newtype ModuleName = ModuleName {unModName :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''ModuleName
-deriveJSON defaultOptions{unwrapUnaryRecords=True} ''ModuleName
+--deriveJSON defaultOptions{unwrapUnaryRecords=True} ''ModuleName
+instance ToJSON ModuleName where
+    toJSON = toJSON . unModName
+instance FromJSON ModuleName where
+    parseJSON (String s) = pure $ ModuleName s
+    parseJSON _          = mzero
 
 instance IsString ModuleName where
   fromString = ModuleName . pack
 
+
+data Location = Location
+  { lLine   :: !Int
+  , lColumn :: !Int
+  } deriving (Show,Read,Eq,Ord,Typeable,Data)
+
+
+deriveSafeCopy 0 'base ''Location
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''Location
+
+data MarkerLevel = MLError | MLWarning | MLInfo
+  deriving (Show,Read,Eq,Ord,Typeable,Data,Bounded,Enum)
+
+deriveSafeCopy 0 'base ''MarkerLevel
+deriveJSON defaultOptions ''MarkerLevel
+
+data Marker = Marker
+  { mText :: Text
+  , mLevel :: MarkerLevel
+  , mLocation :: Location
+  } deriving (Show,Read,Eq,Ord,Typeable,Data)
+
+deriveSafeCopy 0 'base ''Marker
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''Marker
+
+
 newtype DeclName = DeclName {unDeclName :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
 
-deriveSafeCopy 0 'base ''DeclName
-deriveJSON defaultOptions{unwrapUnaryRecords=True} ''DeclName
 
-data DeclType = DeclData | DeclNewType | DeclClass | DeclInstance | DeclType 
+deriveSafeCopy 0 'base ''DeclName
+--deriveJSON defaultOptions{unwrapUnaryRecords=True} ''DeclName
+instance ToJSON DeclName where
+    toJSON = toJSON . unDeclName
+instance FromJSON DeclName where
+    parseJSON (String s) = pure $ DeclName s
+    parseJSON _          = mzero
+
+instance IsString DeclName where
+  fromString = DeclName . pack
+
+data DeclType = DeclData | DeclNewType | DeclClass | DeclInstance | DeclType
     | DeclDataFamily | DeclTypeFamily | DeclDataInstance | DeclTypeInstance
     deriving (Show, Read, Eq, Ord, Bounded,Enum,Typeable,Data)
 
 deriveSafeCopy 0 'base ''DeclType
 
-deriveJSON defaultOptions{unwrapUnaryRecords=True} ''DeclType
+deriveJSON defaultOptions ''DeclType
+
+
+data Decl = Decl
+  { dName :: DeclName
+  , dType :: DeclType
+  , dSignature :: Text
+  , dDoc  :: Doc
+  } deriving (Show,Read,Eq,Ord,Typeable,Data)
+
+deriveSafeCopy 0 'base ''Decl
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''Decl
 
 data WriteDate = WriteDate
   { wdCreated :: UTCTime
   , wdUpdated :: UTCTime
   } deriving (Show, Read, Eq, Ord, Typeable,Data)
-  
+
 
 deriveSafeCopy 0 'base ''WriteDate
 
-
-
-data Package = Package 
+data Package = Package
   { pkgKey        :: !PackageKey
   , pkgDoc        :: !Doc
   , pkgMeta       :: !PackageMetaData
@@ -233,7 +307,7 @@ deriveSafeCopy 0 'base ''Package
 deriveJSON defaultOptions{fieldLabelModifier=jsonField 3} ''Package
 
 
-data ModuleKey = ModuleKey 
+data ModuleKey = ModuleKey
   { modName       :: ModuleName
   , modPackageKey :: PackageKey
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
@@ -244,6 +318,7 @@ deriveJSON defaultOptions{fieldLabelModifier=jsonField 3} ''ModuleKey
 data ModuleInclusion = ModuleInclusion
   { miComponent :: ComponentName
   , miExpose    :: Expose
+  , miMarkers   :: Maybe [Marker]
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''ModuleInclusion
@@ -270,35 +345,43 @@ data FullPackage = FullPackage
 deriveSafeCopy 0 'base ''FullPackage
 deriveJSON defaultOptions{fieldLabelModifier=jsonField 2} ''FullPackage
 
-instance Indexable Component where
-  empty = ixSet
-    [ ixFun $ \c -> [ cPackageKey $ cKey c ]
-    , ixFun $ \c -> [ cKey c ]
-    , ixFun $ \c -> Prelude.map prName $ cRefs c
-    ]
+type ComponentIxs = '[PackageKey, ComponentKey,PackageName]
+type IxComponent  = IxSet ComponentIxs Component
+
+instance Indexable ComponentIxs Component where
+  indices = ixList
+    (ixFun $ \c -> [ cPackageKey $ cKey c ])
+    (ixFun $ \c -> [ cKey c ])
+    (ixFun $ \c -> Prelude.map prName $ cRefs c)
 
 
-instance Indexable Package where
-  empty = ixSet
-    [ ixFun $ \pkg -> [ pkgKey pkg ]
-    , ixFun $ \pkg -> [ pkgName $ pkgKey pkg ]
-    , ixFun $ \pkg -> [ pkgLocal $ pkgKey pkg ]
-    , ixFun $ \pkg -> [ textToPackageNameCI $ unPkgName $ pkgName $ pkgKey pkg ]
-    ]
-    
-instance Indexable Module where
-  empty = ixSet
-    [ ixFun $ \mo -> [ modPackageKey $ modKey mo ]
-    , ixFun $ \mo -> Prelude.map ((ComponentKey $ modPackageKey $ modKey mo) . miComponent) $ modComponents mo 
-    , ixFun $ \mo -> [ modName $ modKey mo ]
-    , ixFun $ \mo -> [ modKey mo ]
-    ]  
+type PackageIxs = '[PackageKey, PackageName, Local, PackageNameCI]
+type IxPackage  = IxSet PackageIxs Package
+
+instance Indexable PackageIxs Package where
+  indices = ixList
+    (ixFun $ \pkg -> [ pkgKey pkg ])
+    (ixFun $ \pkg -> [ pkgName $ pkgKey pkg ])
+    (ixFun $ \pkg -> [ pkgLocal $ pkgKey pkg ])
+    (ixFun $ \pkg -> [ textToPackageNameCI $ unPkgName $ pkgName $ pkgKey pkg ])
+
+
+type ModuleIxs = '[PackageKey, ComponentKey, ModuleName, ModuleKey]
+type IxModule  = IxSet ModuleIxs Module
+
+instance Indexable ModuleIxs Module where
+  indices = ixList
+    (ixFun $ \mo -> [ modPackageKey $ modKey mo ])
+    (ixFun $ \mo -> Prelude.map ((ComponentKey $ modPackageKey $ modKey mo) . miComponent) $ modComponents mo)
+    (ixFun $ \mo -> [ modName $ modKey mo ])
+    (ixFun $ \mo -> [ modKey mo ])
+
 
 data Database = Database
-  { dPackages :: IxSet Package
-  , dComponents :: IxSet Component
-  , dModules  :: IxSet Module
-  } deriving (Data, Typeable)
+  { dPackages :: IxPackage
+  , dComponents :: IxComponent
+  , dModules  :: IxModule
+  } deriving (Typeable)
 
 deriveSafeCopy 0 'base ''Database
 

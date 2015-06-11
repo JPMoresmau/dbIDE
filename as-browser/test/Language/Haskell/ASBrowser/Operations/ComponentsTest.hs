@@ -12,12 +12,12 @@ import Test.Tasty.HUnit
 
 import Data.Acid
 import Data.Default
-import Data.IxSet
+import Data.IxSet.Typed
 import Data.List
 import Distribution.Version
 
 componentTests :: TestTree
-componentTests = testGroup "Component Tests" 
+componentTests = testGroup "Component Tests"
   [ testCase "Write/Get/Delete" $
       withTestAcid $ \acid -> do
         mod1 <- update acid $ WriteComponent testComp1
@@ -48,7 +48,7 @@ componentTests = testGroup "Component Tests"
         mods2 <- query acid $ FindComponentsUsing "text"
         toList mods2 @?= [testComp1]
   ]
-  
+
 testCompKey1 :: ComponentKey
 testCompKey1 = ComponentKey testPkgKey1 ""
 

@@ -13,11 +13,11 @@ import Test.Tasty.HUnit
 
 import Data.Acid
 import Data.Default
-import Data.IxSet
+import Data.IxSet.Typed
 import Data.List
 
 moduleTests :: TestTree
-moduleTests = testGroup "Module Tests" 
+moduleTests = testGroup "Module Tests"
   [ testCase "Write/Get/Delete" $
       withTestAcid $ \acid -> do
         mod1 <- update acid $ WriteModule testMod1
@@ -53,27 +53,27 @@ moduleTests = testGroup "Module Tests"
         mods3 <- query acid $ FindModules [] "Test.M"
         toList mods3 @?= [testMod1,testMod2]
   , testCase "Merge" $ do
-      let 
+      let
           urls=URLs (Just $ URL "u1") Nothing
-          testMod1' = Module testModKey1 def [ModuleInclusion (cName testCompKey2) Included] urls
+          testMod1' = Module testModKey1 def [ModuleInclusion (cName testCompKey2) Included Nothing] urls
           merged = mergeModules [testMod1,testMod1']
-      merged @?= [Module testModKey1 def [ModuleInclusion (cName testCompKey1) Exposed,ModuleInclusion (cName testCompKey2) Included] urls]
+      merged @?= [Module testModKey1 def [ModuleInclusion (cName testCompKey1) Exposed Nothing,ModuleInclusion (cName testCompKey2) Included Nothing] urls]
   ]
-  
+
 testModKey1 :: ModuleKey
 testModKey1 = ModuleKey "Test.Module1" testPkgKey1
 
 testMod1 :: Module
-testMod1 = Module testModKey1 def [ModuleInclusion (cName testCompKey1) Exposed] def
+testMod1 = Module testModKey1 def [ModuleInclusion (cName testCompKey1) Exposed Nothing] def
 
 testModKey2 :: ModuleKey
 testModKey2 = ModuleKey "Test.Module2" testPkgKey1
 
 testMod2 :: Module
-testMod2 = Module testModKey2 def  [ModuleInclusion (cName testCompKey2) Exposed] def
+testMod2 = Module testModKey2 def  [ModuleInclusion (cName testCompKey2) Exposed Nothing] def
 
 testModKey3 :: ModuleKey
 testModKey3 = ModuleKey "Test.Utils" testPkgKey1
 
 testMod3 :: Module
-testMod3 = Module testModKey3 def [ModuleInclusion (cName testCompKey1) Exposed] def
+testMod3 = Module testModKey3 def [ModuleInclusion (cName testCompKey1) Exposed Nothing] def

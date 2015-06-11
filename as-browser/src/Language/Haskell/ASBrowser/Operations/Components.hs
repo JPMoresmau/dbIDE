@@ -5,7 +5,7 @@ import Control.Arrow ((***))
 import Control.Monad.Reader
 import Control.Monad.State
 import Data.Acid
-import Data.IxSet
+import Data.IxSet.Typed
 
 import qualified Data.Text as T
 
@@ -22,18 +22,18 @@ deleteComponent :: ComponentKey -> Update Database ()
 deleteComponent key = do
   db@Database{..} <- get
   put $ db{dComponents=deleteIx key dComponents}
-  
+
 getComponent :: ComponentKey -> Query Database (Maybe Component)
-getComponent key = do 
+getComponent key = do
   Database{..} <- ask
   return $ getOne $ dComponents @= key
-  
-listComponents :: PackageKey -> Query Database (IxSet Component)
+
+listComponents :: PackageKey -> Query Database IxComponent
 listComponents key = do
   Database{..} <- ask
   return $ dComponents @= key
 
-findComponentsUsing :: PackageName -> Query Database (IxSet Component)
+findComponentsUsing :: PackageName -> Query Database IxComponent
 findComponentsUsing key = do
   Database{..} <- ask
   return $ dComponents @= key

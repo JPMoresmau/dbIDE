@@ -18,11 +18,11 @@ import Data.Attoparsec.ByteString.Lazy as L
 import Control.Monad
 
 typesTests :: TestTree
-typesTests = testGroup "Types Tests" 
+typesTests = testGroup "Types Tests"
   [ testCase "IsString tests" $ do
       fromString "0.12.3" @?= Version [0,12,3] []
       fromString "acid-state"  @?= PackageName "acid-state"
-  , testGroup "JSON round trip" 
+  , testGroup "JSON round trip"
       [ QC.testProperty "PackageName" (roundTripJSON:: PackageName -> Bool)
       , QC.testProperty "PackageNameCI" (roundTripJSON:: PackageNameCI -> Bool)
       , QC.testProperty "Version" (roundTripJSON:: Version -> Bool)
@@ -40,15 +40,15 @@ typesTests = testGroup "Types Tests"
       , QC.testProperty "PackageRef" (roundTripJSON:: PackageRef -> Bool)
       , QC.testProperty "ComponentKey" (roundTripJSON:: ComponentKey -> Bool)
       , QC.testProperty "Component" (roundTripJSON:: Component -> Bool)  
-      , QC.testProperty "Package" (roundTripJSON:: Package -> Bool)          
+      , QC.testProperty "Package" (roundTripJSON:: Package -> Bool)
       , QC.testProperty "ModuleKey" (roundTripJSON:: ModuleKey -> Bool)
-      , QC.testProperty "ModuleInclusion" (roundTripJSON:: ModuleInclusion -> Bool)  
-      , QC.testProperty "Module" (roundTripJSON:: Module -> Bool)          
+      , QC.testProperty "ModuleInclusion" (roundTripJSON:: ModuleInclusion -> Bool)
+      , QC.testProperty "Module" (roundTripJSON:: Module -> Bool)
       , QC.testProperty "FullPackage" (roundTripJSON:: FullPackage -> Bool)
-            
+
       ]
   ]
-  
+
 
 roundTripJSON :: (FromJSON a, ToJSON a,Eq a) => a -> Bool
 roundTripJSON i =
@@ -60,7 +60,7 @@ roundTripJSON i =
 
 instance Arbitrary PackageName where
   arbitrary = PackageName <$> arbitrary
-  
+
 instance Arbitrary PackageNameCI where
   arbitrary = PackageNameCI <$> arbitrary
 
@@ -70,7 +70,7 @@ instance Arbitrary Version where
     Version <$> (vectorOf n $ suchThat arbitrary (>=0)) <*> pure [] -- no tags
 
 instance Arbitrary VersionRange where
-  arbitrary = simplifyVersionRange <$> oneof 
+  arbitrary = simplifyVersionRange <$> oneof
     [ return anyVersion
     , return noVersion
     , thisVersion <$> arbitrary
@@ -93,32 +93,32 @@ simpleVersionRange = simplifyVersionRange <$> elements
 
 
 instance Arbitrary ComponentName where
-  arbitrary = ComponentName <$> arbitrary 
+  arbitrary = ComponentName <$> arbitrary
 
 instance Arbitrary ComponentType where
   arbitrary = elements [minBound..maxBound]
-  
+
 instance Arbitrary ModuleName where
   arbitrary = ModuleName <$> arbitrary
 
 instance Arbitrary DeclName where
   arbitrary = DeclName <$> arbitrary
-  
+
 instance Arbitrary DeclType where
-  arbitrary = elements [minBound..maxBound] 
+  arbitrary = elements [minBound..maxBound]
 
 
 instance Arbitrary Local where
   arbitrary = elements [minBound..maxBound]
-  
+
 
 instance Arbitrary Expose where
   arbitrary = oneof [return Exposed,return Included,Main <$> arbitrary]
- 
+
 
 instance Arbitrary PackageMetaData where
   arbitrary = PackageMetaData <$> arbitrary
-  
+
 
 instance Arbitrary Doc where
   arbitrary = Doc <$> arbitrary <*> arbitrary
@@ -130,19 +130,19 @@ instance Arbitrary PackageRef where
   arbitrary = PackageRef <$> arbitrary <*> arbitrary
 
 instance Arbitrary ComponentKey where
-  arbitrary = ComponentKey <$> arbitrary <*> arbitrary  
+  arbitrary = ComponentKey <$> arbitrary <*> arbitrary
 
 instance Arbitrary Component where
   arbitrary = Component <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
 
 instance Arbitrary Package where
   arbitrary = Package <$> arbitrary <*> arbitrary <*> arbitrary  <*> arbitrary
-  
+
 instance Arbitrary ModuleKey where
-  arbitrary = ModuleKey <$> arbitrary <*> arbitrary  
+  arbitrary = ModuleKey <$> arbitrary <*> arbitrary
 
 instance Arbitrary ModuleInclusion where
-  arbitrary = ModuleInclusion <$> arbitrary <*> arbitrary  
+  arbitrary = ModuleInclusion <$> arbitrary <*> arbitrary <*> pure Nothing
 
 instance Arbitrary Module where
   arbitrary = do
@@ -150,7 +150,7 @@ instance Arbitrary Module where
     Module <$> arbitrary <*> arbitrary <*> (vectorOf m arbitrary) <*> arbitrary
 
 instance Arbitrary URLs where
-  arbitrary = URLs <$> arbitrary <*> arbitrary  
+  arbitrary = URLs <$> arbitrary <*> arbitrary
 
 instance Arbitrary URL where
   arbitrary = URL <$> arbitrary
@@ -159,4 +159,4 @@ instance Arbitrary FullPackage where
   arbitrary = do
     m <- choose (1, 4) :: Gen Int
     n <- choose (1, 10) :: Gen Int
-    FullPackage <$> arbitrary <*> (vectorOf m arbitrary) <*> (vectorOf n arbitrary) 
+    FullPackage <$> arbitrary <*> (vectorOf m arbitrary) <*> (vectorOf n arbitrary)

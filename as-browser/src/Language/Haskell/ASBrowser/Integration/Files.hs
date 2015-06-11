@@ -3,7 +3,6 @@ module Language.Haskell.ASBrowser.Integration.Files where
 import System.FilePath
 import System.Directory
 
-import Control.Applicative
 import Control.Exception
 
 import qualified Codec.Archive.Tar as Tar
@@ -24,7 +23,7 @@ unTarGzipTemp res f = do
               f tmpDir)
 
 unTarGzFileMap :: FilePath -> (FilePath -> BS.ByteString -> IO a) -> IO [a]
-unTarGzFileMap res f = 
+unTarGzFileMap res f =
   walk =<< return . Tar.read . GZip.decompress =<< BS.readFile res
   where
     walk Tar.Done = return []
@@ -34,9 +33,9 @@ unTarGzFileMap res f =
         Tar.NormalFile bs _ -> do
           r <- f (Tar.entryPath e) bs
           (r:) <$> walk es
-        _ -> walk es     
-       
-unTarGzFileParMap :: FilePath -> (FilePath -> BS.ByteString -> IO a) -> IO [a] 
+        _ -> walk es
+
+unTarGzFileParMap :: FilePath -> (FilePath -> BS.ByteString -> IO a) -> IO [a]
 unTarGzFileParMap res f = do
   cnts <- BS.readFile res
   let ungzip  = GZip.decompress cnts
@@ -44,8 +43,8 @@ unTarGzFileParMap res f = do
       acts = Tar.foldEntries toAct [] (const []) entries
   n <- getNumCapabilities
   withPool n $ \pool -> parallelInterleaved pool acts
-  where 
-    toAct e ls =  
+  where
+    toAct e ls =
       case Tar.entryContent e of
         Tar.NormalFile bs _ -> f (Tar.entryPath e) bs : ls
         _ -> ls
@@ -73,8 +72,8 @@ unTarGzip res folder = do
 getSubDirs :: FilePath -> IO [FilePath]
 getSubDirs folder =
   filterM isDir =<< getDirectoryContents folder
-  where 
-    isDir d = 
+  where
+    isDir d =
       if d `notElem` [".",".."]
           then doesDirectoryExist $ folder </> d
           else return False

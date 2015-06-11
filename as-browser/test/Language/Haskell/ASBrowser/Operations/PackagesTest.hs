@@ -12,12 +12,12 @@ import Test.Tasty.HUnit
 
 import Data.Acid
 import Data.Default
-import Data.IxSet
+import Data.IxSet.Typed
 import Data.List
 import Distribution.Version
 
 packageTests :: TestTree
-packageTests = testGroup "Package Tests" 
+packageTests = testGroup "Package Tests"
   [ testCase "Write/Get/Delete" $
       withTestAcid $ \acid -> do
         pkg1 <- update acid $ WritePackage testPkg1
@@ -117,9 +117,9 @@ packageTests = testGroup "Package Tests"
         pks <- query acid $ ListByLocal Packaged
         toList pks @?= [testPkg1]
   ]
-  
 
-  
+
+
 testPkgKey1 :: PackageKey
 testPkgKey1 = PackageKey "pkg1" "0.0.1" Packaged
 
