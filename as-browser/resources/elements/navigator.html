@@ -1,13 +1,13 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/core-list/core-list.html">
-<link rel="import" href="../bower_components/core-ajax/core-ajax.html">
+<!--link rel="import" href="../bower_components/iron-list/iron-list.html"-->
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
-<link rel="import" href="../bower_components/core-signals/core-signals.html">
-<link rel="import" href="../bower_components/core-icon/core-icon.html">
+<link rel="import" href="../bower_components/iron-signals/iron-signals.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="nav_package.html">
 <link rel="import" href="nav_module.html">
 
-<polymer-element name="as-navigator">
+<dom-module id="as-navigator">
   <template>
   	<link rel="stylesheet" type="text/css" href="../style/as-browser.css">
   	<template id="pkgTemplate">
@@ -20,39 +20,61 @@
   	</template>
   	<template id="rootTemplate">
   			
-  			<div class="link" on-click="{{selectedRoot}}">
-  				<core-icon src="../images/haskell.png" class="small" alt="All Packages"></core-icon>
+  			<div class="link" on-click="selectedRoot">
+  				<iron-icon src="../images/haskell.png" class="small" alt="All Packages"></iron-icon>
   				<span>All Packages</span></div>
   	</template>
   	
 		<div vertical style="height:100%">
-	  	<core-ajax url="/json/packages" response="{{data}}" handleAs="json" id="ajax"></core-ajax>
-	  	<core-signals on-core-signal-selected-package="{{selectedPackage}}"></core-signals>
+	  	<iron-ajax url="/json/packages" on-response="handleResponse" handleAs="json" id="ajax"></iron-ajax>
+	  	<iron-signals on-iron-signal-selected-package="selectedPackage"></iron-signals>
 	  	
 	  	<div horizontal layout>
-	  		<template repeat="{{c in crumbs}}">
-	  			<div>
-	  			<template bind="{{c as model}}" ref="{{c.root?'rootTemplate':(c.key.packagekey?'modlTemplate':'pkgTemplate')}}">
-				    </template>
-					</div>
-	  		</template>
+	  	    <template is="dom-repeat" items="{{crumbs}}">
+	  	     <template is="dom-if" if="{{!item.key}}">
+	 	        	<div class="link" on-click="selectedRoot">
+  				<iron-icon src="../images/haskell.png" class="small" alt="All Packages"></iron-icon>
+  				<span>All Packages</span></div>
+	 	        </template>
+			 <template is="dom-if" if="{{isModule(item)}}">
+	 	        	<as-nav-module modl="{{item}}">
+		                </as-nav-module>
+	 	        </template>
+	 	         <template is="dom-if" if="{{isPackage(item)}}">
+	 	        	<as-nav-package pkg="{{item}}">
+		                </as-nav-package>
+	 	        </template>
+
+	  	     </template>
 	  	</div>
 	  	
-	  	<paper-input label="Type name prefix" value="{{filt}}" id="prefixFilter" style="width:100%"></paper-input>
-		  <core-list data="{{data | keyNameStartsWith(filt) | keyNameSort()}}" height="20" style="height:100%" id="list">
+	  	<paper-input label="Type name prefix" value="{{filt::input}}" id="prefixFilter" style="width:100%"></paper-input>
+		 <!--<iron-list data="{{data | keyNameStartsWith(filt) | keyNameSort()}}" height="20" style="height:100%" id="list">
 		    	<template>
         	<div>
           	<template bind ref="{{model.key.packagekey?'modlTemplate':'pkgTemplate'}}">
 				    </template>
 				   </div>
 				   </template>
-	 	  </core-list>
-		   
+	 	  </iron-list>-->
+	 	  <template is="dom-repeat" items="{{data}}" filter="{{keyNameStartsWith(filt)}}" sort="keyNameSort" id="list">
+	 	        <template is="dom-if" if="{{isModule(item)}}">
+	 	        	<as-nav-module modl="{{item}}">
+		                </as-nav-module>
+	 	        </template>
+	 	         <template is="dom-if" if="{{isPackage(item)}}">
+	 	        	<as-nav-package pkg="{{item}}">
+		                </as-nav-package>
+	 	        </template>
+
+	          </template>
+		
     </div>
 
   </template>
   <script>
 	Polymer({
+		is:"as-navigator",
 		filt:"",
 		filtersByLevel:["",""],
 		currentLevel:0,
@@ -61,23 +83,21 @@
 				root:true
 			}],
 		ready: function(){
-			this.$.ajax.go();
+			this.$.ajax.generateRequest();
+			this.crumbs=[{
+				root:true
+			}];
 		},
-		keyNameStartsWith : function (input, prefix) {
-		  if (!input || !prefix){
-			  return input;
-		  }
-			return input.filter(function(item){
-		    return item.key.name.toLowerCase().startsWith(prefix.toLowerCase());
-		  });
-		},
-		keyNameSort : function (input){
-			if (!input){
-				return input;
-			}
-			return input.sort(function(a,b){
-				return a.key.name.localeCompare(b.key.name);
-			});
+		keyNameStartsWith : function(filt){
+		  return function (item) {
+		      if (!filt){
+		        return true;
+		      }
+		      return item.key.name.toLowerCase().startsWith(filt.toLowerCase());
+		    }
+		   },
+		keyNameSort : function (a,b){
+			return a.key.name.localeCompare(b.key.name);
 		},
 		resetCrumbs : function(level){
 			if (this.currentLevel==level){
@@ -85,17 +105,20 @@
 			}
 			this.filtersByLevel[this.currentLevel]=this.filt;
 			while (this.crumbs.length>Math.max(1,level)){
-				this.crumbs.pop();
+				this.pop('crumbs');
 			}
 			this.filt=this.filtersByLevel[level];
 			this.currentLevel=level;
 		},
 		reload : function(url,params){
 			var aj=this.$.ajax;
-			aj.abort();
+			var reqs=aj.activeRequests;
+			reqs.forEach(function (r){
+			    aj.discardRequest(r);
+			});
 			aj.params=params;
 			aj.url=url;
-			aj.go();
+			aj.generateRequest();
 		},
 		selectedRoot : function (){
 			this.resetCrumbs(0);
@@ -103,10 +126,19 @@
 		},
 		selectedPackage : function (e, detail, sender){
 			this.resetCrumbs(1);
-			this.crumbs.push(detail);
-			var s=JSON.stringify({"key":JSON.stringify(detail.key)});
+			this.push('crumbs',detail);
+			var s={"key":JSON.stringify(detail.key)};
 			this.reload("/json/modules",s);
+		},
+		handleResponse : function (e){
+		    this.data=e.detail.response.slice(0,5);
+		},
+		isModule : function (item){
+		    return item.key && item.key.packagekey;
+		},
+		isPackage : function (item){
+		    return item.key && !item.key.packagekey;
 		}
 	});
   </script>
-</polymer-element>
+</dom-module>

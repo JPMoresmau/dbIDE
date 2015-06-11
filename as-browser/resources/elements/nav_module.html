@@ -1,30 +1,37 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/core-icon/core-icon.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 
 
-<polymer-element name="as-nav-module" attributes="modl">
+<dom-module id="as-nav-module">
 	<template>
 		<link rel="stylesheet" type="text/css" href="../style/as-browser.css">
 		<template id="withDoc">
-			<a href="{{modl.urls.docurl}}" target="_new"><core-icon src="../images/module.png" class="small" title="Docs at {{modl.urls.docurl}}" alt="Module with documentation"></core-icon></a>
+			<a href="{{modl.urls.docurl}}" target="_new"><iron-icon src="../images/module.png" class="small" title="Docs at {{modl.urls.docurl}}" alt="Module with documentation"></iron-icon></a>
 		</template>
 		<template id="withoutDoc">
-			<core-icon src="../images/module_gs.png" class="small" alt="Module without documentation"></core-icon>
+			<iron-icon src="../images/module_gs.png" class="small" alt="Module without documentation"></iron-icon>
 		</template>
 		<div title="{{modl.key.name}}" layout horizontal>
-			<template bind="{{}}" ref="{{modl.urls.docurl?'withDoc':'withoutDoc'}}">
-			</template>
-			<span on-click="{{selectModl}}" flex>
-				{{modl.key.name}}
-			</span>
+		 <template is="dom-if" if="{{modl.urls.docurl}}">
+		   	<a href="{{modl.urls.docurl}}" target="_new"><iron-icon src="../images/module.png" class="small" title="Docs at {{modl.urls.docurl}}" alt="Module with documentation"></iron-icon></a>
+		 </template>
+		   <template is="dom-if" if="{{!modl.urls.docurl}}">
+		    	<iron-icon src="../images/module_gs.png" class="small" alt="Module without documentation"></iron-icon>
+		    </template>
+
+			<span on-click="selectModl" flex>{{modl.key.name}}</span>
 		</div>
 	</template>
 	<script>
 	Polymer({
+	        is:"as-nav-module",
 		modl:{},
 		selectModl:function(){
-		  this.fire('core-signal', {name: "selected-module", data: this.modl.key});
-	  }
+		  this.fire('iron-signal', {name: "selected-module", data: this.modl.key});
+		}
+	        , properties: {
+                  modl: { type: Object }
+                }
 	});
 	</script>
 </polymer-element>

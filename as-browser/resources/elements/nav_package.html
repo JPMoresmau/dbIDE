@@ -1,31 +1,33 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/core-icon/core-icon.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 
 
-<polymer-element name="as-nav-package" attributes="pkg">
+<dom-module id="as-nav-package">
 	<template>
 		<link rel="stylesheet" type="text/css" href="../style/as-browser.css">
-		<template id="withDoc">
-			<a href="{{pkg.docurl}}" target="_new"><core-icon src="../images/package.png" class="small" title="Docs at {{pkg.docurl}}" alt="Package with documentation"></core-icon></a>
-		</template>
-		<template id="withoutDoc">
-			<core-icon src="../images/package_gs.png" class="small" alt="Package without documentation"></core-icon>
-		</template>
-
+		
+		
 		<div title="{{pkg.doc.short}}" layout horizontal>
-			<template bind="{{}}" ref="{{pkg.docurl?'withDoc':'withoutDoc'}}">
-			</template>
-			<span on-click="{{selectPkg}}" class="link" flex>
-				{{pkg.key.name}}
-			</span>
+		    <template is="dom-if" if="{{pkg.docurl}}">
+		        <a href="{{pkg.docurl}}" target="_new"><iron-icon src="../images/package.png" class="small" title="Docs at {{pkg.docurl}}" alt="Package with documentation"></iron-icon></a>
+		    </template>
+		    <template is="dom-if" if="{{!pkg.docurl}}">
+		        <iron-icon src="../images/package_gs.png" class="small" alt="Package without documentation"></iron-icon>
+		    </template>
+		
+		<span on-click="selectPkg" class="link" flex>{{pkg.key.name}}</span>
 		</div>
 	</template>
 	<script>
 		Polymer({
+		        is:"as-nav-package",
 			pkg:{},
 		  selectPkg:function(){
-			  this.fire('core-signal', {name: "selected-package", data: this.pkg});
-		  }
+			  this.fire('iron-signal', {name: "selected-package", data: this.pkg});
+		  },
+		  properties: {
+                      pkg: { type: Object }
+                    }
 		});
 	</script>
-</polymer-element>
+</dom-module>
