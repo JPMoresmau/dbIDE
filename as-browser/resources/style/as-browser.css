@@ -12,3 +12,7 @@
             font-family: Haskell;
             color: #453a62;
             }
+
+.top_input {
+    --paper-input-container-focus-color:#453a62;
+}

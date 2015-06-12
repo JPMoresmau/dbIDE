@@ -7,7 +7,7 @@
 	<template>
 		<div title="{{modl.key.name}}" layout horizontal style="white-space: nowrap;">
 		 <template is="dom-if" if="{{modl.urls.docurl}}">
-		   	<a href="{{modl.urls.docurl}}" target="_new"><iron-icon src="../images/module_flat.png" class="small" title="Docs at {{modl.urls.docurl}}" alt="Module with documentation"></iron-icon></a>
+		   	<a href="{{modl.urls.docurl}}" target="_new"><iron-icon src="../images/module_flat.png" class="small" title="{{docs()}}" alt="Module with documentation"></iron-icon></a>
 		 </template>
 		 <template is="dom-if" if="{{!modl.urls.docurl}}">
 		    	<iron-icon src="../images/module_flat_gs.png" class="small" alt="Module without documentation"></iron-icon>
@@ -24,7 +24,8 @@
 		}
 	        , properties: {
                   modl: { type: Object }
-                }
+                },
+                docs:function(){return "Module docs at " + this.modl.urls.docurl;}
 	});
 	</script>
 </polymer-element>
