@@ -271,6 +271,7 @@ instance IsString DeclName where
 
 data DeclType = DeclData | DeclNewType | DeclClass | DeclInstance | DeclType
     | DeclDataFamily | DeclTypeFamily | DeclDataInstance | DeclTypeInstance
+    | DeclFunction
     deriving (Show, Read, Eq, Ord, Bounded,Enum,Typeable,Data)
 
 deriveSafeCopy 0 'base ''DeclType

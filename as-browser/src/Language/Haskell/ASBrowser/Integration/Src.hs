@@ -2,19 +2,21 @@
 module Language.Haskell.ASBrowser.Integration.Src where
 
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as LT
 import qualified Data.ByteString.Lazy as LBS
 
-import Control.Applicative
 
 import Text.HTML.DOM (parseLBS)
+import Text.XML hiding (parseLBS)
 import Text.XML.Cursor
 import Network.HTTP.Conduit (simpleHttp)
+
 -- import Language.Haskell.Exts.Annotated as HSE
 
 import Language.Haskell.ASBrowser.Types as ASB
-import Data.Char
-import Data.Maybe
-import Data.String
+
+
+import Debug.Trace
 
 type ModuleParseResult = Either [Marker] (Doc,[ASB.Decl])
 
@@ -61,3 +63,50 @@ getPreContents doc = T.concat $ doc $.// findNodes &| extractData
   where
     findNodes = element "pre" >=> descendant
     extractData = T.concat . content
+
+parseHaddock :: LBS.ByteString -> [Decl]
+parseHaddock bs = let
+    d = parseLBS bs
+    pr = Prologue [] Nothing []
+    in parseHaddock' pr $ fromDocument d
+
+parseHaddock' :: Prologue -> Cursor -> [Decl]
+parseHaddock' pr c = c $.// tops >=> srcs
+    where
+        tops = element "div"
+                       >=> attributeIs "class" "top"
+        srcs s =  do
+            src <- s $/ element "p"
+                       >=> attributeIs "class" "src"
+            ns <- src $/ names
+            let k = src $/ kw
+            let docs = s $/ doc
+            -- let k'= trace (show docs) k
+            let d = docToText docs
+            [Decl (DeclName ns) (kw2Type k) "" d]
+        names =  element "a"
+                      >=> attributeIs "class" "def"
+                      &// content
+        kw = element "span"
+                      >=> attributeIs "class" "keyword"
+                      &// content
+        doc = element "div"
+                >=> attributeIs "class" "doc"
+        kw2Type ("class":_)   = DeclClass
+        kw2Type ["type"]    = DeclType
+        kw2Type ["newtype"] = DeclNewType
+        kw2Type ["data"]    = DeclData
+        kw2Type _         = DeclFunction
+        cToText [n] =  case node n of
+            NodeElement el -> LT.toStrict $ renderText def (Document pr el [])
+            _ -> ""
+        cToText _ = ""
+        docToText [n]     = let
+                ps = n $/ element "p"
+                ps2 = T.concat $ concatMap (\p -> p $// content) $ take 1 ps
+                --ps2 = concatMap (\p-> p &// content) $ take 1 ps
+                -- sh = T.concat ps2
+                t = cToText [n]
+                in Doc ps2 t
+        docToText _      = Doc "" ""
+
