@@ -3,16 +3,15 @@
 
 
 <dom-module id="as-nav-package">
+    <link rel="import" type="css" href="../style/as-browser.css">
+
 	<template>
-		<link rel="stylesheet" type="text/css" href="../style/as-browser.css">
-		
-		
 		<div title="{{pkg.doc.short}}" layout horizontal>
 		    <template is="dom-if" if="{{pkg.docurl}}">
-		        <a href="{{pkg.docurl}}" target="_new"><iron-icon src="../images/package.png" class="small" title="Docs at {{pkg.docurl}}" alt="Package with documentation"></iron-icon></a>
+		        <a href="{{pkg.docurl}}" target="_new"><iron-icon src="../images/package_flat.png" class="small" title="Docs at {{pkg.docurl}}" alt="Package with documentation"></iron-icon></a>
 		    </template>
 		    <template is="dom-if" if="{{!pkg.docurl}}">
-		        <iron-icon src="../images/package_gs.png" class="small" alt="Package without documentation"></iron-icon>
+		        <iron-icon src="../images/package_flat_gs.png" class="small" alt="Package without documentation"></iron-icon>
 		    </template>
 		
 		<span on-click="selectPkg" class="link" flex>{{pkg.key.name}}</span>

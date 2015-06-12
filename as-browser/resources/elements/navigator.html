@@ -8,23 +8,11 @@
 <link rel="import" href="nav_module.html">
 
 <dom-module id="as-navigator">
+
+    <link rel="import" type="css" href="../style/as-browser.css">
+    <link rel="import" type="css" href="../style/haskell.font.css">
   <template>
-  	<link rel="stylesheet" type="text/css" href="../style/as-browser.css">
-  	<template id="pkgTemplate">
-  			 <as-nav-package pkg="{{model}}">
-		      </as-nav-package>
-  	</template>
-  	<template id="modlTemplate">
-  				<as-nav-module modl="{{model}}">
-		      </as-nav-module>
-  	</template>
-  	<template id="rootTemplate">
-  			
-  			<div class="link" on-click="selectedRoot">
-  				<iron-icon src="../images/haskell.png" class="small" alt="All Packages"></iron-icon>
-  				<span>All Packages</span></div>
-  	</template>
-  	
+
 		<div vertical style="height:100%">
 	  	<iron-ajax url="/json/packages" on-response="handleResponse" handleAs="json" id="ajax"></iron-ajax>
 	  	<iron-signals on-iron-signal-selected-package="selectedPackage"></iron-signals>
@@ -33,7 +21,7 @@
 	  	    <template is="dom-repeat" items="{{crumbs}}">
 	  	     <template is="dom-if" if="{{!item.key}}">
 	 	        	<div class="link" on-click="selectedRoot">
-  				<iron-icon src="../images/haskell.png" class="small" alt="All Packages"></iron-icon>
+  				<span class="logo"></span>
   				<span>All Packages</span></div>
 	 	        </template>
 			 <template is="dom-if" if="{{isModule(item)}}">

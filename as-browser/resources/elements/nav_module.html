@@ -3,23 +3,16 @@
 
 
 <dom-module id="as-nav-module">
+    <link rel="import" type="css" href="../style/as-browser.css">
 	<template>
-		<link rel="stylesheet" type="text/css" href="../style/as-browser.css">
-		<template id="withDoc">
-			<a href="{{modl.urls.docurl}}" target="_new"><iron-icon src="../images/module.png" class="small" title="Docs at {{modl.urls.docurl}}" alt="Module with documentation"></iron-icon></a>
-		</template>
-		<template id="withoutDoc">
-			<iron-icon src="../images/module_gs.png" class="small" alt="Module without documentation"></iron-icon>
-		</template>
-		<div title="{{modl.key.name}}" layout horizontal>
+		<div title="{{modl.key.name}}" layout horizontal style="white-space: nowrap;">
 		 <template is="dom-if" if="{{modl.urls.docurl}}">
-		   	<a href="{{modl.urls.docurl}}" target="_new"><iron-icon src="../images/module.png" class="small" title="Docs at {{modl.urls.docurl}}" alt="Module with documentation"></iron-icon></a>
+		   	<a href="{{modl.urls.docurl}}" target="_new"><iron-icon src="../images/module_flat.png" class="small" title="Docs at {{modl.urls.docurl}}" alt="Module with documentation"></iron-icon></a>
 		 </template>
-		   <template is="dom-if" if="{{!modl.urls.docurl}}">
-		    	<iron-icon src="../images/module_gs.png" class="small" alt="Module without documentation"></iron-icon>
-		    </template>
-
-			<span on-click="selectModl" flex>{{modl.key.name}}</span>
+		 <template is="dom-if" if="{{!modl.urls.docurl}}">
+		    	<iron-icon src="../images/module_flat_gs.png" class="small" alt="Module without documentation"></iron-icon>
+		  </template>
+		  <span on-click="selectModl" flex>{{modl.key.name}}</span>
 		</div>
 	</template>
 	<script>

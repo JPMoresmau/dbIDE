@@ -2,7 +2,13 @@
     	height: 16px;
     	width: 16px;
   	}
-  	
+
 .link {
 	cursor:pointer;
 }
+
+
+.logo {
+            font-family: Haskell;
+            color: #453a62;
+            }
