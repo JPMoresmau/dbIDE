@@ -39,7 +39,7 @@ typesTests = testGroup "Types Tests"
       , QC.testProperty "PackageKey" (roundTripJSON:: PackageKey -> Bool)
       , QC.testProperty "PackageRef" (roundTripJSON:: PackageRef -> Bool)
       , QC.testProperty "ComponentKey" (roundTripJSON:: ComponentKey -> Bool)
-      , QC.testProperty "Component" (roundTripJSON:: Component -> Bool)  
+      , QC.testProperty "Component" (roundTripJSON:: Component -> Bool)
       , QC.testProperty "Package" (roundTripJSON:: Package -> Bool)
       , QC.testProperty "ModuleKey" (roundTripJSON:: ModuleKey -> Bool)
       , QC.testProperty "ModuleInclusion" (roundTripJSON:: ModuleInclusion -> Bool)
@@ -136,7 +136,7 @@ instance Arbitrary Component where
   arbitrary = Component <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
 
 instance Arbitrary Package where
-  arbitrary = Package <$> arbitrary <*> arbitrary <*> arbitrary  <*> arbitrary
+  arbitrary = Package <$> arbitrary <*> arbitrary <*> arbitrary  <*> arbitrary  <*> arbitrary
 
 instance Arbitrary ModuleKey where
   arbitrary = ModuleKey <$> arbitrary <*> arbitrary

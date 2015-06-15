@@ -4,6 +4,7 @@
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/iron-signals/iron-signals.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="nav_package.html">
 <link rel="import" href="nav_module.html">
 
@@ -15,9 +16,10 @@
   <template>
 
 		<div vertical style="height:100%">
-	  	<iron-ajax url="/json/packages" on-response="handleResponse" handleAs="json" id="ajax"></iron-ajax>
+	  	<iron-ajax url="/json/packages" on-response="handlePackages" handleAs="json" id="ajaxPackages"></iron-ajax>
+	  	<iron-ajax url="/json/modules" on-response="handleModules" handleAs="json" id="ajaxModules"></iron-ajax>
+	  	<iron-ajax url="/json/versions" on-response="handleVersions" handleAs="json" id="ajaxVersions"></iron-ajax>
 	  	<iron-signals on-iron-signal-selected-package="selectedPackage"></iron-signals>
-	  	
 	  	<div horizontal layout>
 	  	    <template is="dom-repeat" items="{{crumbs}}">
 	  	     <template is="dom-if" if="{{!item.key}}">
@@ -33,11 +35,18 @@
 	 	        	<as-nav-package pkg="{{item}}">
 		                </as-nav-package>
 	 	        </template>
-
 	  	     </template>
 	  	</div>
-	  	
+		<template is="dom-if" if="{{versions.length}}">
+		    <span>Version:<select id="versionSelect" on-change="selectedVersion">
+		            <template is="dom-repeat" items="{{versions}}">
+		                <option value="{{item.key}}">{{item.key.version}}</option>
+		            </template>
+		        </select></span>
+		</template>
+		
 	  	<paper-input label="Type name prefix" class="top_input" value="{{filt::input}}" id="prefixFilter" style="width:100%"></paper-input>
+
 		 <!--<iron-list data="{{data | keyNameStartsWith(filt) | keyNameSort()}}" height="20" style="height:100%" id="list">
 		    	<template>
         	<div>
@@ -68,11 +77,13 @@
 		filtersByLevel:["",""],
 		currentLevel:0,
 		data:[],
+		versions:[],
+		currentVersionIdx:0,
 		crumbs:[{
 				root:true
 			}],
 		ready: function(){
-			this.$.ajax.generateRequest();
+			this.reload("ajaxPackages",null);
 			this.crumbs=[{
 				root:true
 			}];
@@ -99,34 +110,61 @@
 			this.filt=this.filtersByLevel[level];
 			this.currentLevel=level;
 		},
-		reload : function(url,params){
-			var aj=this.$.ajax;
+		reload : function(id,params){
+			var aj=this.$[id];
 			var reqs=aj.activeRequests;
 			reqs.forEach(function (r){
-			    aj.discardRequest(r);
+			    aj._discardRequest(r);
 			});
 			aj.params=params;
-			aj.url=url;
 			aj.generateRequest();
 		},
 		selectedRoot : function (){
+		        this.versions=[];
 			this.resetCrumbs(0);
-			this.reload("/json/packages",null);
+			this.reload("ajaxPackages",null);
 		},
 		selectedPackage : function (e, detail, sender){
+		        this.data=[];
 			this.resetCrumbs(1);
 			this.push('crumbs',detail);
 			var s={"key":JSON.stringify(detail.key)};
-			this.reload("/json/modules",s);
+			this.reload("ajaxModules",s);
+			var n={"name":JSON.stringify(detail.key.name)};
+			this.reload("ajaxVersions",n);
 		},
-		handleResponse : function (e){
-		    this.data=e.detail.response.slice(0,5);
+		selectedVersion : function (e){
+		    if (this.versions && this.versions.length){
+		        var sel=this.$$("select#versionSelect");
+		        if (sel && sel.selectedIndex!=this.currentVersionIdx){
+		            this.data=[];
+		            this.currentVersionIdx=sel.selectedIndex;
+		            var detail = this.versions[sel.selectedIndex];
+			    this.resetCrumbs(1);
+			    this.push('crumbs',detail);
+			    var s={"key":JSON.stringify(detail.key)};
+			    this.reload("ajaxModules",s);
+			}
+		    }
 		},
 		isModule : function (item){
-		    return item.key && item.key.packagekey;
+		    return item && item.key && item.key.packagekey;
 		},
 		isPackage : function (item){
-		    return item.key && !item.key.packagekey;
+		    return item && item.key && !item.key.packagekey;
+		},
+		inPackage : function (){
+		    return this.crumbs && this.crumbs.length>0 && this.isPackage(this.crumbs[this.crumbs.length-1]);
+		},
+		handlePackages : function (e){
+	             this.data=e.detail.response.slice(0,10);
+	        },
+	        handleModules : function (e){
+	             this.data=e.detail.response;
+	             var s={"name":JSON.stringify(this.crumbs[this.crumbs.length-1].key.name)};
+	        },
+		handleVersions : function (e){
+		     this.versions=e.detail.response;
 		}
 	});
   </script>

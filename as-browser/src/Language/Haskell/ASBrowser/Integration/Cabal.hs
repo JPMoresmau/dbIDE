@@ -43,7 +43,7 @@ import Language.Haskell.ASBrowser.Operations.Modules
 import Distribution.Version
 import Network.URI hiding (query)
 import Data.Version
-
+import Data.Time.Clock
 
 data CabalRepositories = CabalRepositories
   { crCachePath :: FilePath
@@ -104,20 +104,17 @@ getIndexFile CabalRepositories{..} = do
 
 
 updateFromCabal ::  AcidState Database -> IO ()
-updateFromCabal acid = do
+updateFromCabal acid =
   processIdx =<< idxFile =<< getCabalRepositories
   where
-    idxFile Nothing = return Nothing
-    idxFile (Just rep) = do
-      idxf <- getIndexFile rep
-      return $ Just (rep,idxf)
     processIdx Nothing = return ()
     processIdx (Just (rep,fp)) = do
       toAdd <- unTarGzFileParMap fp processEntry
       let lasts=DM.fromListWith max $ catMaybes toAdd
+      now <- getCurrentTime
       --let toInsert=catMaybes allPkgs
       --update acid $ WritePackages toInsert
-      _ <- unTarGzFileParMap fp $ processEntry2 rep lasts
+      _ <- unTarGzFileParMap fp $ processEntry2 rep lasts now
       createCheckpoint acid
     processEntry fp _ = do
       let dirs = splitDirectories fp
@@ -130,20 +127,20 @@ updateFromCabal acid = do
       if isNothing mPkg
         then return $ Just (pkg,(fromString ver)::Version)
         else return Nothing
-    processEntry2 rep dm fp cnts = do
+    processEntry2 rep dm now fp cnts = do
       let dirs = splitDirectories fp
       case dirs of
         [pkg,ver,_]
           | Just ver2 <- DM.lookup pkg dm
-            -> processVersion rep cnts (fromString ver == ver2)
+            -> processVersion rep cnts now (fromString ver == ver2)
         _ -> return ()
-    processVersion rep cnts isLast =
-      case packageFromDescriptionBS cnts (remotePackageLocation rep) of
+    processVersion rep cnts now isLast =
+      case packageFromDescriptionBS cnts (remotePackageLocation rep) now of
           Just pkg -> if isLast
                           then -- do
                             -- when ("acid-state" == pkgName (pkgKey $ fpPackage pkg)) $ print pkg
                             void $ scheduleUpdate acid $ WriteFullPackage pkg
-                          else void $ scheduleUpdate acid $ WritePackage (fpPackage pkg)
+                          else void $ scheduleUpdate acid $ WritePackage ((fpPackage pkg){pkgModulesAnalysedDate=Nothing})
           _ -> return ()
 --    processPackage folder d = do
 --      vrss <- getSubDirs $ folder </> d
@@ -177,6 +174,34 @@ updateFromCabal acid = do
 --            Nothing ->return m
 --        else return m
 --    toText (Dependency (PackageName name) range)=(T.pack name,T.pack $ show range)
+
+updateSinglePackage :: PackageKey -> AcidState Database -> IO ()
+updateSinglePackage key acid =
+    processIdx =<< idxFile =<< getCabalRepositories
+    where
+        name = T.unpack $ unPkgName $ pkgName key
+        version = showVersion $ pkgVersion key
+        processIdx Nothing = return ()
+        processIdx (Just (rep,fp))= do
+            now <- getCurrentTime
+            _ <- unTarGzFileParMap fp $ processEntry rep now
+            createCheckpoint acid
+        processEntry rep now fp cnts = do
+          let dirs = splitDirectories fp
+          case dirs of
+            [pkg,ver,_]
+              | pkg == name && ver == version
+                -> processVersion rep cnts now
+            _ -> return ()
+        processVersion rep cnts now =
+          case packageFromDescriptionBS cnts (remotePackageLocation rep) now of
+              Just pkg -> void $ scheduleUpdate acid $ WriteFullPackage pkg
+              _ -> return ()
+
+idxFile Nothing = return Nothing
+idxFile (Just rep) = do
+  idxf <- getIndexFile rep
+  return $ Just (rep,idxf)
 
 data PackageLocation = PackageLocation
   { plLocal      :: Local
@@ -213,14 +238,14 @@ remotePackageLocation CabalRepositories{..} = build parse
     doc _ _ _ = Nothing
 
 
-packageFromDescriptionBS :: ByteString -> PackageLocation -> Maybe FullPackage
-packageFromDescriptionBS cnts loc =
+packageFromDescriptionBS :: ByteString -> PackageLocation -> UTCTime -> Maybe FullPackage
+packageFromDescriptionBS cnts loc now =
         case parsePackageDescription $ toString cnts of
-          ParseOk _ gpd -> Just $ packageFromDescription (flattenPackageDescription gpd) loc
+          ParseOk _ gpd -> Just $ packageFromDescription (flattenPackageDescription gpd) loc now
           _ -> Nothing
 
-packageFromDescription :: PackageDescription -> PackageLocation -> FullPackage
-packageFromDescription PackageDescription{..} loc =
+packageFromDescription :: PackageDescription -> PackageLocation -> UTCTime -> FullPackage
+packageFromDescription PackageDescription{..} loc now =
   let Cabal.PackageName name = Cabal.pkgName package
       version = Cabal.pkgVersion package
       pkgKey = PackageKey (PackageName $ T.pack name) version (plLocal loc)
@@ -234,7 +259,7 @@ packageFromDescription PackageDescription{..} loc =
                            ++ map (fromBi testName Test testBuildInfo testToModule) testSuites
                            ++ map (fromBi benchmarkName BenchMark benchmarkBuildInfo benchToModule) benchmarks
                          _ -> []
-  in FullPackage (Package pkgKey doc md (plPackageURL loc pkgKey)) cps (mergeModules $ concat mods)
+  in FullPackage (Package pkgKey doc md (plPackageURL loc pkgKey) (Just now)) cps (mergeModules $ concat mods)
 
 componentFromBuildInfo :: PackageLocation -> PackageKey -> [Cabal.Dependency] -> (e -> String) -> ComponentType -> (e -> BuildInfo) -> (PackageLocation -> e -> PackageKey -> ComponentName -> [Module]) -> e -> (Component,[Module])
 componentFromBuildInfo loc pkgKey deps key typ fbi fmods e=let

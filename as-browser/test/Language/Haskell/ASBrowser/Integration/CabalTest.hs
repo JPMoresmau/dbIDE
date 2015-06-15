@@ -11,9 +11,10 @@ import Data.ByteString.Lazy (ByteString)
 import Data.String
 import Distribution.Version
 import Data.Default
+import Data.Time.Clock
 
 cabalTests :: TestTree
-cabalTests = testGroup "Cabal Tests" 
+cabalTests = testGroup "Cabal Tests"
   [ testCase "getConfigValue" $ do
       Just "hackage" @=? getConfigValue "repo" ["repo: hackage"]
       Just "hackage" @=? getConfigValue "repo" ["repo:  hackage"]
@@ -26,7 +27,7 @@ cabalTests = testGroup "Cabal Tests"
       Nothing @=? parseConfig ["remote-repo: hackage.haskell.org:http://hackage.haskell.org/packages/archive"]
   , testCase "getCabalRepositories" $ do
       rep <- getCabalRepositories
-      isJust rep @? "rep is nothing" 
+      isJust rep @? "rep is nothing"
   , testCase "getIndexFile" $ do
       rep <- getCabalRepositories
       f <- getIndexFile $ fromJust rep
@@ -34,7 +35,8 @@ cabalTests = testGroup "Cabal Tests"
       ex @? "indexFile does not exist"
   , testCase "FullPackageWithLibrary" $ do
       rep <- getCabalRepositories
-      let mfp = packageFromDescriptionBS cabalFile1 $ remotePackageLocation $ fromJust rep
+      now <- getCurrentTime
+      let mfp = packageFromDescriptionBS cabalFile1 (remotePackageLocation (fromJust rep)) now
       isJust mfp @? "mfp is nothing"
       let Just fp = mfp
       let pkg= fpPackage fp
@@ -51,9 +53,9 @@ cabalTests = testGroup "Cabal Tests"
       length (fpModules fp) @?= 2
       fpModules fp @?= [modA,modBC]
   ]
-  
+
 cabalFile1 :: ByteString
-cabalFile1 = fromString $ unlines 
+cabalFile1 = fromString $ unlines
   [ "name: Pkg1"
   , "version: 0.1"
   , "cabal-version:  >= 1.8"
@@ -66,7 +68,7 @@ cabalFile1 = fromString $ unlines
   , "  build-depends:  base >=4 && <5"
   , "  default-extensions: CPP, OverloadedStrings"
   ]
-  
+
 modA :: Module
 modA=Module (ModuleKey "A" (PackageKey "Pkg1" "0.1" Packaged)) def
           [ModuleInclusion "" Exposed Nothing] (URLs (Just (URL "http://hackage.haskell.org/package/Pkg1-0.1/docs/src/A.html")) (Just (URL "http://hackage.haskell.org/package/Pkg1-0.1/docs/A.html")))

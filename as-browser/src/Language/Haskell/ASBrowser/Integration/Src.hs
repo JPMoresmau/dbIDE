@@ -10,6 +10,8 @@ import Text.HTML.DOM (parseLBS)
 import Text.XML hiding (parseLBS)
 import Text.XML.Cursor
 import Network.HTTP.Conduit (simpleHttp)
+import           Text.Blaze.Html                 (toHtml)
+import           Text.Blaze.Html.Renderer.Text (renderHtml)
 
 -- import Language.Haskell.Exts.Annotated as HSE
 
@@ -64,33 +66,39 @@ getPreContents doc = T.concat $ doc $.// findNodes &| extractData
     findNodes = element "pre" >=> descendant
     extractData = T.concat . content
 
-parseHaddock :: LBS.ByteString -> [Decl]
-parseHaddock bs = let
-    d = parseLBS bs
-    pr = Prologue [] Nothing []
-    in parseHaddock' pr $ fromDocument d
+parseHaddock :: ModuleKey -> LBS.ByteString -> [Decl]
+parseHaddock mk  = parseHaddock' mk . fromDocument . parseLBS
 
-parseHaddock' :: Prologue -> Cursor -> [Decl]
-parseHaddock' pr c = c $.// tops >=> srcs
+parseHaddock' :: ModuleKey -> Cursor -> [Decl]
+parseHaddock' mk c =
+    let ts = c $.// tops >=> srcs "p" "div" False
+        cs = c $.// conss >=> srcs "td" "td" True
+        ms = c $.// meths >=> srcs "p" "div" False
+    in ts ++ (map toCons cs) ++ (map toMeth ms)
     where
         tops = element "div"
                        >=> attributeIs "class" "top"
-        srcs s =  do
-            src <- s $/ element "p"
-                       >=> attributeIs "class" "src"
+        conss = element "div"
+                       >=> attributeIs "class" "subs constructors"
+        meths = element "div"
+                       >=> attributeIs "class" "subs methods"
+        srcs el docEl rec s =  do
+            let f = if rec then ($//) else ($/)
+            src <- s `f` (element el
+                       >=> attributeIs "class" "src")
             ns <- src $/ names
             let k = src $/ kw
-            let docs = s $/ doc
+            let docs = s $/ doc docEl
             -- let k'= trace (show docs) k
             let d = docToText docs
-            [Decl (DeclName ns) (kw2Type k) "" d]
+            [Decl (DeclKey (DeclName ns) mk) (kw2Type k) "" d]
         names =  element "a"
                       >=> attributeIs "class" "def"
                       &// content
         kw = element "span"
                       >=> attributeIs "class" "keyword"
                       &// content
-        doc = element "div"
+        doc el = element el
                 >=> attributeIs "class" "doc"
         kw2Type ("class":_)   = DeclClass
         kw2Type ["type"]    = DeclType
@@ -98,7 +106,7 @@ parseHaddock' pr c = c $.// tops >=> srcs
         kw2Type ["data"]    = DeclData
         kw2Type _         = DeclFunction
         cToText [n] =  case node n of
-            NodeElement el -> LT.toStrict $ renderText def (Document pr el [])
+            NodeElement el -> LT.toStrict $ renderHtml $ toHtml el
             _ -> ""
         cToText _ = ""
         docToText [n]     = let
@@ -109,4 +117,5 @@ parseHaddock' pr c = c $.// tops >=> srcs
                 t = cToText [n]
                 in Doc ps2 t
         docToText _      = Doc "" ""
-
+        toCons d = d{dType=DeclConstructor}
+        toMeth d = d{dType=DeclMethod}

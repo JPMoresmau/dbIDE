@@ -271,23 +271,13 @@ instance IsString DeclName where
 
 data DeclType = DeclData | DeclNewType | DeclClass | DeclInstance | DeclType
     | DeclDataFamily | DeclTypeFamily | DeclDataInstance | DeclTypeInstance
-    | DeclFunction
+    | DeclFunction | DeclConstructor | DeclMethod
     deriving (Show, Read, Eq, Ord, Bounded,Enum,Typeable,Data)
 
 deriveSafeCopy 0 'base ''DeclType
 
 deriveJSON defaultOptions ''DeclType
 
-
-data Decl = Decl
-  { dName :: DeclName
-  , dType :: DeclType
-  , dSignature :: Text
-  , dDoc  :: Doc
-  } deriving (Show,Read,Eq,Ord,Typeable,Data)
-
-deriveSafeCopy 0 'base ''Decl
-deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''Decl
 
 data WriteDate = WriteDate
   { wdCreated :: UTCTime
@@ -302,6 +292,7 @@ data Package = Package
   , pkgDoc        :: !Doc
   , pkgMeta       :: !PackageMetaData
   , pkgDocURL     :: !(Maybe URL)
+  , pkgModulesAnalysedDate :: !(Maybe UTCTime)
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Package
@@ -334,6 +325,25 @@ data Module = Module
 
 deriveSafeCopy 0 'base ''Module
 deriveJSON defaultOptions{fieldLabelModifier=jsonField 3} ''Module
+
+data DeclKey = DeclKey
+    { decName   :: DeclName
+    , decModule :: ModuleKey
+    } deriving (Show,Read,Eq,Ord,Typeable,Data)
+
+deriveSafeCopy 0 'base ''DeclKey
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 3} ''DeclKey
+
+data Decl = Decl
+  { dKey :: DeclKey
+  , dType :: DeclType
+  , dSignature :: Text
+  , dDoc  :: Doc
+  } deriving (Show,Read,Eq,Ord,Typeable,Data)
+
+deriveSafeCopy 0 'base ''Decl
+deriveJSON defaultOptions{fieldLabelModifier=jsonField 1} ''Decl
+
 
 
 data FullPackage = FullPackage
@@ -377,6 +387,14 @@ instance Indexable ModuleIxs Module where
     (ixFun $ \mo -> [ modName $ modKey mo ])
     (ixFun $ \mo -> [ modKey mo ])
 
+type DeclIxs = '[PackageKey, ModuleKey , DeclName]
+type IxDecl = IxSet DeclIxs Decl
+
+instance Indexable DeclIxs Decl where
+    indices = ixList
+        (ixFun $ \de -> [modPackageKey $ decModule $ dKey de])
+        (ixFun $ \de -> [decModule $ dKey de])
+        (ixFun $ \de -> [decName $ dKey de])
 
 data Database = Database
   { dPackages :: IxPackage

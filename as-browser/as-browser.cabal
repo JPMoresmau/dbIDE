@@ -61,7 +61,8 @@ library
                    aeson,
                    network-uri,
                    xml-conduit,
-                   html-conduit
+                   html-conduit,
+                   blaze-html
   ghc-options:     -Wall -O2
   other-modules:
                    Language.Haskell.ASBrowser.Types,
@@ -109,7 +110,9 @@ executable as-browser
                    transformers,
                    network-uri,
                    xml-conduit,
-                   html-conduit
+                   html-conduit,
+                   blaze-html,
+                   attoparsec
   ghc-options:     -Wall -rtsopts -threaded -O2
 
 test-suite as-browser-test
@@ -147,7 +150,8 @@ test-suite as-browser-test
                    attoparsec,
                    network-uri,
                    xml-conduit,
-                   html-conduit
+                   html-conduit,
+                   blaze-html
   other-modules:
                   Language.Haskell.ASBrowser.Operations.Packages,
                   Language.Haskell.ASBrowser.Operations.PackagesTest,
@@ -201,7 +205,8 @@ test-suite as-browser-integration
                    aeson,
                    network-uri,
                    xml-conduit,
-                   html-conduit
+                   html-conduit,
+                   blaze-html
   other-modules:
                   Language.Haskell.ASBrowser.Operations.Packages,
                   Language.Haskell.ASBrowser.Utils,

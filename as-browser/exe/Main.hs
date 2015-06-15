@@ -1,15 +1,12 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell, MultiParamTypeClasses #-}
 module Main where
 
-import Control.Applicative
-
 import Snap.Http.Server
 import Snap.Core
 import Snap.Util.FileServe
 
-import Data.Acid as A (openLocalStateFrom,closeAcidState)
+import Data.Acid as A (closeAcidState)
 import Data.ByteString (ByteString)
-import Data.ByteString.Lazy (fromStrict)
 
 import Language.Haskell.AsBrowser
 import Snap.Snaplet
@@ -18,6 +15,11 @@ import Control.Lens.TH
 import Control.Lens
 import Data.Default
 import Data.Aeson
+import Data.Aeson.Types (parseMaybe)
+import Data.Aeson.Parser
+import Data.List
+import Data.Ord
+import Data.Maybe
 
 import Paths_as_browser
 import Control.Monad
@@ -26,6 +28,10 @@ import System.Directory
 import System.FilePath
 import Control.Concurrent
 import Data.IxSet.Typed (toList)
+
+import Data.Attoparsec.ByteString
+
+import Debug.Trace
 
 dataDir :: IO FilePath
 dataDir = liftM (</> "resources") getDataDir
@@ -53,6 +59,7 @@ appInit st = makeSnaplet "as-browser" "ASBrowser Snap app" (Just dataDir) $ do
   ac <- nestSnaplet "asb" acid $ acidInitManual st
   addRoutes
     [ ("/json/packages", with acid packagesH)
+    , ("/json/versions", with acid versionsH)
     , ("/json/modules", with acid modulesH)
     , ("/static/", serveDirectory "resources")
     ]
@@ -62,14 +69,30 @@ packagesH :: Handler App (Acid Database) ()
 packagesH = method GET $
   writeJSON =<< onlyLastVersions <$> query AllPackages
 
+versionsH :: Handler App (Acid Database) ()
+versionsH = do
+  mkey <- getJSONParam "name"
+  method GET $
+    writeJSON =<<
+      maybe (return [])
+        (\ key -> (sortBy (comparing (Down . pkgVersion . pkgKey)) . toList) <$> query (ListVersions key))
+        mkey
 
 modulesH :: Handler App (Acid Database) ()
 modulesH = do
   mkey <- getJSONParam "key"
+  mversion <- getJSONParam "component"
   method GET $
     writeJSON =<<
       maybe (return [])
-        (\ key -> toList <$> query (ListModules key Nothing))
+        (\ key -> do
+            mpkg <- query $ GetPackage key
+            let needUpd= isNothing $ join $ fmap pkgModulesAnalysedDate mpkg
+            when needUpd $ do
+                liftIO $ print $ "updating package: "++show key
+                state <- getAcidState
+                liftIO $ updateSinglePackage key state
+            toList <$> query (ListModules key mversion))
         mkey
 
 
@@ -77,7 +100,8 @@ getJSONParam :: (FromJSON a, MonadSnap m) =>
                   ByteString -> m (Maybe a)
 getJSONParam name = do
   mkey <- getParam name
-  return $ maybe Nothing (decode . fromStrict) mkey
+  let mv = maybe Nothing (maybeResult . parse value) mkey
+  return $ maybe Nothing (parseMaybe parseJSON) mv
 
 
 writeJSON :: (ToJSON a) => a -> Handler b c ()
