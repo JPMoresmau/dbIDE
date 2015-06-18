@@ -293,6 +293,7 @@ data Package = Package
   , pkgMeta       :: !PackageMetaData
   , pkgDocURL     :: !(Maybe URL)
   , pkgModulesAnalysedDate :: !(Maybe UTCTime)
+  , pkgDeclsAnalysedDate :: !(Maybe UTCTime)
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Package
@@ -387,7 +388,7 @@ instance Indexable ModuleIxs Module where
     (ixFun $ \mo -> [ modName $ modKey mo ])
     (ixFun $ \mo -> [ modKey mo ])
 
-type DeclIxs = '[PackageKey, ModuleKey , DeclName]
+type DeclIxs = '[PackageKey, ModuleKey, DeclName]
 type IxDecl = IxSet DeclIxs Decl
 
 instance Indexable DeclIxs Decl where
@@ -397,12 +398,13 @@ instance Indexable DeclIxs Decl where
         (ixFun $ \de -> [decName $ dKey de])
 
 data Database = Database
-  { dPackages :: IxPackage
+  { dPackages   :: IxPackage
   , dComponents :: IxComponent
-  , dModules  :: IxModule
+  , dModules    :: IxModule
+  , dDecls      :: IxDecl
   } deriving (Typeable)
 
 deriveSafeCopy 0 'base ''Database
 
 instance Default Database where
-  def = Database empty empty empty
+  def = Database empty empty empty empty

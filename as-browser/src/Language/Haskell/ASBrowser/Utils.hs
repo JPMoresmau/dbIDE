@@ -5,11 +5,10 @@ import qualified Data.Text as T
 
 
 import Data.IxSet.Typed
-import Data.List
+import Data.List (sortBy)
 import Data.Ord
 import Data.Char
 import qualified Data.Set as Set
-
 
 prefixInterval :: T.Text -> (T.Text,T.Text)
 prefixInterval "" = ("","")
@@ -44,3 +43,15 @@ ordNub l = go Set.empty l
     go _ [] = []
     go s (x:xs) = if x `Set.member` s then go s xs
                                       else x : go (Set.insert x s) xs
+
+
+update1 :: (Indexable ixs a)
+         => a -> (IxSet ixs a -> IxSet ixs a) -> IxSet ixs a -> IxSet ixs a
+update1 new restrict ixset = insert new $
+                     maybe ixset (flip delete ixset) $
+                     getOne $ restrict ixset
+
+delete1 :: (Indexable ixs a)
+         => (IxSet ixs a -> IxSet ixs a) -> IxSet ixs a -> IxSet ixs a
+delete1 restrict ixset = maybe ixset (flip delete ixset) $
+                       getOne $ restrict ixset

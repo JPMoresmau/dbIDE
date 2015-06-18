@@ -1,224 +1,225 @@
-name:           as-browser
-version:        0.1
-cabal-version:  >=1.8
-build-type:     Simple
-author:         jpmoresmau
-license:        BSD3
-license-file:   LICENSE
+name: as-browser
+version: 0.1
+cabal-version: >=1.8
+build-type: Simple
+license: BSD3
+license-file: LICENSE
+author: jpmoresmau
 data-files:
-                resources/bower_components/core-component-page/bowager-logo.png,
-                resources/bower_components/core-component-page/bower.json,
-                resources/bower_components/core-component-page/core-component-page.html,
-                resources/bower_components/core-component-page/demo.html,
-                resources/bower_components/core-component-page/index.html,
-                resources/bower_components/core-component-page/README.md,
-                resources/bower_components/polymer/bower.json,
-                resources/bower_components/polymer/build.log,
-                resources/bower_components/polymer/layout.html,
-                resources/bower_components/polymer/polymer.html,
-                resources/bower_components/polymer/polymer.js,
-                resources/bower_components/polymer/polymer.min.js,
-                resources/bower_components/polymer/README.md,
-                resources/bower_components/webcomponentsjs/bower.json,
-                resources/bower_components/webcomponentsjs/build.log,
-                resources/bower_components/webcomponentsjs/CustomElements.js,
-                resources/bower_components/webcomponentsjs/CustomElements.min.js,
-                resources/bower_components/webcomponentsjs/HTMLImports.js,
-                resources/bower_components/webcomponentsjs/HTMLImports.min.js,
-                resources/bower_components/webcomponentsjs/package.json,
-                resources/bower_components/webcomponentsjs/README.md,
-                resources/bower_components/webcomponentsjs/ShadowDOM.js,
-                resources/bower_components/webcomponentsjs/ShadowDOM.min.js,
-                resources/bower_components/webcomponentsjs/webcomponents-lite.js,
-                resources/bower_components/webcomponentsjs/webcomponents-lite.min.js,
-                resources/bower_components/webcomponentsjs/webcomponents.js,
-                resources/bower_components/webcomponentsjs/webcomponents.min.js,
-                resources/bower.json
+    resources/bower_components/core-component-page/bowager-logo.png
+    resources/bower_components/core-component-page/bower.json
+    resources/bower_components/core-component-page/core-component-page.html
+    resources/bower_components/core-component-page/demo.html
+    resources/bower_components/core-component-page/index.html
+    resources/bower_components/core-component-page/README.md
+    resources/bower_components/polymer/bower.json
+    resources/bower_components/polymer/build.log
+    resources/bower_components/polymer/layout.html
+    resources/bower_components/polymer/polymer.html
+    resources/bower_components/polymer/polymer.js
+    resources/bower_components/polymer/polymer.min.js
+    resources/bower_components/polymer/README.md
+    resources/bower_components/webcomponentsjs/bower.json
+    resources/bower_components/webcomponentsjs/build.log
+    resources/bower_components/webcomponentsjs/CustomElements.js
+    resources/bower_components/webcomponentsjs/CustomElements.min.js
+    resources/bower_components/webcomponentsjs/HTMLImports.js
+    resources/bower_components/webcomponentsjs/HTMLImports.min.js
+    resources/bower_components/webcomponentsjs/package.json
+    resources/bower_components/webcomponentsjs/README.md
+    resources/bower_components/webcomponentsjs/ShadowDOM.js
+    resources/bower_components/webcomponentsjs/ShadowDOM.min.js
+    resources/bower_components/webcomponentsjs/webcomponents-lite.js
+    resources/bower_components/webcomponentsjs/webcomponents-lite.min.js
+    resources/bower_components/webcomponentsjs/webcomponents.js
+    resources/bower_components/webcomponentsjs/webcomponents.min.js
+    resources/bower.json
 
 library
-  hs-source-dirs:  src
-  build-depends:
-                   base >= 4,
-                   directory,
-                   filepath,
-                   safecopy,
-                   acid-state,
-                   ixset-typed,
-                   text,
-                   Cabal,
-                   time,
-                   data-default,
-                   mtl,
-                   conduit,
-                   conduit-extra,
-                   http-conduit,
-                   bytestring,
-                   zlib,
-                   tar,
-                   utf8-string,
-                   parallel-io,
-                   containers,
-                   aeson,
-                   network-uri,
-                   xml-conduit,
-                   html-conduit,
-                   blaze-html
-  ghc-options:     -Wall -O2
-  other-modules:
-                   Language.Haskell.ASBrowser.Types,
-                   Language.Haskell.ASBrowser.Operations.Packages,
-                   Language.Haskell.ASBrowser.Utils,
-                   Language.Haskell.ASBrowser.Database,
-                   Language.Haskell.ASBrowser.Operations.Modules,
-                   Language.Haskell.ASBrowser.Integration.Cabal,
-                   Language.Haskell.ASBrowser.Integration.Files,
-                   Language.Haskell.ASBrowser.Operations.Components,
-                   Language.Haskell.ASBrowser.Integration.Src
-  exposed-modules: Language.Haskell.AsBrowser
+    exposed-modules:
+        Language.Haskell.AsBrowser
+    build-depends:
+        base >=4,
+        directory -any,
+        filepath -any,
+        safecopy -any,
+        acid-state -any,
+        ixset-typed -any,
+        text -any,
+        Cabal -any,
+        time -any,
+        data-default -any,
+        mtl -any,
+        conduit -any,
+        conduit-extra -any,
+        http-conduit -any,
+        bytestring -any,
+        zlib -any,
+        tar -any,
+        utf8-string -any,
+        parallel-io -any,
+        containers -any,
+        aeson -any,
+        network-uri -any,
+        xml-conduit -any,
+        html-conduit -any,
+        blaze-html -any,
+        transformers -any
+    hs-source-dirs: src
+    other-modules:
+        Language.Haskell.ASBrowser.Operations.Decls
+        Language.Haskell.ASBrowser.Types
+        Language.Haskell.ASBrowser.Operations.Packages
+        Language.Haskell.ASBrowser.Utils
+        Language.Haskell.ASBrowser.Database
+        Language.Haskell.ASBrowser.Operations.Modules
+        Language.Haskell.ASBrowser.Integration.Cabal
+        Language.Haskell.ASBrowser.Integration.Files
+        Language.Haskell.ASBrowser.Operations.Components
+        Language.Haskell.ASBrowser.Integration.Src
+    ghc-options: -Wall -O2
 
 executable as-browser
-  hs-source-dirs:  exe
-  main-is:         Main.hs
-  build-depends:
-                   base >= 4,
-                   as-browser,
-                   directory,
-                   filepath,
-                   safecopy,
-                   acid-state,
-                   ixset-typed,
-                   text,
-                   Cabal,
-                   time,
-                   data-default,
-                   mtl,
-                   conduit,
-                   conduit-extra,
-                   http-conduit,
-                   bytestring,
-                   zlib,
-                   tar,
-                   utf8-string,
-                   parallel-io,
-                   containers,
-                   aeson,
-                   snap-core,
-                   snap-server,
-                   snaplet-acid-state,
-                   snap,
-                   lens,
-                   transformers,
-                   network-uri,
-                   xml-conduit,
-                   html-conduit,
-                   blaze-html,
-                   attoparsec
-  ghc-options:     -Wall -rtsopts -threaded -O2
+    main-is: Main.hs
+    build-depends:
+        base >=4,
+        as-browser -any,
+        directory -any,
+        filepath -any,
+        safecopy -any,
+        acid-state -any,
+        ixset-typed -any,
+        text -any,
+        Cabal -any,
+        time -any,
+        data-default -any,
+        mtl -any,
+        conduit -any,
+        conduit-extra -any,
+        http-conduit -any,
+        bytestring -any,
+        zlib -any,
+        tar -any,
+        utf8-string -any,
+        parallel-io -any,
+        containers -any,
+        aeson -any,
+        snap-core -any,
+        snap-server -any,
+        snaplet-acid-state -any,
+        snap -any,
+        lens -any,
+        transformers -any,
+        network-uri -any,
+        xml-conduit -any,
+        html-conduit -any,
+        blaze-html -any,
+        attoparsec -any
+    hs-source-dirs: exe
+    ghc-options: -Wall -rtsopts -threaded -O2
 
 test-suite as-browser-test
-  type:            exitcode-stdio-1.0
-  main-is:         as-browser-test.hs
-  ghc-options:     -Wall -rtsopts -threaded -O2
-  build-depends:
-                   base >= 4,
-                   tasty > 0.10,
-                   tasty-hunit,
-                   tasty-quickcheck,
-                   QuickCheck,
-                   quickcheck-instances,
-                   HUnit,
-                   Cabal,
-                   acid-state,
-                   ixset-typed,
-                   safecopy,
-                   text,
-                   time,
-                   data-default,
-                   directory,
-                   filepath,
-                   conduit,
-                   conduit-extra,
-                   http-conduit,
-                   bytestring,
-                   mtl,
-                   zlib,
-                   tar,
-                   utf8-string,
-                   parallel-io,
-                   containers,
-                   aeson,
-                   attoparsec,
-                   network-uri,
-                   xml-conduit,
-                   html-conduit,
-                   blaze-html
-  other-modules:
-                  Language.Haskell.ASBrowser.Operations.Packages,
-                  Language.Haskell.ASBrowser.Operations.PackagesTest,
-                  Language.Haskell.ASBrowser.Utils,
-                  Language.Haskell.ASBrowser.UtilsTest,
-                  Language.Haskell.ASBrowser.Database,
-                  Language.Haskell.ASBrowser.Operations.Modules,
-                  Language.Haskell.ASBrowser.Operations.ModulesTest,
-                  Language.Haskell.ASBrowser.Integration.Cabal,
-                  Language.Haskell.ASBrowser.Integration.Files,
-                  Language.Haskell.ASBrowser.Integration.CabalTest,
-                  Language.Haskell.ASBrowser.Integration.FilesTest,
-                  Language.Haskell.ASBrowser.TypesTest,
-                  Language.Haskell.ASBrowser.Operations.Components,
-                  Language.Haskell.ASBrowser.Operations.ComponentsTest,
-                  Language.Haskell.AsBrowser,
-                  Language.Haskell.ASBrowser.Integration.Src,
-                  Language.Haskell.ASBrowser.Integration.SrcTest
-  hs-source-dirs:
-                  test,
-                  src
-
+    type: exitcode-stdio-1.0
+    main-is: as-browser-test.hs
+    build-depends:
+        base >=4,
+        tasty >0.10,
+        tasty-hunit -any,
+        tasty-quickcheck -any,
+        QuickCheck -any,
+        quickcheck-instances -any,
+        HUnit -any,
+        Cabal -any,
+        acid-state -any,
+        ixset-typed -any,
+        safecopy -any,
+        text -any,
+        time -any,
+        data-default -any,
+        directory -any,
+        filepath -any,
+        conduit -any,
+        conduit-extra -any,
+        http-conduit -any,
+        bytestring -any,
+        mtl -any,
+        zlib -any,
+        tar -any,
+        utf8-string -any,
+        parallel-io -any,
+        containers -any,
+        aeson -any,
+        attoparsec -any,
+        network-uri -any,
+        xml-conduit -any,
+        html-conduit -any,
+        blaze-html -any
+    hs-source-dirs: test src
+    other-modules:
+        Language.Haskell.ASBrowser.Operations.Decls
+         Language.Haskell.ASBrowser.Operations.DeclsTest
+        Language.Haskell.ASBrowser.Operations.Packages
+        Language.Haskell.ASBrowser.Operations.PackagesTest
+        Language.Haskell.ASBrowser.Utils
+        Language.Haskell.ASBrowser.UtilsTest
+        Language.Haskell.ASBrowser.Database
+        Language.Haskell.ASBrowser.Operations.Modules
+        Language.Haskell.ASBrowser.Operations.ModulesTest
+        Language.Haskell.ASBrowser.Integration.Cabal
+        Language.Haskell.ASBrowser.Integration.Files
+        Language.Haskell.ASBrowser.Integration.CabalTest
+        Language.Haskell.ASBrowser.Integration.FilesTest
+        Language.Haskell.ASBrowser.TypesTest
+        Language.Haskell.ASBrowser.Operations.Components
+        Language.Haskell.ASBrowser.Operations.ComponentsTest
+        Language.Haskell.AsBrowser
+        Language.Haskell.ASBrowser.Integration.Src
+        Language.Haskell.ASBrowser.Integration.SrcTest
+    ghc-options: -Wall -rtsopts -threaded -O2
 test-suite as-browser-integration
-  type:            exitcode-stdio-1.0
-  main-is:         as-browser-integration.hs
-  ghc-options:     -Wall -rtsopts -threaded -O2
-  build-depends:
-                   base >= 4,
-                   tasty > 0.10,
-                   tasty-hunit,
-                   HUnit,
-                   directory,
-                   filepath,
-                   Cabal,
-                   safecopy,
-                   acid-state,
-                   ixset-typed,
-                   text,
-                   time,
-                   data-default,
-                   conduit,
-                   conduit-extra,
-                   http-conduit,
-                   bytestring,
-                   mtl,
-                   zlib,
-                   tar,
-                   utf8-string,
-                   parallel-io,
-                   containers,
-                   aeson,
-                   network-uri,
-                   xml-conduit,
-                   html-conduit,
-                   blaze-html
-  other-modules:
-                  Language.Haskell.ASBrowser.Operations.Packages,
-                  Language.Haskell.ASBrowser.Utils,
-                  Language.Haskell.ASBrowser.Database,
-                  Language.Haskell.ASBrowser.Operations.Modules,
-                  Language.Haskell.ASBrowser.Integration.Cabal,
-                  Language.Haskell.ASBrowser.Integration.Files,
-                  Language.Haskell.ASBrowser.Integration.CabalTest,
-                  Language.Haskell.ASBrowser.TestHarness,
-                  Language.Haskell.ASBrowser.Operations.Components,
-                  Language.Haskell.AsBrowser,
-                  Language.Haskell.ASBrowser.Integration.Src
-  hs-source-dirs:
-                  src,
-                  integration
+    type: exitcode-stdio-1.0
+    main-is: as-browser-integration.hs
+    build-depends:
+        base >=4,
+        tasty >0.10,
+        tasty-hunit -any,
+        HUnit -any,
+        directory -any,
+        filepath -any,
+        Cabal -any,
+        safecopy -any,
+        acid-state -any,
+        ixset-typed -any,
+        text -any,
+        time -any,
+        data-default -any,
+        conduit -any,
+        conduit-extra -any,
+        http-conduit -any,
+        bytestring -any,
+        mtl -any,
+        zlib -any,
+        tar -any,
+        utf8-string -any,
+        parallel-io -any,
+        containers -any,
+        aeson -any,
+        network-uri -any,
+        xml-conduit -any,
+        html-conduit -any,
+        blaze-html -any
+    hs-source-dirs: src integration
+    other-modules:
+        Language.Haskell.ASBrowser.Operations.Decls
+        Language.Haskell.ASBrowser.Operations.Packages
+        Language.Haskell.ASBrowser.Utils
+        Language.Haskell.ASBrowser.Database
+        Language.Haskell.ASBrowser.Operations.Modules
+        Language.Haskell.ASBrowser.Integration.Cabal
+        Language.Haskell.ASBrowser.Integration.Files
+        Language.Haskell.ASBrowser.Integration.CabalTest
+        Language.Haskell.ASBrowser.TestHarness
+        Language.Haskell.ASBrowser.Operations.Components
+        Language.Haskell.AsBrowser
+        Language.Haskell.ASBrowser.Integration.Src
+    ghc-options: -Wall -rtsopts -threaded -O2

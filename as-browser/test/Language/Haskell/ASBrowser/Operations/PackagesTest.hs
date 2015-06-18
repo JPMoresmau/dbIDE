@@ -59,7 +59,7 @@ packageTests = testGroup "Package Tests"
         ipkg1 <- query acid $ ListVersions $ pkgName $ pkgKey testPkg1
         toList ipkg1 @?= [testPkg1]
         let testPkgKey1_2 = PackageKey "pkg1" "0.0.2" Packaged
-            testPkg1_2 = Package testPkgKey1_2 def def def def
+            testPkg1_2 = Package testPkgKey1_2 def def def def def
         _ <- update acid $ WritePackage testPkg1_2
         mpkg2 <- query acid $ GetLatest $ pkgName $ pkgKey testPkg1_2
         mpkg2 @?= Just testPkg1_2
@@ -88,7 +88,7 @@ packageTests = testGroup "Package Tests"
         ipkg1'' <- query acid $ ListMatching (pkgName $ pkgKey testPkg1) (laterVersion $ pkgVersion $ pkgKey testPkg1)
         toList ipkg1'' @?= []
         let testPkgKey1_2 = PackageKey "pkg1" "0.0.2" Packaged
-            testPkg1_2 = Package testPkgKey1_2 def def def def
+            testPkg1_2 = Package testPkgKey1_2 def def def def def
         _ <- update acid $ WritePackage testPkg1_2
         mpkg2 <- query acid $ GetLatestMatching (pkgName $ pkgKey testPkg1) anyVersion
         mpkg2 @?= Just testPkg1_2
@@ -110,7 +110,7 @@ packageTests = testGroup "Package Tests"
       withTestAcid $ \acid -> do
         _ <- update acid $ WritePackage testPkg1
         let pkgKeyLoc = PackageKey "mypkg" "0.0.1" Local
-            pkgLoc = Package pkgKeyLoc def def def def
+            pkgLoc = Package pkgKeyLoc def def def def def
         _ <- update acid $ WritePackage pkgLoc
         locs <- query acid $ ListByLocal Local
         toList locs @?= [pkgLoc]
@@ -124,12 +124,12 @@ testPkgKey1 :: PackageKey
 testPkgKey1 = PackageKey "pkg1" "0.0.1" Packaged
 
 testPkg1 :: Package
-testPkg1 = Package testPkgKey1 def def def def
+testPkg1 = Package testPkgKey1 def def def def def
 
 testPkgKey2 :: PackageKey
 testPkgKey2 = PackageKey "mypkg" "0.0.1" Packaged
 
 testPkg2 :: Package
-testPkg2 = Package testPkgKey2 def def def def
+testPkg2 = Package testPkgKey2 def def def def def
 
 

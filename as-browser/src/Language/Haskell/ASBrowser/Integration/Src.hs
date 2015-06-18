@@ -66,6 +66,12 @@ getPreContents doc = T.concat $ doc $.// findNodes &| extractData
     findNodes = element "pre" >=> descendant
     extractData = T.concat . content
 
+parseModuleHaddock :: Module -> IO (Maybe [Decl])
+parseModuleHaddock modl = case uDocURL $ modURLs modl of
+    Nothing -> return Nothing
+    Just du -> (Just . parseHaddock (modKey modl)) <$> simpleHttp (T.unpack $ unURLName du)
+
+
 parseHaddock :: ModuleKey -> LBS.ByteString -> [Decl]
 parseHaddock mk  = parseHaddock' mk . fromDocument . parseLBS
 

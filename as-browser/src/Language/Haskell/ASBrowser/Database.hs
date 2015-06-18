@@ -5,9 +5,11 @@ import Data.Acid
 
 import Language.Haskell.ASBrowser.Types
 import Language.Haskell.ASBrowser.Operations.Components
+import Language.Haskell.ASBrowser.Operations.Decls
 import Language.Haskell.ASBrowser.Operations.Modules
 import Language.Haskell.ASBrowser.Operations.Packages
-import Control.Monad (void)
+import Control.Monad
+
 
 writeFullPackage :: FullPackage -> Update Database FullPackage
 writeFullPackage fpk@FullPackage{..} = do
@@ -39,6 +41,11 @@ $(makeAcidic ''Database
   , 'listModules
   , 'findModules
   , 'writeFullPackage
+  , 'writeDecl
+  , 'deleteDecl
+  , 'getDecl
+  , 'listDecls
+  , 'findDecls
   ])
-  
+
 

@@ -61,6 +61,7 @@ appInit st = makeSnaplet "as-browser" "ASBrowser Snap app" (Just dataDir) $ do
     [ ("/json/packages", with acid packagesH)
     , ("/json/versions", with acid versionsH)
     , ("/json/modules", with acid modulesH)
+    , ("/json/decls", with acid modulesH)
     , ("/static/", serveDirectory "resources")
     ]
   return $ App ac
@@ -81,20 +82,27 @@ versionsH = do
 modulesH :: Handler App (Acid Database) ()
 modulesH = do
   mkey <- getJSONParam "key"
-  mversion <- getJSONParam "component"
+  mcomp <- getJSONParam "component"
   method GET $
     writeJSON =<<
       maybe (return [])
         (\ key -> do
-            mpkg <- query $ GetPackage key
-            let needUpd= isNothing $ join $ fmap pkgModulesAnalysedDate mpkg
-            when needUpd $ do
-                liftIO $ print $ "updating package: "++show key
-                state <- getAcidState
-                liftIO $ updateSinglePackage key state
-            toList <$> query (ListModules key mversion))
+            state <- getAcidState
+            liftIO $ ensurePackageModules key state
+            toList <$> query (ListModules key mcomp))
         mkey
 
+declsH :: Handler App (Acid Database) ()
+declsH = do
+  mkey <- getJSONParam "key"
+  method GET $
+    writeJSON =<<
+      maybe (return [])
+        (\ key -> do
+            state <- getAcidState
+            liftIO $ ensurePackageDecls (modPackageKey key) state
+            toList <$> query (ListDecls key))
+        mkey
 
 getJSONParam :: (FromJSON a, MonadSnap m) =>
                   ByteString -> m (Maybe a)

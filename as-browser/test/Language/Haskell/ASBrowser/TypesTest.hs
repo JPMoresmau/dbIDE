@@ -136,7 +136,7 @@ instance Arbitrary Component where
   arbitrary = Component <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
 
 instance Arbitrary Package where
-  arbitrary = Package <$> arbitrary <*> arbitrary <*> arbitrary  <*> arbitrary  <*> arbitrary
+  arbitrary = Package <$> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary <*> arbitrary
 
 instance Arbitrary ModuleKey where
   arbitrary = ModuleKey <$> arbitrary <*> arbitrary

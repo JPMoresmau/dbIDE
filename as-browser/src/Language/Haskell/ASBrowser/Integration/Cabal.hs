@@ -22,6 +22,7 @@ import Network.HTTP.Conduit
 import qualified Data.Conduit as C
 
 import Language.Haskell.ASBrowser.Integration.Files
+import Language.Haskell.ASBrowser.Integration.Src
 import Data.Acid
 import Data.Acid.Advanced
 
@@ -44,6 +45,7 @@ import Distribution.Version
 import Network.URI hiding (query)
 import Data.Version
 import Data.Time.Clock
+import Data.IxSet.Typed
 
 data CabalRepositories = CabalRepositories
   { crCachePath :: FilePath
@@ -175,6 +177,19 @@ updateFromCabal acid =
 --        else return m
 --    toText (Dependency (PackageName name) range)=(T.pack name,T.pack $ show range)
 
+ensurePackageModules :: PackageKey -> AcidState Database -> IO ()
+ensurePackageModules key state = do
+    needUpdate <- packageNotDated key state pkgModulesAnalysedDate
+    when needUpdate $ do
+        print $ "updating module for package: "++show key
+        updateSinglePackage key state
+
+packageNotDated :: PackageKey -> AcidState Database -> (Package -> Maybe a) -> IO Bool
+packageNotDated key state f = do
+  mpkg <- query state $ GetPackage key
+  return $ isNothing $ join $ fmap f mpkg
+
+
 updateSinglePackage :: PackageKey -> AcidState Database -> IO ()
 updateSinglePackage key acid =
     processIdx =<< idxFile =<< getCabalRepositories
@@ -195,9 +210,23 @@ updateSinglePackage key acid =
             _ -> return ()
         processVersion rep cnts now =
           case packageFromDescriptionBS cnts (remotePackageLocation rep) now of
-              Just pkg -> void $ scheduleUpdate acid $ WriteFullPackage pkg
+              Just pkg -> void $ update acid $ WriteFullPackage pkg
               _ -> return ()
 
+ensurePackageDecls :: PackageKey -> AcidState Database -> IO ()
+ensurePackageDecls key state = do
+    needUpdate <- packageNotDated key state pkgDeclsAnalysedDate
+    when needUpdate $ do
+        print $ "updating decls for package: "++show key
+        mods <- query state $ ListModules key Nothing
+        mdecls <- (concat . catMaybes) <$> forM (toList mods) parseModuleHaddock
+        forM_  mdecls (update state . WriteDecl)
+        Just pkg <- query state $ GetPackage key
+        now <- getCurrentTime
+        void $ update state $ WritePackage (pkg{pkgDeclsAnalysedDate=Just now})
+
+idxFile :: Maybe CabalRepositories
+        -> IO (Maybe (CabalRepositories, FilePath))
 idxFile Nothing = return Nothing
 idxFile (Just rep) = do
   idxf <- getIndexFile rep
@@ -259,7 +288,7 @@ packageFromDescription PackageDescription{..} loc now =
                            ++ map (fromBi testName Test testBuildInfo testToModule) testSuites
                            ++ map (fromBi benchmarkName BenchMark benchmarkBuildInfo benchToModule) benchmarks
                          _ -> []
-  in FullPackage (Package pkgKey doc md (plPackageURL loc pkgKey) (Just now)) cps (mergeModules $ concat mods)
+  in FullPackage (Package pkgKey doc md (plPackageURL loc pkgKey) (Just now) Nothing) cps (mergeModules $ concat mods)
 
 componentFromBuildInfo :: PackageLocation -> PackageKey -> [Cabal.Dependency] -> (e -> String) -> ComponentType -> (e -> BuildInfo) -> (PackageLocation -> e -> PackageKey -> ComponentName -> [Module]) -> e -> (Component,[Module])
 componentFromBuildInfo loc pkgKey deps key typ fbi fmods e=let
