@@ -47,6 +47,8 @@ import Data.Version
 import Data.Time.Clock
 import Data.IxSet.Typed
 
+import qualified Text.PrettyPrint.HughesPJClass as PP
+
 data CabalRepositories = CabalRepositories
   { crCachePath :: FilePath
   , crRemoteRepoName :: T.Text
@@ -181,7 +183,7 @@ ensurePackageModules :: PackageKey -> AcidState Database -> IO ()
 ensurePackageModules key state = do
     needUpdate <- packageNotDated key state pkgModulesAnalysedDate
     when needUpdate $ do
-        print $ "updating module for package: "++show key
+        putStrLn $ "Updating module for package: "++PP.prettyShow key
         updateSinglePackage key state
 
 packageNotDated :: PackageKey -> AcidState Database -> (Package -> Maybe a) -> IO Bool
@@ -217,7 +219,7 @@ ensurePackageDecls :: PackageKey -> AcidState Database -> IO ()
 ensurePackageDecls key state = do
     needUpdate <- packageNotDated key state pkgDeclsAnalysedDate
     when needUpdate $ do
-        print $ "updating decls for package: "++show key
+        putStrLn $ "Updating decls for package: "++PP.prettyShow key
         mods <- query state $ ListModules key Nothing
         mdecls <- (concat . catMaybes) <$> forM (toList mods) parseModuleHaddock
         forM_  mdecls (update state . WriteDecl)

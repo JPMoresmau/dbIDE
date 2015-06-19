@@ -128,12 +128,14 @@
 		},
 		selectedRoot : function (){
 		  this.versions=[];
+      this.data=[];
       this.showVersions=false;
 			this.resetCrumbs(0);
 			this.reload("ajaxPackages",null);
 		},
 		selectedPackage : function (e, detail, sender){
-		  this.data=[];
+		  this.versions=[];
+      this.data=[];
 			this.resetCrumbs(1);
 			this.push('crumbs',detail);
 			var s={"key":JSON.stringify(detail.key)};

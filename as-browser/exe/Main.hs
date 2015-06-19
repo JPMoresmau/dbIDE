@@ -122,10 +122,11 @@ main :: IO ()
 main = do
   ldir <- logDir
   dbdir <- liftIO dbDir
-  print $ "Database in folder:" ++ dbdir
+  putStrLn $ "Database folder:" ++ dbdir
   state <- openLocalStateFrom dbdir def
   _ <- forkIO $ updateFromCabal state
   createDirectoryIfMissing True ldir
+  putStrLn $ "Log folder:" ++ ldir
   let cfg = setAccessLog (ConfigFileLog (ldir </> "access.log"))
               $ setErrorLog (ConfigFileLog (ldir </> "error.log"))
                 defaultConfig

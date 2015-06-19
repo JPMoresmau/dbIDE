@@ -64,7 +64,8 @@ library
         xml-conduit -any,
         html-conduit -any,
         blaze-html -any,
-        transformers -any
+        transformers -any,
+        pretty
     hs-source-dirs: src
     other-modules:
         Language.Haskell.ASBrowser.Operations.Decls
@@ -114,7 +115,8 @@ executable as-browser
         xml-conduit -any,
         html-conduit -any,
         blaze-html -any,
-        attoparsec -any
+        attoparsec -any,
+        pretty
     hs-source-dirs: exe
     ghc-options: -Wall -rtsopts -threaded -O2
 
@@ -153,7 +155,8 @@ test-suite as-browser-test
         network-uri -any,
         xml-conduit -any,
         html-conduit -any,
-        blaze-html -any
+        blaze-html -any,
+        pretty
     hs-source-dirs: test src
     other-modules:
         Language.Haskell.ASBrowser.Operations.Decls
@@ -207,7 +210,8 @@ test-suite as-browser-integration
         network-uri -any,
         xml-conduit -any,
         html-conduit -any,
-        blaze-html -any
+        blaze-html -any,
+        pretty
     hs-source-dirs: src integration
     other-modules:
         Language.Haskell.ASBrowser.Operations.Decls

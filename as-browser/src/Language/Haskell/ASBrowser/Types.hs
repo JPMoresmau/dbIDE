@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TypeSynonymInstances #-}
@@ -25,7 +26,8 @@ import Data.Maybe
 import Data.Aeson
 import Data.Aeson.TH
 
-
+import qualified Text.PrettyPrint as PP
+import qualified Text.PrettyPrint.HughesPJClass as PP
 
 newtype PackageName = PackageName {unPkgName :: Text}
   deriving (Show,Read,Eq,Ord,Typeable,Data)
@@ -180,6 +182,9 @@ data PackageKey = PackageKey
 
 deriveSafeCopy 0 'base ''PackageKey
 deriveJSON defaultOptions{fieldLabelModifier=jsonField 3} ''PackageKey
+
+instance PP.Pretty PackageKey where
+    pPrint PackageKey{..} = PP.text (unpack $ unPkgName pkgName) PP.<> PP.char '-' PP.<> (PP.text $ showVersion pkgVersion)
 
 data PackageRef = PackageRef
   { prName :: !PackageName
