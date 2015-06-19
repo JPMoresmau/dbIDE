@@ -6,7 +6,13 @@
     <link rel="import" type="css" href="../style/as-browser.css">
 	   <template>
 		     <div title="{{summary(decl)}}" layout horizontal style="white-space: nowrap;">
-           <iron-icon src="{{image(decl)}}" class="small" alt="{{summary(decl)}}"></iron-icon>
+           <template is="dom-if" if="{{decl.urls.docurl}}">
+               <a href="{{decl.urls.docurl}}" target="_new"><iron-icon src="{{image(decl)}}" class="small" title="{{docs(decl)}}" alt="Declaration with documentation"></iron-icon></a>
+           </template>
+           <template is="dom-if" if="{{!decl.urls.docurl}}">
+               <iron-icon src="{{image(decl)}}" class="small gray" alt="Declaration without documentation"></iron-icon>
+           </template>
+
            <span on-click="selectDecl" class="link" flex>{{decl.key.name}}</span>
          </div>
     </template>
@@ -20,8 +26,8 @@
             properties: {
                 decl: { type: Object }
             },
-            docs:function(){
-              return "Docs at " + this.decl.urls.docurl;
+            docs:function(decl){
+              return "Docs at " + decl.urls.docurl;
             },
             summary:function(decl){
               if (!decl){

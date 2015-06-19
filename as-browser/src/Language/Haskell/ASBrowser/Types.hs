@@ -340,6 +340,7 @@ data Decl = Decl
   , dType :: DeclType
   , dSignature :: Text
   , dDoc  :: Doc
+  , dURLs :: URLs
   } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''Decl

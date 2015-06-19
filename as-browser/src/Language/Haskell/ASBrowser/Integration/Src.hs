@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Language.Haskell.ASBrowser.Integration.Src where
 
+import Data.Monoid
+
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as LT
 import qualified Data.ByteString.Lazy as LBS
@@ -69,14 +71,14 @@ getPreContents doc = T.concat $ doc $.// findNodes &| extractData
 parseModuleHaddock :: Module -> IO (Maybe [Decl])
 parseModuleHaddock modl = case uDocURL $ modURLs modl of
     Nothing -> return Nothing
-    Just du -> (Just . parseHaddock (modKey modl)) <$> simpleHttp (T.unpack $ unURLName du)
+    Just du -> (Just . parseHaddock modl) <$> simpleHttp (T.unpack $ unURLName du)
 
 
-parseHaddock :: ModuleKey -> LBS.ByteString -> [Decl]
-parseHaddock mk  = parseHaddock' mk . fromDocument . parseLBS
+parseHaddock :: Module -> LBS.ByteString -> [Decl]
+parseHaddock modl  = parseHaddock' modl . fromDocument . parseLBS
 
-parseHaddock' :: ModuleKey -> Cursor -> [Decl]
-parseHaddock' mk c =
+parseHaddock' :: Module -> Cursor -> [Decl]
+parseHaddock' modl c =
     let ts = c $.// tops >=> srcs "p" "div" False
         cs = c $.// conss >=> srcs "td" "td" True
         ms = c $.// meths >=> srcs "p" "div" False
@@ -92,15 +94,19 @@ parseHaddock' mk c =
             let f = if rec then ($//) else ($/)
             src <- s `f` (element el
                        >=> attributeIs "class" "src")
-            ns <- src $/ names
+            ns <- src $/ namesAnch &// content
+            url <- src $/ namesAnch &| anc
+            let srcurl = concat $ srcUrl src
+            let urls = URLs (addSrcUrl srcurl) (addDocAnchor url)
             let k = src $/ kw
             let docs = s $/ doc docEl
-            -- let k'= trace (show docs) k
+            --let ns'= trace (show srcurl) ns
             let d = docToText docs
-            [Decl (DeclKey (DeclName ns) mk) (kw2Type k) "" d]
-        names =  element "a"
+            [Decl (DeclKey (DeclName ns) (modKey modl)) (kw2Type k) "" d urls]
+        namesAnch =  element "a"
                       >=> attributeIs "class" "def"
-                      &// content
+                      -- &// content
+        anc = attribute "name"
         kw = element "span"
                       >=> attributeIs "class" "keyword"
                       &// content
@@ -125,3 +131,12 @@ parseHaddock' mk c =
         docToText _      = Doc "" ""
         toCons d = d{dType=DeclConstructor}
         toMeth d = d{dType=DeclMethod}
+        addDocAnchor [] = Nothing
+        addDocAnchor (url:_) = (URL . (\t->t <> "#" <> url) . unURLName) <$> (uDocURL $ modURLs modl)
+        srcUrl src = src $/ element "a"
+                      >=> attributeIs "class" "link"
+                      >=> check (\c->T.concat (c $// content) == "Source")
+                      &| attribute "href"
+        addSrcUrl [] = Nothing
+        addSrcUrl (url:_) = (URL . (\t->(T.dropWhileEnd (/= '/') t) <> url) . unURLName) <$> (uDocURL $ modURLs modl)
+

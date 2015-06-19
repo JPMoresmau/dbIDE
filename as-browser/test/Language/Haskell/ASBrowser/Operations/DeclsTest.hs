@@ -63,16 +63,16 @@ declKey1 :: DeclKey
 declKey1 = DeclKey "decl1" testModKey1
 
 decl1 :: Decl
-decl1 = Decl declKey1 DeclFunction "" def
+decl1 = Decl declKey1 DeclFunction "" def def
 
 declKey2 :: DeclKey
 declKey2 = DeclKey "decl2" testModKey1
 
 decl2 :: Decl
-decl2 = Decl declKey2 DeclFunction "" def
+decl2 = Decl declKey2 DeclFunction "" def def
 
 declKey3 :: DeclKey
 declKey3 = DeclKey "decl1" testModKey2
 
 decl3 :: Decl
-decl3 = Decl declKey3 DeclFunction "" def
+decl3 = Decl declKey3 DeclFunction "" def def

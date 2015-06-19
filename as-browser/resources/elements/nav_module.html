@@ -7,10 +7,10 @@
 	<template>
 		<div title="{{modl.key.name}}" layout horizontal style="white-space: nowrap;">
 		 <template is="dom-if" if="{{modl.urls.docurl}}">
-		   	<a href="{{modl.urls.docurl}}" target="_new"><iron-icon src="../images/module_flat.png" class="small" title="{{docs()}}" alt="Module with documentation"></iron-icon></a>
+		   	<a href="{{modl.urls.docurl}}" target="_new"><iron-icon src="../images/module_flat.png" class="small" title="{{docs(modl)}}" alt="Module with documentation"></iron-icon></a>
 		 </template>
 		 <template is="dom-if" if="{{!modl.urls.docurl}}">
-		    	<iron-icon src="../images/module_flat_gs.png" class="small" alt="Module without documentation"></iron-icon>
+		    	<iron-icon src="../images/module_flat.png" class="small gray" alt="Module without documentation"></iron-icon>
 		  </template>
 		  <span on-click="selectModl" class="link" flex>{{modl.key.name}}</span>
 		</div>
@@ -25,8 +25,8 @@
           properties: {
               modl: { type: Object }
           },
-          docs:function(){
-            return "Module docs at " + this.modl.urls.docurl;
+          docs:function(modl){
+            return "Module docs at " + modl.urls.docurl;
           }
 	});
 	</script>

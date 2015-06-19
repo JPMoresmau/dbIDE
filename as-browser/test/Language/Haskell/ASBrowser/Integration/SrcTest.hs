@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Language.Haskell.ASBrowser.Integration.SrcTest where
 
+import Data.Default
 import Data.Monoid
 
 import Language.Haskell.ASBrowser.Integration.Src
@@ -52,11 +53,14 @@ testNoLongDoc d1 decls = do
     let ds2 = map (\d@Decl{..}->d{dDoc=dDoc{dLong=""}}) ds
     ds2 @?= [d1]
 
-aesonModule :: ModuleKey
-aesonModule= ModuleKey "Data.Aeson" (PackageKey "aeson" "0.9.1" Packaged)
+aesonModuleKey :: ModuleKey
+aesonModuleKey = ModuleKey "Data.Aeson" (PackageKey "aeson" "0.9.1" Packaged)
+
+aesonModule :: Module
+aesonModule = Module aesonModuleKey def [] (URLs (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/src/Data-Aeson.html") (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/Data-Aeson.html"))
 
 aesonDeclDecode :: Decl
-aesonDeclDecode = Decl (DeclKey "decode" aesonModule) DeclFunction ""
+aesonDeclDecode = Decl (DeclKey "decode" aesonModuleKey) DeclFunction ""
     (Doc
         "Efficiently deserialize a JSON value from a lazy ByteString.\n If this fails due to incomplete or invalid input, Nothing is\n returned."
         $ "<div class=\"doc\"><p>Efficiently deserialize a JSON value from a lazy <code><a href=\"/package/bytestring-0.10.4.0/docs/Data-ByteString-Lazy.html#t:ByteString\">ByteString</a></code>."
@@ -64,22 +68,33 @@ aesonDeclDecode = Decl (DeclKey "decode" aesonModule) DeclFunction ""
             <> "\n returned.</p><p>The input must consist solely of a JSON document, with no trailing"
             <> "\n data except for whitespace.</p><p>This function parses immediately, but defers conversion.  See"
             <> "\n <code><a href=\"Data-Aeson.html#v:json\">json</a></code> for details.</p></div>")
+    (URLs (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/src/Data-Aeson.html#decode")
+        (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/Data-Aeson.html#v:decode"))
 
 aesonDeclValue :: Decl
-aesonDeclValue = Decl (DeclKey "Value" aesonModule) DeclData ""
+aesonDeclValue = Decl (DeclKey "Value" aesonModuleKey) DeclData ""
     (Doc "A JSON value represented as a Haskell value." "<div class=\"doc\"><p>A JSON value represented as a Haskell value.</p></div>")
+    (URLs  (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/src/Data-Aeson-Types-Internal.html#Value")
+        (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/Data-Aeson.html#t:Value"))
 
 aesonDeclString :: Decl
-aesonDeclString = Decl (DeclKey "String" aesonModule) DeclConstructor ""
+aesonDeclString = Decl (DeclKey "String" aesonModuleKey) DeclConstructor ""
     (Doc "" "")
+    (URLs Nothing (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/Data-Aeson.html#v:String"))
 
 aesonDeclFromJSON :: Decl
-aesonDeclFromJSON = Decl (DeclKey "FromJSON" aesonModule) DeclClass ""
+aesonDeclFromJSON = Decl (DeclKey "FromJSON" aesonModuleKey) DeclClass ""
     (Doc "A type that can be converted from JSON, with the possibility of\n failure."
     "")
+    (URLs (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/src/Data-Aeson-Types-Class.html#FromJSON")
+        (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/Data-Aeson.html#t:FromJSON") )
+
 
 aesonDeclParseJSON :: Decl
-aesonDeclParseJSON = Decl (DeclKey "gParseJSON" aesonModule) DeclMethod ""
+aesonDeclParseJSON = Decl (DeclKey "gParseJSON" aesonModuleKey) DeclMethod ""
     (Doc "This method (applied to defaultOptions) is used as the\n default generic implementation of parseJSON."
         $ "<div class=\"doc\"><p>This method (applied to <code><a href=\"Data-Aeson-Types.html#v:defaultOptions\">defaultOptions</a></code>) is used as the\n"
             <>" default generic implementation of <code><a href=\"Data-Aeson.html#v:parseJSON\">parseJSON</a></code>.</p></div>")
+    (URLs (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/src/Data-Aeson-Types-Class.html#gParseJSON")
+    (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/Data-Aeson.html#v:gParseJSON"))
+
