@@ -328,8 +328,8 @@ deriveSafeCopy 0 'base ''Module
 deriveJSON defaultOptions{fieldLabelModifier=jsonField 3} ''Module
 
 data DeclKey = DeclKey
-    { decName   :: DeclName
-    , decModule :: ModuleKey
+    { decName      :: DeclName
+    , decModuleKey :: ModuleKey
     } deriving (Show,Read,Eq,Ord,Typeable,Data)
 
 deriveSafeCopy 0 'base ''DeclKey
@@ -393,8 +393,8 @@ type IxDecl = IxSet DeclIxs Decl
 
 instance Indexable DeclIxs Decl where
     indices = ixList
-        (ixFun $ \de -> [modPackageKey $ decModule $ dKey de])
-        (ixFun $ \de -> [decModule $ dKey de])
+        (ixFun $ \de -> [modPackageKey $ decModuleKey $ dKey de])
+        (ixFun $ \de -> [decModuleKey $ dKey de])
         (ixFun $ \de -> [decName $ dKey de])
 
 data Database = Database

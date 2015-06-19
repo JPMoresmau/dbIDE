@@ -61,7 +61,7 @@ appInit st = makeSnaplet "as-browser" "ASBrowser Snap app" (Just dataDir) $ do
     [ ("/json/packages", with acid packagesH)
     , ("/json/versions", with acid versionsH)
     , ("/json/modules", with acid modulesH)
-    , ("/json/decls", with acid modulesH)
+    , ("/json/decls", with acid declsH)
     , ("/static/", serveDirectory "resources")
     ]
   return $ App ac

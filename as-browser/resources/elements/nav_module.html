@@ -12,20 +12,22 @@
 		 <template is="dom-if" if="{{!modl.urls.docurl}}">
 		    	<iron-icon src="../images/module_flat_gs.png" class="small" alt="Module without documentation"></iron-icon>
 		  </template>
-		  <span on-click="selectModl" flex>{{modl.key.name}}</span>
+		  <span on-click="selectModl" class="link" flex>{{modl.key.name}}</span>
 		</div>
 	</template>
 	<script>
 	Polymer({
 	        is:"as-nav-module",
-		modl:{},
-		selectModl:function(){
-		  this.fire('iron-signal', {name: "selected-module", data: this.modl.key});
-		}
-	        , properties: {
-                  modl: { type: Object }
-                },
-                docs:function(){return "Module docs at " + this.modl.urls.docurl;}
+      		modl:{},
+      		selectModl:function(){
+      		  this.fire('iron-signal', {name: "selected-module", data: this.modl});
+      		},
+          properties: {
+              modl: { type: Object }
+          },
+          docs:function(){
+            return "Module docs at " + this.modl.urls.docurl;
+          }
 	});
 	</script>
 </polymer-element>

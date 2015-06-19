@@ -27,10 +27,10 @@ deleteDecl key = do
 getDecl :: DeclKey -> Query Database (Maybe Decl)
 getDecl key = do
   Database{..} <- ask
-  return $ getOne $ ((dDecls @= (decName key)) &&& (dDecls @= (decModule key)))
+  return $ getOne $ ((dDecls @= (decName key)) &&& (dDecls @= (decModuleKey key)))
 
 declIx :: DeclKey -> IxSet DeclIxs Decl -> IxSet DeclIxs Decl
-declIx key dDecls = ((dDecls @= (decName key)) &&& (dDecls @= (decModule key)))
+declIx key dDecls = ((dDecls @= (decName key)) &&& (dDecls @= (decModuleKey key)))
 
 listDecls :: ModuleKey -> Query Database IxDecl
 listDecls key = do

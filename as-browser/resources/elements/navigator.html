@@ -7,6 +7,7 @@
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="nav_package.html">
 <link rel="import" href="nav_module.html">
+<link rel="import" href="nav_decl.html">
 
 <dom-module id="as-navigator">
 
@@ -19,7 +20,9 @@
 	  	<iron-ajax url="/json/packages" on-response="handlePackages" handleAs="json" id="ajaxPackages"></iron-ajax>
 	  	<iron-ajax url="/json/modules" on-response="handleModules" handleAs="json" id="ajaxModules"></iron-ajax>
 	  	<iron-ajax url="/json/versions" on-response="handleVersions" handleAs="json" id="ajaxVersions"></iron-ajax>
+      <iron-ajax url="/json/decls" on-response="handleDecls" handleAs="json" id="ajaxDecls"></iron-ajax>
 	  	<iron-signals on-iron-signal-selected-package="selectedPackage"></iron-signals>
+      <iron-signals on-iron-signal-selected-module="selectedModule"></iron-signals>
 	  	<div horizontal layout>
 	  	    <template is="dom-repeat" items="{{crumbs}}">
 	  	     <template is="dom-if" if="{{!item.key}}">
@@ -27,24 +30,24 @@
   				<span class="logo"></span>
   				<span>All Packages</span></div>
 	 	        </template>
-			 <template is="dom-if" if="{{isModule(item)}}">
+			      <template is="dom-if" if="{{isModule(item)}}">
 	 	        	<as-nav-module modl="{{item}}">
-		                </as-nav-module>
+		          </as-nav-module>
 	 	        </template>
 	 	         <template is="dom-if" if="{{isPackage(item)}}">
-	 	        	<as-nav-package pkg="{{item}}">
-		                </as-nav-package>
+	 	        	<as-nav-package pkg="{{item}}" show-version="true">
+		          </as-nav-package>
 	 	        </template>
 	  	     </template>
 	  	</div>
-		<template is="dom-if" if="{{versions.length}}">
+		<template is="dom-if" if="{{showVersions}}">
 		    <span>Version:<select id="versionSelect" on-change="selectedVersion">
 		            <template is="dom-repeat" items="{{versions}}">
 		                <option value="{{item.key}}">{{item.key.version}}</option>
 		            </template>
 		        </select></span>
 		</template>
-		
+
 	  	<paper-input label="Type name prefix" class="top_input" value="{{filt::input}}" id="prefixFilter" style="width:100%"></paper-input>
 
 		 <!--<iron-list data="{{data | keyNameStartsWith(filt) | keyNameSort()}}" height="20" style="height:100%" id="list">
@@ -58,15 +61,18 @@
 	 	  <template is="dom-repeat" items="{{data}}" filter="{{keyNameStartsWith(filt)}}" sort="keyNameSort" id="list">
 	 	        <template is="dom-if" if="{{isModule(item)}}">
 	 	        	<as-nav-module modl="{{item}}">
-		                </as-nav-module>
+		          </as-nav-module>
 	 	        </template>
 	 	         <template is="dom-if" if="{{isPackage(item)}}">
 	 	        	<as-nav-package pkg="{{item}}">
-		                </as-nav-package>
+		          </as-nav-package>
 	 	        </template>
+            <template is="dom-if" if="{{isDecl(item)}}">
+              <as-nav-decl decl="{{item}}">
+              </as-nav-decl>
+            </template>
+	    </template>
 
-	          </template>
-		
     </div>
 
   </template>
@@ -79,6 +85,7 @@
 		data:[],
 		versions:[],
 		currentVersionIdx:0,
+    showVersions:false,
 		crumbs:[{
 				root:true
 			}],
@@ -120,12 +127,13 @@
 			aj.generateRequest();
 		},
 		selectedRoot : function (){
-		        this.versions=[];
+		  this.versions=[];
+      this.showVersions=false;
 			this.resetCrumbs(0);
 			this.reload("ajaxPackages",null);
 		},
 		selectedPackage : function (e, detail, sender){
-		        this.data=[];
+		  this.data=[];
 			this.resetCrumbs(1);
 			this.push('crumbs',detail);
 			var s={"key":JSON.stringify(detail.key)};
@@ -140,32 +148,46 @@
 		            this.data=[];
 		            this.currentVersionIdx=sel.selectedIndex;
 		            var detail = this.versions[sel.selectedIndex];
-			    this.resetCrumbs(1);
-			    this.push('crumbs',detail);
-			    var s={"key":JSON.stringify(detail.key)};
-			    this.reload("ajaxModules",s);
-			}
+      			    this.resetCrumbs(1);
+      			    this.push('crumbs',detail);
+      			    var s={"key":JSON.stringify(detail.key)};
+      			    this.reload("ajaxModules",s);
+      			}
 		    }
 		},
+    selectedModule : function (e, detail, sender){
+      this.showVersions=false;
+      this.data=[];
+      this.resetCrumbs(2);
+      this.push('crumbs',detail);
+      var s={"key":JSON.stringify(detail.key)};
+			this.reload("ajaxDecls",s);
+    },
 		isModule : function (item){
 		    return item && item.key && item.key.packagekey;
 		},
 		isPackage : function (item){
-		    return item && item.key && !item.key.packagekey;
+		    return item && item.key && !item.key.packagekey  && !item.key.modulekey;
 		},
+    isDecl : function (item){
+      return item && item.type;
+    },
 		inPackage : function (){
-		    return this.crumbs && this.crumbs.length>0 && this.isPackage(this.crumbs[this.crumbs.length-1]);
+		    return this.crumbs && this.crumbs.length==2 && this.isPackage(this.crumbs[this.crumbs.length-1]);
 		},
-		handlePackages : function (e){
-	             this.data=e.detail.response.slice(0,10);
-	        },
-	        handleModules : function (e){
-	             this.data=e.detail.response;
-	             var s={"name":JSON.stringify(this.crumbs[this.crumbs.length-1].key.name)};
-	        },
+  	handlePackages : function (e){
+         this.data=e.detail.response.slice(0,10);
+    },
+    handleModules : function (e){
+         this.data=e.detail.response;
+    },
 		handleVersions : function (e){
 		     this.versions=e.detail.response;
-		}
+         this.showVersions=this.versions.length>0;
+		},
+    handleDecls : function (e){
+        this.data=e.detail.response;
+    }
 	});
   </script>
 </dom-module>

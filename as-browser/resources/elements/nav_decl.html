@@ -1,0 +1,50 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+
+
+<dom-module id="as-nav-decl">
+    <link rel="import" type="css" href="../style/as-browser.css">
+	   <template>
+		     <div title="{{summary(decl)}}" layout horizontal style="white-space: nowrap;">
+           <iron-icon src="{{image(decl)}}" class="small" alt="{{summary(decl)}}"></iron-icon>
+           <span on-click="selectDecl" class="link" flex>{{decl.key.name}}</span>
+         </div>
+    </template>
+    <script>
+    Polymer({
+            is:"as-nav-decl",
+            decl:{},
+            selectDecl:function(){
+              this.fire('iron-signal', {name: "selected-decl", data: this.decl});
+            },
+            properties: {
+                decl: { type: Object }
+            },
+            docs:function(){
+              return "Docs at " + this.decl.urls.docurl;
+            },
+            summary:function(decl){
+              if (!decl){
+                return "";
+              }
+              var d=decl.doc;
+              var s=decl.key.name;
+              if (d && d.short){
+                s=d.short;
+              }
+              return s;
+            },
+            image:function(decl){
+              var s="function_flat";
+              var t=decl.type;
+              if (t.startsWith("DeclType")){
+                s="type_flat";
+              }
+              if (t.startsWith("DeclMethod")){
+                s="method_flat";
+              }
+              return "images/"+s+".png";
+            }
+    });
+    </script>
+  </polymer-element>
