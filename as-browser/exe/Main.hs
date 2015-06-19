@@ -1,5 +1,8 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings, TemplateHaskell, MultiParamTypeClasses #-}
 module Main where
+
+import Control.Exception hiding (Handler)
 
 import Snap.Http.Server
 import Snap.Core
@@ -19,7 +22,6 @@ import Data.Aeson.Types (parseMaybe)
 import Data.Aeson.Parser
 import Data.List
 import Data.Ord
-import Data.Maybe
 
 import Paths_as_browser
 import Control.Monad
@@ -121,7 +123,12 @@ main :: IO ()
 main = do
   ldir <- logDir
   dbdir <- liftIO dbDir
-  state <- openLocalStateFrom dbdir def
+  state <- catch (openLocalStateFrom dbdir def)
+                 (\(_::SomeException)-> do
+                    cnts <- getDirectoryContents dbdir
+                    forM_ cnts removeFile
+                    openLocalStateFrom dbdir def
+                    )
   _ <- forkIO $ updateFromCabal state
   createDirectoryIfMissing True ldir
   let cfg = setAccessLog (ConfigFileLog (ldir </> "access.log"))
