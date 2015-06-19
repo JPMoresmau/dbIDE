@@ -2,7 +2,6 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell, MultiParamTypeClasses #-}
 module Main where
 
-import Control.Exception hiding (Handler)
 
 import Snap.Http.Server
 import Snap.Core
@@ -123,12 +122,8 @@ main :: IO ()
 main = do
   ldir <- logDir
   dbdir <- liftIO dbDir
-  state <- catch (openLocalStateFrom dbdir def)
-                 (\(_::SomeException)-> do
-                    cnts <- getDirectoryContents dbdir
-                    forM_ cnts removeFile
-                    openLocalStateFrom dbdir def
-                    )
+  print $ "Database in folder:" ++ dbdir
+  state <- openLocalStateFrom dbdir def
   _ <- forkIO $ updateFromCabal state
   createDirectoryIfMissing True ldir
   let cfg = setAccessLog (ConfigFileLog (ldir </> "access.log"))
