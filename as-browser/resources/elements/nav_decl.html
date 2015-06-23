@@ -5,7 +5,7 @@
 <dom-module id="as-nav-decl">
     <link rel="import" type="css" href="../style/as-browser.css">
 	   <template>
-		     <div title="{{summary(decl)}}" layout horizontal style="white-space: nowrap;">
+		     <div title="{{shortDoc(decl)}}" layout horizontal style="white-space: nowrap;">
            <template is="dom-if" if="{{decl.urls.docurl}}">
                <a href="{{decl.urls.docurl}}" target="_new"><iron-icon src="{{image(decl)}}" class="small" title="{{docs(decl)}}" alt="Declaration with documentation"></iron-icon></a>
            </template>
@@ -29,7 +29,7 @@
             docs:function(decl){
               return "Docs at " + decl.urls.docurl;
             },
-            summary:function(decl){
+            shortDoc:function(decl){
               if (!decl){
                 return "";
               }

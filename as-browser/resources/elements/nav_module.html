@@ -5,7 +5,7 @@
 <dom-module id="as-nav-module">
     <link rel="import" type="css" href="../style/as-browser.css">
 	<template>
-		<div title="{{modl.key.name}}" layout horizontal style="white-space: nowrap;">
+		<div title="{{shortDoc(modl)}}" layout horizontal style="white-space: nowrap;">
 		 <template is="dom-if" if="{{modl.urls.docurl}}">
 		   	<a href="{{modl.urls.docurl}}" target="_new"><iron-icon src="../images/module_flat.png" class="small" title="{{docs(modl)}}" alt="Module with documentation"></iron-icon></a>
 		 </template>
@@ -27,6 +27,12 @@
           },
           docs:function(modl){
             return "Module docs at " + modl.urls.docurl;
+          },
+          shortDoc:function(modl){
+            if (modl.doc && modl.doc.short){
+              return modl.doc.short;
+            }
+            return modl.key.name;
           }
 	});
 	</script>

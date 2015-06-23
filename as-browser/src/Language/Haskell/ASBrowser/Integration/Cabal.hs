@@ -221,8 +221,9 @@ ensurePackageDecls key state = do
     when needUpdate $ do
         putStrLn $ "Updating decls for package: "++PP.prettyShow key
         mods <- query state $ ListModules key Nothing
-        mdecls <- (concat . catMaybes) <$> forM (toList mods) parseModuleHaddock
-        forM_  mdecls (update state . WriteDecl)
+        moddecls <- (catMaybes) <$> forM (toList mods) parseModuleHaddock
+        forM_  (concatMap snd moddecls) (update state . WriteDecl)
+        forM_  (map fst moddecls) (update state . WriteModule)
         Just pkg <- query state $ GetPackage key
         now <- getCurrentTime
         void $ update state $ WritePackage (pkg{pkgDeclsAnalysedDate=Just now})

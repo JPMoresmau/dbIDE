@@ -18,7 +18,7 @@ import           Text.Blaze.Html.Renderer.Text (renderHtml)
 -- import Language.Haskell.Exts.Annotated as HSE
 
 import Language.Haskell.ASBrowser.Types as ASB
-
+import Language.Haskell.ASBrowser.Utils
 
 import Debug.Trace
 
@@ -68,21 +68,25 @@ getPreContents doc = T.concat $ doc $.// findNodes &| extractData
     findNodes = element "pre" >=> descendant
     extractData = T.concat . content
 
-parseModuleHaddock :: Module -> IO (Maybe [Decl])
+parseModuleHaddock :: Module -> IO (Maybe (Module,[Decl]))
 parseModuleHaddock modl = case uDocURL $ modURLs modl of
     Nothing -> return Nothing
     Just du -> (Just . parseHaddock modl) <$> simpleHttp (T.unpack $ unURLName du)
 
 
-parseHaddock :: Module -> LBS.ByteString -> [Decl]
+parseHaddock :: Module -> LBS.ByteString -> (Module,[Decl])
 parseHaddock modl  = parseHaddock' modl . fromDocument . parseLBS
 
-parseHaddock' :: Module -> Cursor -> [Decl]
+parseHaddock' :: Module -> Cursor -> (Module,[Decl])
 parseHaddock' modl c =
     let ts = c $.// tops >=> srcs "p" "div" False
         cs = c $.// conss >=> srcs "td" "td" True
         ms = c $.// meths >=> srcs "p" "div" False
-    in ts ++ (map toCons cs) ++ (map toMeth ms)
+        ds = ts ++ (map toCons cs) ++ (map toMeth ms)
+        mdocs = c $.// moduleDoc &/ (doc "div")
+        --mdocs' = trace (show mdocs) mdocs
+        d = docToText mdocs
+    in (modl{modDoc=d},ds)
     where
         tops = element "div"
                        >=> attributeIs "class" "top"
@@ -90,6 +94,8 @@ parseHaddock' modl c =
                        >=> attributeIs "class" "subs constructors"
         meths = element "div"
                        >=> attributeIs "class" "subs methods"
+        moduleDoc = element "div"
+                       >=> attributeIs "id" "description"
         srcs el docEl rec s =  do
             let f = if rec then ($//) else ($/)
             src <- s `f` (element el
@@ -135,7 +141,7 @@ parseHaddock' modl c =
         addDocAnchor (url:_) = (URL . (\t->t <> "#" <> url) . unURLName) <$> (uDocURL $ modURLs modl)
         srcUrl src = src $/ element "a"
                       >=> attributeIs "class" "link"
-                      >=> check (\c->T.concat (c $// content) == "Source")
+                      >=> check (\cr->T.concat (cr $// content) == "Source")
                       &| attribute "href"
         addSrcUrl [] = Nothing
         addSrcUrl (url:_) = (URL . (\t->(T.dropWhileEnd (/= '/') t) <> url) . unURLName) <$> (uDocURL $ modURLs modl)

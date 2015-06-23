@@ -30,12 +30,13 @@ srcTests = testGroup "Src Tests"
             testCase "Aeson" $ do
                 let fn= "data/Data.Aeson.html"
                 f <- LBS.readFile fn
-                let decls = parseHaddock aesonModule f
+                let (aesonModule2,decls) = parseHaddock aesonModule f
                 testExact aesonDeclDecode decls
                 testExact aesonDeclValue decls
                 testNoLongDoc aesonDeclFromJSON decls
                 testExact aesonDeclString decls
                 testExact aesonDeclParseJSON decls
+                aesonModuleDoc @=? modDoc aesonModule2
         ]
 --    ]
   ]
@@ -98,3 +99,6 @@ aesonDeclParseJSON = Decl (DeclKey "gParseJSON" aesonModuleKey) DeclMethod ""
     (URLs (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/src/Data-Aeson-Types-Class.html#gParseJSON")
     (Just "https://hackage.haskell.org/package/aeson-0.9.0.1/docs/Data-Aeson.html#v:gParseJSON"))
 
+aesonModuleDoc :: Doc
+aesonModuleDoc = Doc "Types and functions for working efficiently with JSON data."
+    "<div class=\"doc\"><p>Types and functions for working efficiently with JSON data.</p><p>(A note on naming: in Greek mythology, Aeson was the father of Jason.)</p></div>"

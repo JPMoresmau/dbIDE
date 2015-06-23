@@ -9,6 +9,9 @@ import Data.List (sortBy)
 import Data.Ord
 import Data.Char
 import qualified Data.Set as Set
+import Text.XML.Cursor
+import qualified Data.Map as Map
+import           Text.XML
 
 prefixInterval :: T.Text -> (T.Text,T.Text)
 prefixInterval "" = ("","")
@@ -55,3 +58,10 @@ delete1 :: (Indexable ixs a)
          => (IxSet ixs a -> IxSet ixs a) -> IxSet ixs a -> IxSet ixs a
 delete1 restrict ixset = maybe ixset (flip delete ixset) $
                        getOne $ restrict ixset
+
+-- | Select only those element nodes containing the given attribute key/value pair.
+attributeIsNot :: Name -> T.Text -> Axis
+attributeIsNot n v c =
+    case node c of
+        NodeElement (Element _ as _) -> if Just v /= Map.lookup n as then [c] else []
+        _ -> []

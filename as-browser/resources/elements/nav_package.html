@@ -6,7 +6,7 @@
     <link rel="import" type="css" href="../style/as-browser.css">
 
 	<template>
-		<div title="{{pkg.doc.short}}" layout horizontal>
+		<div title="{{shortDoc(pkg)}}" layout horizontal>
 		    <template is="dom-if" if="{{pkg.docurl}}">
 		        <a href="{{pkg.docurl}}" target="_new"><iron-icon src="../images/package_flat.png" class="small" title="{{docs(pkg)}}" alt="Package with documentation"></iron-icon></a>
 		    </template>
@@ -38,6 +38,12 @@
         } else {
           return pkg.key.name;
         }
+      },
+      shortDoc:function(pkg){
+        if (pkg.doc && pkg.doc.short){
+          return pkg.doc.short;
+        }
+        return showName(pkg,true);
       }
 		});
 	</script>
