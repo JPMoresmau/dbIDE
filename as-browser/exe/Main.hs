@@ -2,23 +2,17 @@
 {-# LANGUAGE OverloadedStrings, TemplateHaskell, MultiParamTypeClasses #-}
 module Main where
 
+import Network.Wai.Middleware.Static
+import Web.Scotty
+import Network.Wai.Handler.Launch
 
-import Snap.Http.Server
-import Snap.Core
-import Snap.Util.FileServe
-
-import Data.Acid as A (closeAcidState)
-import Data.ByteString (ByteString)
+import Data.Acid as A
 
 import Language.Haskell.AsBrowser
-import Snap.Snaplet
-import Snap.Snaplet.AcidState
-import Control.Lens.TH
-import Control.Lens
 import Data.Default
-import Data.Aeson
+import Data.Aeson hiding (json)
 import Data.Aeson.Types (parseMaybe)
-import Data.Aeson.Parser
+import Data.Aeson.Parser hiding (json)
 import Data.List
 import Data.Ord
 
@@ -34,6 +28,10 @@ import Data.Attoparsec.ByteString
 
 import Debug.Trace
 
+import Data.Text.Lazy (Text)
+
+
+
 dataDir :: IO FilePath
 dataDir = liftM (</> "resources") getDataDir
 
@@ -44,90 +42,60 @@ dbDir = liftM (</> "db") getDataDir
 logDir :: IO FilePath
 logDir = liftM (</> "log") getDataDir
 
-data App = App
-  { _acid :: Snaplet (Acid Database)
-  }
-
-makeLenses ''App
-
-instance HasAcid App Database where
-     getAcidStore = view (acid . snapletValue)
-
-
-appInit :: AcidState Database -> SnapletInit App App
-appInit st = makeSnaplet "as-browser" "ASBrowser Snap app" (Just dataDir) $ do
-  onUnload (A.closeAcidState st)
-  ac <- nestSnaplet "asb" acid $ acidInitManual st
-  addRoutes
-    [ ("/json/packages", with acid packagesH)
-    , ("/json/versions", with acid versionsH)
-    , ("/json/modules", with acid modulesH)
-    , ("/json/decls", with acid declsH)
-    , ("/static/", serveDirectory "resources")
-    ]
-  return $ App ac
-
-packagesH :: Handler App (Acid Database) ()
-packagesH = method GET $
-  writeJSON =<< onlyLastVersions <$> query AllPackages
-
-versionsH :: Handler App (Acid Database) ()
-versionsH = do
-  mkey <- getJSONParam "name"
-  method GET $
-    writeJSON =<<
-      maybe (return [])
-        (\ key -> (sortBy (comparing (Down . pkgVersion . pkgKey)) . toList) <$> query (ListVersions key))
-        mkey
-
-modulesH :: Handler App (Acid Database) ()
-modulesH = do
-  mkey <- getJSONParam "key"
-  mcomp <- getJSONParam "component"
-  method GET $
-    writeJSON =<<
-      maybe (return [])
-        (\ key -> do
-            state <- getAcidState
-            liftIO $ ensurePackageModules key state
-            toList <$> query (ListModules key mcomp))
-        mkey
-
-declsH :: Handler App (Acid Database) ()
-declsH = do
-  mkey <- getJSONParam "key"
-  method GET $
-    writeJSON =<<
-      maybe (return [])
-        (\ key -> do
-            state <- getAcidState
-            liftIO $ ensurePackageDecls (modPackageKey key) state
-            toList <$> query (ListDecls key))
-        mkey
-
-getJSONParam :: (FromJSON a, MonadSnap m) =>
-                  ByteString -> m (Maybe a)
-getJSONParam name = do
-  mkey <- getParam name
-  let mv = maybe Nothing (maybeResult . parse value) mkey
-  return $ maybe Nothing (parseMaybe parseJSON) mv
-
-
-writeJSON :: (ToJSON a) => a -> Handler b c ()
-writeJSON obj = do
-  modifyResponse $ setContentType "application/json"
-  writeLBS $ encode obj
 
 main :: IO ()
 main = do
-  ldir <- logDir
+  --ldir <- logDir
   dbdir <- liftIO dbDir
   putStrLn $ "Database folder: " ++ dbdir
   state <- openLocalStateFrom dbdir def
   _ <- forkIO $ updateFromCabal state
-  createDirectoryIfMissing True ldir
-  putStrLn $ "Log folder: " ++ ldir
-  let cfg = setAccessLog (ConfigFileLog (ldir </> "access.log"))
-              $ setErrorLog (ConfigFileLog (ldir </> "error.log"))
-                defaultConfig
-  serveSnaplet cfg $ appInit state
+  --createDirectoryIfMissing True ldir
+  --putStrLn $ "Log folder: " ++ ldir
+  --let cfg = setAccessLog (ConfigFileLog (ldir </> "access.log"))
+  --            $ setErrorLog (ConfigFileLog (ldir </> "error.log"))
+  --              defaultConfig
+  app <- scottyApp $ asBrowserApp state
+  runUrlPort 3000 "" app
+
+asBrowserApp :: AcidState Database -> ScottyM ()
+asBrowserApp state = do
+     middleware $ staticPolicy (noDots >-> addBase "resources")
+     get "/" $ file "resources/index.html"
+     get "/json/packages" $ do
+            result <- liftIO $ onlyLastVersions <$> query state AllPackages
+            json result
+     get "/json/versions" $ do
+            mkey <- getJSONParam "name"
+            result <- liftIO $ maybe (return [])
+                (\ key -> (sortBy (comparing (Down . pkgVersion . pkgKey)) . toList) <$> query state (ListVersions key))
+                mkey
+            json result
+     get "/json/modules" $ do
+        mkey <- getJSONParam "key"
+        mcomp <- getJSONParam "component"
+        result <- liftIO $ maybe (return [])
+            (\ key -> do
+                ensurePackageModules key state
+                toList <$> query state (ListModules key mcomp))
+            mkey
+        json result
+     get "/json/decls" $ do
+        mkey <- getJSONParam "key"
+        result <- liftIO $ maybe (return [])
+          (\ key -> do
+              ensurePackageDecls (modPackageKey key) state
+              toList <$> query state (ListDecls key))
+          mkey
+        json result
+
+
+getJSONParam ::       FromJSON a =>
+                      Text
+                      -> ActionM (Maybe a)
+getJSONParam name= do
+  mkey <- (Just <$> param name) `rescue` (const $ return Nothing)
+  let mv = maybe Nothing (maybeResult . parse value) mkey
+  return $ maybe Nothing (parseMaybe parseJSON) mv
+
+
