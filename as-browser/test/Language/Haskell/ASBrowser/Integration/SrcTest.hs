@@ -36,6 +36,7 @@ srcTests = testGroup "Src Tests"
                 testNoLongDoc aesonDeclFromJSON decls
                 testExact aesonDeclString decls
                 testExact aesonDeclParseJSON decls
+                testExact aesonDeclEqValue decls
                 aesonModuleDoc @=? modDoc aesonModule2
         ]
 --    ]
@@ -102,3 +103,6 @@ aesonDeclParseJSON = Decl (DeclKey "gParseJSON" aesonModuleKey) DeclMethod ""
 aesonModuleDoc :: Doc
 aesonModuleDoc = Doc "Types and functions for working efficiently with JSON data."
     "<div class=\"doc\"><p>Types and functions for working efficiently with JSON data.</p><p>(A note on naming: in Greek mythology, Aeson was the father of Jason.)</p></div>"
+
+aesonDeclEqValue :: Decl
+aesonDeclEqValue = Decl (DeclKey "Eq Value" aesonModuleKey) DeclInstance "Eq Value" def def

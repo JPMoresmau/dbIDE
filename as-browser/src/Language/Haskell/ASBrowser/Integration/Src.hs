@@ -82,7 +82,9 @@ parseHaddock' modl c =
     let ts = c $.// tops >=> srcs "p" "div" False
         cs = c $.// conss >=> srcs "td" "td" True
         ms = c $.// meths >=> srcs "p" "div" False
-        ds = ts ++ (map toCons cs) ++ (map toMeth ms)
+        is = c $.// insts >=> srcInsts "td" "td" True
+        --is' = trace (show is) is
+        ds = ts ++ (map toCons cs) ++ (map toMeth ms) ++  is
         mdocs = c $.// moduleDoc &/ (doc "div")
         --mdocs' = trace (show mdocs) mdocs
         d = docToText mdocs
@@ -94,6 +96,8 @@ parseHaddock' modl c =
                        >=> attributeIs "class" "subs constructors"
         meths = element "div"
                        >=> attributeIs "class" "subs methods"
+        insts = element "div"
+                       >=> attributeIs "class" "subs instances"
         moduleDoc = element "div"
                        >=> attributeIs "id" "description"
         srcs el docEl rec s =  do
@@ -109,6 +113,17 @@ parseHaddock' modl c =
             --let ns'= trace (show srcurl) ns
             let d = docToText docs
             [Decl (DeclKey (DeclName ns) (modKey modl)) (kw2Type k) "" d urls]
+        srcInsts el docEl rec s =  do
+            let f = if rec then ($//) else ($/)
+            src <- s `f` (element el
+                       >=> attributeIs "class" "src")
+            let ns = src $// content
+            let sign = T.concat ns
+            let name = T.strip $ substringAfter "=>" sign
+            let docs = s $/ doc docEl
+            --let ns'= trace (show srcurl) ns
+            let d = docToText docs
+            [Decl (DeclKey (DeclName name) (modKey modl)) DeclInstance sign d def]
         namesAnch =  element "a"
                       >=> attributeIs "class" "def"
                       -- &// content
@@ -137,6 +152,7 @@ parseHaddock' modl c =
         docToText _      = Doc "" ""
         toCons d = d{dType=DeclConstructor}
         toMeth d = d{dType=DeclMethod}
+        --toInst d = d{dType=DeclInstance}
         addDocAnchor [] = Nothing
         addDocAnchor (url:_) = (URL . (\t->t <> "#" <> url) . unURLName) <$> (uDocURL $ modURLs modl)
         srcUrl src = src $/ element "a"

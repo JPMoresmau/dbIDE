@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Language.Haskell.ASBrowser.Utils where
 
@@ -59,9 +60,28 @@ delete1 :: (Indexable ixs a)
 delete1 restrict ixset = maybe ixset (flip delete ixset) $
                        getOne $ restrict ixset
 
--- | Select only those element nodes containing the given attribute key/value pair.
+-- | Select only those element nodes not containing the given attribute key/value pair.
 attributeIsNot :: Name -> T.Text -> Axis
 attributeIsNot n v c =
     case node c of
         NodeElement (Element _ as _) -> if Just v /= Map.lookup n as then [c] else []
         _ -> []
+
+splitCaseFold :: Char -> T.Text -> [T.Text]
+splitCaseFold c = map T.toCaseFold . T.split (== c)
+
+splitSearch :: (Indexable ixs a,IsIndexOf T.Text ixs) => Char -> T.Text -> IxSet ixs a -> IxSet ixs a
+splitSearch c prf ix
+    | T.null prf = ix
+    | otherwise  = let
+        cmpts = map T.toCaseFold $ T.split (==c) prf
+        exact = init cmpts
+        pref  = prefixInterval $ last cmpts
+        in (foldr (flip (@=)) ix exact) @>=< pref
+
+substringAfter :: T.Text -> T.Text -> T.Text
+substringAfter needle haystack =
+  let (prefix,match) = T.breakOn needle haystack
+  in if T.null match
+    then prefix
+    else T.drop (T.length needle) match

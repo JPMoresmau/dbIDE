@@ -11,7 +11,7 @@ import qualified Test.Tasty.QuickCheck as QC
 import Data.Maybe
 
 utilsTests :: TestTree
-utilsTests = testGroup "Utils Tests" 
+utilsTests = testGroup "Utils Tests"
   [ testCase "Prefix tests" $ do
       prefixInterval "" @?= ("","")
       prefixInterval "a" @?= ("a","b")
@@ -19,13 +19,16 @@ utilsTests = testGroup "Utils Tests"
       prefixInterval "az" @?= ("az","a{")
   , QC.testProperty "safeLast" safeLast_prop
   , QC.testProperty "safeHead" safeLast_prop
+  , testCase "substringAfter" $ do
+    substringAfter "/" "foobar" @?= "foobar"
+    substringAfter "=>" "(Eq a) => Ord a" @?= " Ord a"
   ]
 
 
 safeLast_prop :: [Int] -> Bool
-safeLast_prop [] = isNothing $ safeLast [] 
+safeLast_prop [] = isNothing $ safeLast []
 safeLast_prop list = safeLast list == Just (last list)
 
 safeHead_prop :: [Int] -> Bool
-safeHead_prop [] = isNothing $ safeHead [] 
+safeHead_prop [] = isNothing $ safeHead []
 safeHead_prop list = safeHead list == Just (head list)

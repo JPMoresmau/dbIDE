@@ -10,6 +10,7 @@ import Language.Haskell.ASBrowser.Operations.Modules
 import Language.Haskell.ASBrowser.Operations.Packages
 import Control.Monad
 
+import qualified Data.Text as T
 
 writeFullPackage :: FullPackage -> Update Database FullPackage
 writeFullPackage fpk@FullPackage{..} = do
@@ -17,6 +18,14 @@ writeFullPackage fpk@FullPackage{..} = do
   mapM_ writeComponent fpComponents
   mapM_ writeModule fpModules
   return fpk
+
+prefixQuery :: T.Text -> Query Database (IxPackage,IxModule,IxDecl)
+prefixQuery prf = do
+    pkgs <- findPackages prf
+    mods <- findModules [] prf
+    decls <- findDecls [] prf
+    return (pkgs,mods,decls)
+
 
 $(makeAcidic ''Database
   [ 'writePackage

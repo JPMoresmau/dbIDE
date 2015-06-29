@@ -42,9 +42,7 @@ findModules keys prf = do
   let ix1 = case keys of
               [] -> dModules
               _  -> dModules @+ keys
-  let ix2 = case prf of
-              "" -> dModules
-              _  -> dModules @>=< join (***) ModuleName (prefixInterval prf)
+  let ix2 = splitSearch moduleSep prf dModules
   return $ ix1 &&& ix2
 
 mergeModules :: [Module] -> [Module]

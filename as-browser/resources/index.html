@@ -5,11 +5,12 @@
     <link rel="import" href="bower_components/paper-drawer-panel/paper-drawer-panel.html">
 
     <link rel="import" href="elements/navigator.html">
-    <!--link rel="import" href="bower_components/font-roboto/roboto.html"-->
+    <link rel="import" href="elements/search.html">
+    <link rel="import" href="bower_components/font-roboto/roboto.html">
     <link rel="stylesheet" type="text/css" href="style/as-browser.css">
-    <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <!--link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'-->
     <title>as-browser</title>
-		
+
 		<style type="text/css">
 		html,body {
 		  height: 100%;
@@ -17,9 +18,9 @@
 		  background-color: white;
 		  font-family: 'Roboto', sans-serif;
 		}
-		
+
 		</style>
-		
+
   </head>
   <body unresolved fullbleed horizontal layout>
   <paper-drawer-panel drawerWidth="320px">
@@ -27,6 +28,7 @@
   		<as-navigator style="height:100%"></as-navigator>
   	</div>
   	<div main class="content">
+      <as-search></as-search>
 	      content
 	  </div>
   </paper-drawer-panel>

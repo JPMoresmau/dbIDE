@@ -373,25 +373,32 @@ instance Indexable ComponentIxs Component where
     (ixFun $ \c -> Prelude.map prName $ cRefs c)
 
 
-type PackageIxs = '[PackageKey, PackageName, Local, PackageNameCI]
+type PackageIxs = '[PackageKey, PackageName, Local, Text]
 type IxPackage  = IxSet PackageIxs Package
+
+packageSep :: Char
+packageSep = '-'
 
 instance Indexable PackageIxs Package where
   indices = ixList
     (ixFun $ \pkg -> [ pkgKey pkg ])
-    (ixFun $ \pkg -> [ pkgName $ pkgKey pkg ])
+    (ixFun $ \pkg -> [pkgName $ pkgKey pkg] )
     (ixFun $ \pkg -> [ pkgLocal $ pkgKey pkg ])
-    (ixFun $ \pkg -> [ textToPackageNameCI $ unPkgName $ pkgName $ pkgKey pkg ])
+    (ixFun $ \pkg -> splitCaseFold packageSep $ unPkgName $ pkgName $ pkgKey pkg )
 
 
-type ModuleIxs = '[PackageKey, ComponentKey, ModuleName, ModuleKey]
+type ModuleIxs = '[PackageKey, ComponentKey, Text, ModuleKey]
 type IxModule  = IxSet ModuleIxs Module
+
+
+moduleSep :: Char
+moduleSep = '-'
 
 instance Indexable ModuleIxs Module where
   indices = ixList
     (ixFun $ \mo -> [ modPackageKey $ modKey mo ])
     (ixFun $ \mo -> Prelude.map ((ComponentKey $ modPackageKey $ modKey mo) . miComponent) $ modComponents mo)
-    (ixFun $ \mo -> [ modName $ modKey mo ])
+    (ixFun $ \mo -> splitCaseFold moduleSep $ unModName $ modName $ modKey mo)
     (ixFun $ \mo -> [ modKey mo ])
 
 type DeclIxs = '[PackageKey, ModuleKey, DeclName]

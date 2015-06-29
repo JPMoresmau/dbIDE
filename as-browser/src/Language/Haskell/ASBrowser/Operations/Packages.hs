@@ -41,9 +41,8 @@ getPackage key = do
 findPackages :: T.Text -> Query Database IxPackage
 findPackages prf = do
   Database{..} <- ask
-  if T.null prf
-    then return dPackages
-    else return $ dPackages @>=< textTupleToPackageNameCI (prefixInterval $ unPkgNameCI $ textToPackageNameCI prf)
+  return $ splitSearch packageSep prf dPackages
+
 
 listVersions :: PackageName -> Query Database IxPackage
 listVersions nm = do

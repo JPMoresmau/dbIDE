@@ -37,17 +37,25 @@
               var s=decl.key.name;
               if (d && d.short){
                 s=d.short;
+              } else if (decl.signature){
+                s=decl.signature
               }
               return s;
             },
             image:function(decl){
               var s="function_flat";
               var t=decl.type;
-              if (t.startsWith("DeclType")){
+              if (t.startsWith("DeclType") || t.startsWith("DeclData") || t.startsWith("DeclNewType")){
                 s="type_flat";
               }
               if (t.startsWith("DeclMethod")){
                 s="method_flat";
+              }
+              if (t.startsWith("DeclInstance")){
+                s="instance_flat";
+              }
+              if (t.startsWith("DeclClass")){
+                s="class_flat";
               }
               return "images/"+s+".png";
             }
