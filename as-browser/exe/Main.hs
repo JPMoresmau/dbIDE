@@ -22,14 +22,13 @@ import Control.Monad.IO.Class
 import System.Directory
 import System.FilePath
 import Control.Concurrent
-import Data.IxSet.Typed (toList)
+import Data.IxSet.Typed (toList,empty)
 
 import Data.Attoparsec.ByteString
 
 import Debug.Trace
 
 import Data.Text.Lazy (Text)
-
 
 
 dataDir :: IO FilePath
@@ -88,7 +87,14 @@ asBrowserApp state = do
               toList <$> query state (ListDecls key))
           mkey
         json result
-
+     get "/json/search/:crit" $ do
+        crit <- param "crit"
+        (pkgs,mods,decls) <- liftIO $
+            do
+               query state (PrefixQuery crit)
+        liftIO $ print $ length $ onlyLastVersions pkgs
+        let js = (map toJSON $ onlyLastVersions pkgs) -- ++ (map toJSON $ toList mods) ++ (map toJSON $ toList decls)
+        json js
 
 getJSONParam ::       FromJSON a =>
                       Text
@@ -97,5 +103,4 @@ getJSONParam name= do
   mkey <- (Just <$> param name) `rescue` (const $ return Nothing)
   let mv = maybe Nothing (maybeResult . parse value) mkey
   return $ maybe Nothing (parseMaybe parseJSON) mv
-
 

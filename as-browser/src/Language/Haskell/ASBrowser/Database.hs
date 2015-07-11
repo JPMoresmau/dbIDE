@@ -55,6 +55,7 @@ $(makeAcidic ''Database
   , 'getDecl
   , 'listDecls
   , 'findDecls
+  , 'prefixQuery
   ])
 
 

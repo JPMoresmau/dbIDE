@@ -14,6 +14,8 @@ import Text.XML.Cursor
 import qualified Data.Map as Map
 import           Text.XML
 
+import Debug.Trace
+
 prefixInterval :: T.Text -> (T.Text,T.Text)
 prefixInterval "" = ("","")
 prefixInterval txt =
@@ -70,14 +72,19 @@ attributeIsNot n v c =
 splitCaseFold :: Char -> T.Text -> [T.Text]
 splitCaseFold c = map T.toCaseFold . T.split (== c)
 
-splitSearch :: (Indexable ixs a,IsIndexOf T.Text ixs) => Char -> T.Text -> IxSet ixs a -> IxSet ixs a
+splitSearchText :: Char -> T.Text -> ([T.Text],(T.Text,T.Text))
+splitSearchText c prf = let
+        cmpts = splitCaseFold c prf
+        exact = init cmpts
+        pref  = prefixInterval $ last cmpts
+        in (exact,pref)
+
+splitSearch :: (Indexable ixs a,IsIndexOf T.Text ixs,Show a) => Char -> T.Text -> IxSet ixs a -> IxSet ixs a
 splitSearch c prf ix
     | T.null prf = ix
     | otherwise  = let
-        cmpts = map T.toCaseFold $ T.split (==c) prf
-        exact = init cmpts
-        pref  = prefixInterval $ last cmpts
-        in (foldr (flip (@=)) ix exact) @>=< pref
+        (exact,bnds) = splitSearchText c prf
+        in (ix @* exact) @>=< bnds
 
 substringAfter :: T.Text -> T.Text -> T.Text
 substringAfter needle haystack =

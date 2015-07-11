@@ -41,16 +41,25 @@ packageTests = testGroup "Package Tests"
       withTestAcid $ \acid -> do
         _ <- update acid $ WritePackage testPkg1
         _ <- update acid $ WritePackage testPkg2
+        _ <- update acid $ WritePackage testPkg3
         pkgs1 <- query acid $ FindPackages ""
         pkgs2 <- query acid $ FindPackages "pkg1"
         pkgs3 <- query acid $ FindPackages "p"
         pkgs2' <- query acid $ FindPackages "Pkg1"
         pkgs3' <- query acid $ FindPackages "P"
-        size pkgs1 @?= 2
+        pkgs0 <- query acid $ FindPackages "Pkg2"
+        pkgs4 <- query acid $ FindPackages "pkg3"
+        pkgs5 <- query acid $ FindPackages "my-pkg3"
+        pkgs6 <- query acid $ FindPackages "my"
+        size pkgs1 @?= 3
         toList pkgs2 @?= [testPkg1]
-        toList pkgs3 @?= [testPkg1]
+        (sort $ toList pkgs3) @?= [testPkg3,testPkg1]
         toList pkgs2' @?= [testPkg1]
-        toList pkgs3' @?= [testPkg1]
+        (sort $ toList pkgs3') @?= [testPkg3,testPkg1]
+        toList pkgs0 @?= []
+        toList pkgs4 @?= [testPkg3]
+        toList pkgs5 @?= [testPkg3]
+        (sort $ toList pkgs6) @?= [testPkg3,testPkg2]
   , testCase "Versions" $
       withTestAcid $ \acid -> do
         _ <- update acid $ WritePackage testPkg1
@@ -133,3 +142,8 @@ testPkg2 :: Package
 testPkg2 = Package testPkgKey2 def def def def def
 
 
+testPkgKey3 :: PackageKey
+testPkgKey3 = PackageKey "my-pkg3" "0.0.1" Packaged
+
+testPkg3 :: Package
+testPkg3 = Package testPkgKey3 def def def def def

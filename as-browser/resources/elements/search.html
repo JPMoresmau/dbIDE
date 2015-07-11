@@ -21,12 +21,24 @@
 
   <template>
       <paper-input label="Search text" class="top_input" value="{{crit::input}}" id="criteria"></paper-input>
-      <paper-icon-button icon="search"></paper-icon-button>
+      <paper-icon-button icon="search" on-click="onSearch"></paper-icon-button>
+      <iron-ajax on-response="handleSearch" handleAs="json" id="ajaxSearch" auto ></iron-ajax>
   </template>
   <script>
 	Polymer({
 		is:"as-search",
-    crit:""
+    crit:"",
+    onSearch:function(){
+      if (this.crit){
+        this.$.ajaxSearch.url="/json/search/"+this.crit;
+      }
+
+    },
+    handleSearch:function(e){
+      var res=e.detail.response;
+      console.log(res);
+    }
+
   });
   </script>
 </dom-module>

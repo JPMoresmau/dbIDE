@@ -1,5 +1,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+
 module Language.Haskell.ASBrowser.Integration.SrcTest where
 
 import Data.Default
