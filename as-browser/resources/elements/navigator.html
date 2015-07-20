@@ -1,14 +1,12 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-<!--link rel="import" href="../bower_components/iron-list/iron-list.html"-->
+<link rel="import" href="../bower_components/iron-list/iron-list.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/iron-signals/iron-signals.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
-<link rel="import" href="nav_package.html">
-<link rel="import" href="nav_module.html">
-<link rel="import" href="nav_decl.html">
-<link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout.html">
+<link rel="import" href="nav_element.html">
 
 <dom-module id="as-navigator">
 
@@ -17,6 +15,12 @@
     <style>
       .nav {
         @apply(--layout-vertical);
+        height: 100%;
+      }
+      .crumbs {
+        @apply(--layout-horizontal);
+      }
+      #list {
         height: 100%;
       }
     </style>
@@ -30,21 +34,16 @@
       <iron-ajax url="/json/decls" on-response="handleDecls" handleAs="json" id="ajaxDecls"></iron-ajax>
 	  	<iron-signals on-iron-signal-selected-package="selectedPackage"></iron-signals>
       <iron-signals on-iron-signal-selected-module="selectedModule"></iron-signals>
-	  	<div horizontal layout>
+	  	<div class="crumbs">
 	  	    <template is="dom-repeat" items="{{crumbs}}">
 	  	     <template is="dom-if" if="{{!item.key}}">
 	 	        	<div class="link" on-click="selectedRoot">
   				<span class="logo"></span>
   				<span>All Packages</span></div>
-	 	        </template>
-			      <template is="dom-if" if="{{isModule(item)}}">
-	 	        	<as-nav-module modl="{{item}}">
-		          </as-nav-module>
-	 	        </template>
-	 	         <template is="dom-if" if="{{isPackage(item)}}">
-	 	        	<as-nav-package pkg="{{item}}" show-version="true">
-		          </as-nav-package>
-	 	        </template>
+	 	      </template>
+           <as-nav-element item="{{item}}" showVersion="true">
+           </as-nav-element>
+
 	  	     </template>
 	  	</div>
 		<template is="dom-if" if="{{showVersions}}">
@@ -65,20 +64,12 @@
 				   </div>
 				   </template>
 	 	  </iron-list>-->
-	 	  <template is="dom-repeat" items="{{data}}" filter="{{keyNameStartsWith(filt)}}" sort="keyNameSort" id="list">
-	 	        <template is="dom-if" if="{{isModule(item)}}">
-	 	        	<as-nav-module modl="{{item}}">
-		          </as-nav-module>
-	 	        </template>
-	 	         <template is="dom-if" if="{{isPackage(item)}}">
-	 	        	<as-nav-package pkg="{{item}}">
-		          </as-nav-package>
-	 	        </template>
-            <template is="dom-if" if="{{isDecl(item)}}">
-              <as-nav-decl decl="{{item}}">
-              </as-nav-decl>
-            </template>
-	    </template>
+	 	   <iron-list items="[[filteredData(data,filt)]]" id="list">
+          <template >
+           <as-nav-element item="{{item}}" style="height:20px">
+           </as-nav-element>
+          </template>
+	    </iron-list>
 
     </div>
 
@@ -98,6 +89,7 @@
 			}],
 		ready: function(){
 			this.reload("ajaxPackages",null);
+      this.filt="";
 			this.crumbs=[{
 				root:true
 			}];
@@ -113,6 +105,9 @@
 		keyNameSort : function (a,b){
 			return a.key.name.localeCompare(b.key.name);
 		},
+    filteredData : function(data,filt){
+      return data.filter(this.keyNameStartsWith(filt)).sort(this.keyNameSort);
+    },
 		resetCrumbs : function(level){
 			if (this.currentLevel==level){
 				this.filt="";
@@ -172,20 +167,12 @@
       var s={"key":JSON.stringify(detail.key)};
 			this.reload("ajaxDecls",s);
     },
-		isModule : function (item){
-		    return item && item.key && item.key.packagekey;
-		},
-		isPackage : function (item){
-		    return item && item.key && !item.key.packagekey  && !item.key.modulekey;
-		},
-    isDecl : function (item){
-      return item && item.type;
-    },
+
 		inPackage : function (){
 		    return this.crumbs && this.crumbs.length==2 && this.isPackage(this.crumbs[this.crumbs.length-1]);
 		},
   	handlePackages : function (e){
-         this.data=e.detail.response.slice(0,10);
+         this.data=e.detail.response;
     },
     handleModules : function (e){
          this.data=e.detail.response;

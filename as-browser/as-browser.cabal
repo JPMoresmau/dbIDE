@@ -109,6 +109,7 @@ executable as-browser
         scotty,
         wai-handler-launch,
         wai-middleware-static,
+        wai-extra,
         transformers -any,
         network-uri -any,
         xml-conduit -any,

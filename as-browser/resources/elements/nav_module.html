@@ -6,10 +6,10 @@
     <link rel="import" type="css" href="../style/as-browser.css">
 	<template>
 		<div title="{{shortDoc(modl)}}" layout horizontal style="white-space: nowrap;">
-		 <template is="dom-if" if="{{modl.urls.docurl}}">
+		 <template is="dom-if" if="{{hasDoc(modl)}}">
 		   	<a href="{{modl.urls.docurl}}" target="_new"><iron-icon src="../images/module_flat.png" class="small" title="{{docs(modl)}}" alt="Module with documentation"></iron-icon></a>
 		 </template>
-		 <template is="dom-if" if="{{!modl.urls.docurl}}">
+		 <template is="dom-if" if="{{!hasDoc(modl)}}">
 		    	<iron-icon src="../images/module_flat.png" class="small gray" alt="Module without documentation"></iron-icon>
 		  </template>
 		  <span on-click="selectModl" class="link" flex>{{modl.key.name}}</span>
@@ -25,8 +25,14 @@
           properties: {
               modl: { type: Object }
           },
+          hasDoc : function(modl){
+            return modl && modl.urls && modl.urls.docurl;
+          },
           docs:function(modl){
-            return "Module docs at " + modl.urls.docurl;
+            if (this.hasDoc(modl)){
+              return "Module docs at " + modl.urls.docurl;
+            }
+            return "";
           },
           shortDoc:function(modl){
             if (modl.doc && modl.doc.short){

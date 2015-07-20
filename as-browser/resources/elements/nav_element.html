@@ -1,0 +1,42 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="nav_package.html">
+<link rel="import" href="nav_module.html">
+<link rel="import" href="nav_decl.html">
+
+<dom-module id="as-nav-element">
+  <template>
+    <template is="dom-if" if="{{isModule(item)}}">
+       <as-nav-module modl="{{item}}">
+      </as-nav-module>
+     </template>
+      <template is="dom-if" if="{{isPackage(item)}}">
+       <as-nav-package pkg="{{item}}" showVersion="{{showVersion}}">
+      </as-nav-package>
+     </template>
+    <template is="dom-if" if="{{isDecl(item)}}">
+      <as-nav-decl decl="{{item}}">
+      </as-nav-decl>
+    </template>
+  </template>
+    <script>
+  Polymer({
+          is:"as-nav-element",
+          item:{},
+          showVersion:false,
+          properties : {
+            item: Object,
+            showVersion: {type:Boolean,value:false}
+          },
+          isModule : function (item){
+      		    return item && typeof item.key != 'undefined' && typeof item.key.packagekey != 'undefined';
+      		},
+      		isPackage : function (item){
+      		    return item && item.key && !item.key.packagekey  && !item.key.modulekey;
+      		},
+          isDecl : function (item){
+            return item && item.type;
+          }
+        });
+
+    </script>
+</dom-module>

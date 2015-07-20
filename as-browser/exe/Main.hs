@@ -5,6 +5,7 @@ module Main where
 import Network.Wai.Middleware.Static
 import Web.Scotty
 import Network.Wai.Handler.Launch
+import Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
 
 import Data.Acid as A
 
@@ -60,6 +61,7 @@ main = do
 asBrowserApp :: AcidState Database -> ScottyM ()
 asBrowserApp state = do
      middleware $ staticPolicy (noDots >-> addBase "resources")
+     middleware $ logStdoutDev
      get "/" $ file "resources/index.html"
      get "/json/packages" $ do
             result <- liftIO $ onlyLastVersions <$> query state AllPackages
@@ -92,8 +94,7 @@ asBrowserApp state = do
         (pkgs,mods,decls) <- liftIO $
             do
                query state (PrefixQuery crit)
-        liftIO $ print $ length $ onlyLastVersions pkgs
-        let js = (map toJSON $ onlyLastVersions pkgs) -- ++ (map toJSON $ toList mods) ++ (map toJSON $ toList decls)
+        let js = (map toJSON $ onlyLastVersions pkgs) ++ (map toJSON $ toList mods) ++ (map toJSON $ toList decls)
         json js
 
 getJSONParam ::       FromJSON a =>

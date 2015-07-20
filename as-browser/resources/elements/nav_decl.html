@@ -6,10 +6,10 @@
     <link rel="import" type="css" href="../style/as-browser.css">
 	   <template>
 		     <div title="{{shortDoc(decl)}}" layout horizontal style="white-space: nowrap;">
-           <template is="dom-if" if="{{decl.urls.docurl}}">
+           <template is="dom-if" if="{{hasDoc(decl)}}">
                <a href="{{decl.urls.docurl}}" target="_new"><iron-icon src="{{image(decl)}}" class="small" title="{{docs(decl)}}" alt="Declaration with documentation"></iron-icon></a>
            </template>
-           <template is="dom-if" if="{{!decl.urls.docurl}}">
+           <template is="dom-if" if="{{!hasDoc(decl)}}">
                <iron-icon src="{{image(decl)}}" class="small gray" alt="Declaration without documentation"></iron-icon>
            </template>
 
@@ -26,8 +26,14 @@
             properties: {
                 decl: { type: Object }
             },
+            hasDoc:function(decl){
+              return decl && decl.urls && decl.urls.docurl;
+            },
             docs:function(decl){
-              return "Docs at " + decl.urls.docurl;
+              if (this.hasDoc(decl)){
+               return "Docs at " + decl.urls.docurl;
+              }
+              return "";
             },
             shortDoc:function(decl){
               if (!decl){
@@ -45,17 +51,19 @@
             image:function(decl){
               var s="function_flat";
               var t=decl.type;
-              if (t.startsWith("DeclType") || t.startsWith("DeclData") || t.startsWith("DeclNewType")){
-                s="type_flat";
-              }
-              if (t.startsWith("DeclMethod")){
-                s="method_flat";
-              }
-              if (t.startsWith("DeclInstance")){
-                s="instance_flat";
-              }
-              if (t.startsWith("DeclClass")){
-                s="class_flat";
+              if (typeof t != 'undefined'){
+                if (t.startsWith("DeclType") || t.startsWith("DeclData") || t.startsWith("DeclNewType")){
+                  s="type_flat";
+                }
+                if (t.startsWith("DeclMethod")){
+                  s="method_flat";
+                }
+                if (t.startsWith("DeclInstance")){
+                  s="instance_flat";
+                }
+                if (t.startsWith("DeclClass")){
+                  s="class_flat";
+                }
               }
               return "images/"+s+".png";
             }
