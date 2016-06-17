@@ -11,8 +11,12 @@ import           Language.Haskell.Reload (app)
 spec :: Spec
 spec = with app $ do
   describe "GET /" $ do
-    it "responds with 200 / 'hello'" $ do
-      get "/" `shouldRespondWith` "hello" {matchStatus = 200}
+    it "responds with 200 /" $ do
+      get "/" `shouldRespondWith` 200
+    it "doesn't accept .. " $ do
+      get "/images/../../app/Main.hs" `shouldRespondWith` 404
+    it "doesn't accept absolute " $ do
+      get "//etc/passwd" `shouldRespondWith` 404
 
-    it "has 'Content-Type: text/plain; charset=utf-8'" $ do
-      get "/" `shouldRespondWith` 200 {matchHeaders = ["Content-Type" <:> "text/plain; charset=utf-8"]}
+--    it "has 'Content-Type: text/plain; charset=utf-8'" $ do
+--      get "/" `shouldRespondWith` 200 {matchHeaders = ["Content-Type" <:> "text/plain; charset=utf-8"]}

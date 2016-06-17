@@ -27,8 +27,13 @@ library
                      , containers
                      , mime-types
                      , transformers
+                     , wai-handler-launch
+                     , wai-middleware-static
+                     , wai-extra
+                     , http-types
   default-language:    Haskell2010
   other-modules:       Language.Haskell.Reload.FileBrowser
+  ghc-options:         -Wall -O2
 
 executable reload-exe
   hs-source-dirs:      app

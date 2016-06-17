@@ -56,15 +56,12 @@ instance FromJSON FSItem where
 -- | List all files inside a given directory
 listFiles :: FilePath -> FilePath -> IO [FSItem]
 listFiles root cd = do
-  fs <- getDirectoryContents $ root </> norm
+  fs <- getDirectoryContents $ root </> cd
   let visible = filter (not . ("." `isPrefixOf`) . takeFileName) fs
   sort <$> mapM tofs visible
   where
-    norm = case cd of
-                ('/':r)->r
-                _ -> cd
     tofs fp = do
-      let full = root </> norm </> fp
+      let full = root </> cd </> fp
       isFile <- doesFileExist full
       can <- canonicalizePath full
       let rel=makeRelative root can
