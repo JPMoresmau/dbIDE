@@ -14,17 +14,25 @@
     width: 200%;
     overflow: auto;
   }
+
+  paper-icon-button.file-button {
+     --paper-icon-button: {
+        height: 32px;
+        width: 32px;
+      }
+  }
+
   </style>
 
   <template>
     <iron-ajax id="creationAjax" handle-as="json" on-response="handleCreation" method="PUT"></iron-ajax>
     <iron-ajax id="deletionAjax" handle-as="json" on-response="handleDeletion" method="DELETE"></iron-ajax>
     <app-toolbar>
-      <paper-icon-button id="new_folder" src="/images/folder_new.png" alt="New Folder" on-tap="newFolder"></paper-icon-button>
+      <paper-icon-button id="new_folder" src="/images/folder_new.png" alt="New Folder" on-tap="newFolder" class="file-button"></paper-icon-button>
       <paper-tooltip for="new_folder" offset="0">New Folder</paper-tooltip>
-      <paper-icon-button id="new_file" src="/images/file_new.png" alt="New File" on-tap="newFile"></paper-icon-button>
+      <paper-icon-button id="new_file" src="/images/file_new.png" alt="New File" on-tap="newFile" class="file-button"></paper-icon-button>
       <paper-tooltip for="new_file" offset="0">New File</paper-tooltip>
-      <paper-icon-button id="delete" src="/images/remove.png" alt="Delete" on-tap="deleteFolder" disabled></paper-icon-button>
+      <paper-icon-button id="delete" src="/images/remove.png" alt="Delete" on-tap="deleteFolder" disabled class="file-button"></paper-icon-button>
       <paper-tooltip for="delete" offset="0">Delete Folder</paper-tooltip>
     </app-toolbar>
 

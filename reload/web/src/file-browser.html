@@ -34,7 +34,7 @@
     <div class="drawer-list" role="listbox">
       <template is="dom-repeat" items="{{items}}">
         <div path="{{item.path}}" type="{{item.type}}" expanded="false">
-            <span on-tap="pathSelected" style="white-space: nowrap;"><iron-icon src="{{showIcon(item)}}"></iron-icon>{{showPath(item.path)}}</span>
+            <span on-tap="pathSelected" style="white-space: nowrap;"><img border="0" src="{{showIcon(item)}}" on-error="iconError"></img>{{showPath(item.path)}}</span>
         </div>
       </template>
     </iron-list>
@@ -57,7 +57,7 @@
       },
       pathSelected: function(e){
         var tgt=e.target;
-        if (tgt.localName === "iron-icon"){
+        if (tgt.localName === "iron-icon" || tgt.tagName === "IMG"){
           tgt=tgt.parentNode;
         }
         var a=tgt.parentNode;
@@ -70,11 +70,11 @@
             subF.parent = "/"+a.path;
             d.appendChild(subF);
             a.expanded=true;
-            d.querySelector("iron-icon").src=this.showIcon(a);
+            d.querySelector("img").src=this.showIcon(a);
           } else {
             a.expanded=false;
             d.removeChild(d.childNodes[d.childNodes.length-1]);
-            d.querySelector("iron-icon").src=this.showIcon(a);
+            d.querySelector("img").src=this.showIcon(a);
           }
         } else if (a.type==="file"){
 
@@ -89,12 +89,10 @@
             return "/images/folder.png";
           }
         } else if (item.type==="file"){
-          if ("text/x-cabal"===item.mime){
-            return "/images/cabal.png";
-          } else if ("text/x-haskell"===item.mime){
-            return "/images/hsfile.png";
+          if (item.mime){
+            return "/images/"+item.mime+".png";
           }
-          return "/images/file.png";
+          return "/images/text/plain.png";
         }
         return "";
       },
@@ -104,6 +102,9 @@
       fileSystemChanged: function(e){
         this.items=[];
         this.$.ajax.generateRequest();
+      },
+      iconError:function(e){
+        e.target.src="/images/text/plain.png";
       }
     });
 
