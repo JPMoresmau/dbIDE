@@ -33,7 +33,7 @@
 
     <div class="drawer-list" role="listbox">
       <template is="dom-repeat" items="{{items}}">
-        <div path="{{item.path}}" type="{{item.type}}" expanded="false">
+        <div path="{{item.path}}" type="{{item.type}}" mime="{{item.mime}}" expanded="false">
             <span on-tap="pathSelected" style="white-space: nowrap;"><img border="0" src="{{showIcon(item)}}" on-error="iconError"></img>{{showPath(item.path)}}</span>
         </div>
       </template>
@@ -77,7 +77,7 @@
             d.querySelector("img").src=this.showIcon(a);
           }
         } else if (a.type==="file"){
-
+          this.fire("file-selected",{"path":a.path, "mime": a.mime, "type": a.type});
         }
 
       },

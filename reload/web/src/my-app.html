@@ -22,6 +22,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="my-icons.html">
 <link rel="import" href="file-browser.html">
 <link rel="import" href="file-actions.html">
+<link rel="import" href="file-editor.html">
 
 <dom-module id="my-app">
 
@@ -59,7 +60,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <!-- https://github.com/PolymerElements/app-layout/tree/master/app-drawer -->
         <div style="height:100%;overflow:auto;">
           <file-actions id="fileActions" on-file-system-changed="fileSystemChanged"></file-actions>
-          <file-browser id="fileBrowser" class="drawer-list" parent="/" on-path-selected="pathSelected">
+          <file-browser id="fileBrowser" class="drawer-list" parent="/" on-path-selected="pathSelected" on-file-selected="fileOpened">
           </file-browser>
         </div>
       </app-drawer>
@@ -70,15 +71,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <app-header condenses reveals effects="waterfall">
           <app-toolbar>
             <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
-            <div title>Reload Haskell IDE</div>
+            <div title id="title">Reload Haskell IDE</div>
           </app-toolbar>
         </app-header>
 
-        <iron-pages role="main" selected="[[page]]" attr-for-selected="name">
-          <my-view1 name="view1"></my-view1>
-          <my-view2 name="view2"></my-view2>
-          <my-view3 name="view3"></my-view3>
-        </iron-pages>
+        <file-editor id="editor"></file-editor>
 
       </app-header-layout>
 
@@ -122,6 +119,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       fileSystemChanged: function (e){
         this.$.fileBrowser.fileSystemChanged(e);
       },
+      fileOpened: function(e){
+          this.$.editor.path=e.detail.path;
+          this.$.editor.mime=e.detail.mime;
+          Polymer.dom(this.$.title).innerHTML=e.detail.path;
+      }
 
     });
 
