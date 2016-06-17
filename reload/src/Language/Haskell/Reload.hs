@@ -3,12 +3,11 @@ module Language.Haskell.Reload (runApp, app) where
 
 import Language.Haskell.Reload.FileBrowser
 
-import           Data.Aeson (Value(..), object, (.=))
+import           Data.Aeson (Value(..))
 import           Network.Wai (Application)
 import Network.Wai.Middleware.Static
 import Network.HTTP.Types.Status
 import Web.Scotty
-import Network.Wai.Handler.Launch
 import Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
 import System.Directory
 import Control.Monad
@@ -16,7 +15,6 @@ import Control.Monad.IO.Class
 import System.FilePath
 import qualified Data.ByteString.Lazy as B
 import Data.Text.Lazy (fromStrict)
-import System.IO
 import Data.List (isInfixOf)
 
 app' :: ScottyM ()
@@ -75,14 +73,20 @@ app' = do
       ex <- liftIO $ do
               root <- getCurrentDirectory
               let p = root </> path
-              ex <- doesFileExist p
-              when (not ex) $ do
-                createDirectoryIfMissing True $ takeDirectory p
-              B.writeFile p b
-              return ex
-      if ex
-        then status ok200
-        else status created201
+              exd <- doesDirectoryExist p
+              if exd
+                then
+                  return Nothing
+                else do
+                  ex <- doesFileExist p
+                  when (not ex) $ do
+                    createDirectoryIfMissing True $ takeDirectory p
+                  B.writeFile p b
+                  return $ Just ex
+      case ex of
+        Just True -> status ok200
+        Just False -> status created201
+        Nothing -> status forbidden403
       json Null
   delete (regex "^/file/(.*)$") $ do
     path <- param "1"

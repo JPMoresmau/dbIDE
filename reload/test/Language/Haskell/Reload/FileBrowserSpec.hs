@@ -108,6 +108,8 @@ spec = after cleanUp $ with app $ do
         put "/file/../tempTest/f.txt" "dummy" `shouldRespondWith` 404
     it "doesn't accept absolutes" $ do
         put "/file//tmp/f.txt" "dummy" `shouldRespondWith` 404
+    it "doesn't accept directories" $ do
+        put "/file/test" "dummy" `shouldRespondWith` 403
   describe "DELETE /file" $ do
     it "deletes a file" $ do
       liftIO $ do
