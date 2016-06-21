@@ -36,6 +36,7 @@
 
   <template>
     <iron-ajax id="ajax" url="/file/{{path}}" handle-as="text" on-response="handleResponse"></iron-ajax>
+    <iron-ajax id="ajaxPut" url="/file/{{path}}" handle-as="text" method="PUT"></iron-ajax>
     <div class="card">
         <juicy-ace-editor id="editor" mode$="{{mode}}" softtabs="true" tabsize="2" on-change="textChange">
         </juicy-ace-editor>
@@ -60,15 +61,25 @@
       this.unlisten(this.$.editor, 'change', 'textChange');
       this.$.editor.onChange=function(e){};
       this.$.editor.value="";
-      this.$.ajax.generateRequest();
-      this.$.editor.style.display='block';
+      if (this.path){
+        this.$.ajax.generateRequest();
+        this.$.editor.style.display='block';
+      } else {
+        this.$.editor.style.display='none';
+      }
+
     },
     mimeChanged: function(){
+      this.mode="ace/mode/text";
       var mode=this.mime;
       if (mode.indexOf("haskell")>-1){
         mode="ace/mode/haskell";
       } else if (mode.indexOf("yaml")>-1){
         mode="ace/mode/yaml";
+      } else if (mode.indexOf("json")>-1){
+        mode="ace/mode/json";
+      } else if (this.path && this.path.endsWith(".md")>-1){
+        mode="ace/mode/markdown";
       }
       this.mode=mode;
     },
@@ -82,6 +93,19 @@
     },
     textChange: function(e){
       console.log(e.detail);
+      var ed=this.$.editor;
+      this.$.ajaxPut.body=ed.value;
+      this.$.ajaxPut.generateRequest();
+    },
+    fileOpened: function(e){
+      if (e && e.detail){
+        this.path=e.detail.path;
+        this.mime=e.detail.mime;
+      } else {
+        this.path=null;
+        this.mime="text/plain";
+      }
+
     }
   });
   </script>

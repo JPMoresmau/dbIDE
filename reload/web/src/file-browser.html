@@ -12,7 +12,7 @@
     padding: 0 10px;
     display: block;
     text-decoration: none;
-    color: var(--app-secondary-color);
+    color: var(--app-primary-color);
     cursor: pointer;
     font-size: small;
   }
@@ -61,8 +61,8 @@
           tgt=tgt.parentNode;
         }
         var a=tgt.parentNode;
+        this.fire("path-selected",tgt);
         if (a.type==="dir"){
-          this.fire("path-selected",tgt);
 
           var d=Polymer.dom(a);
           if (!a.expanded){

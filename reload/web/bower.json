@@ -25,7 +25,9 @@
     "paper-dialog": "PolymerElements/paper-dialog#^1.0.4",
     "paper-input": "PolymerElements/paper-input#^1.1.11",
     "juicy-ace-editor": "^1.1.2",
-    "paper-card": "PolymerElements/paper-card#^1.1.1"
+    "paper-card": "PolymerElements/paper-card#^1.1.1",
+    "paper-menu-button": "PolymerElements/paper-menu-button#^1.1.1",
+    "paper-menu": "PolymerElements/paper-menu#^1.2.2"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"

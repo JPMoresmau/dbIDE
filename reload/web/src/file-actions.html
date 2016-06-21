@@ -7,20 +7,30 @@
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
+
 
 <dom-module id="file-actions">
   <style>
-  paper-dialog {
-    width: 200%;
-    overflow: auto;
+  app-toolbar {
+    color: var(--app-primary-color);
   }
 
-  paper-icon-button.file-button {
-     --paper-icon-button: {
-        height: 32px;
-        width: 32px;
-      }
-  }
+    paper-dialog {
+      width: 200%;
+      overflow: auto;
+    }
+
+    paper-icon-button {
+       --paper-icon-button: {
+          height: 32px;
+          width: 32px;
+        }
+
+    }
 
   </style>
 
@@ -28,16 +38,20 @@
     <iron-ajax id="creationAjax" handle-as="json" on-response="handleCreation" method="PUT"></iron-ajax>
     <iron-ajax id="deletionAjax" handle-as="json" on-response="handleDeletion" method="DELETE"></iron-ajax>
     <app-toolbar>
-      <paper-icon-button id="new_folder" src="/images/folder_new.png" alt="New Folder" on-tap="newFolder" class="file-button"></paper-icon-button>
-      <paper-tooltip for="new_folder" offset="0">New Folder</paper-tooltip>
-      <paper-icon-button id="new_file" src="/images/file_new.png" alt="New File" on-tap="newFile" class="file-button"></paper-icon-button>
-      <paper-tooltip for="new_file" offset="0">New File</paper-tooltip>
-      <paper-icon-button id="delete" src="/images/remove.png" alt="Delete" on-tap="deleteFolder" disabled class="file-button"></paper-icon-button>
-      <paper-tooltip for="delete" offset="0">Delete Folder</paper-tooltip>
+      <paper-menu-button>
+        <paper-icon-button id="new_obj" icon="create" alt="New..." class="dropdown-trigger"></paper-icon-button>
+        <paper-menu class="dropdown-content">
+          <paper-icon-item on-tap="newFolder"><iron-icon src="/images/folder_new.png" alt="New Folder..." item-icon></iron-icon>New Folder...</paper-icon-item>
+          <paper-icon-item on-tap="newFile"><iron-icon src="/images/file_new.png" alt="New File..." item-icon></iron-icon>New File...</paper-icon-item>
+        </paper-menu>
+      </paper-menu-button>
+      <paper-tooltip for="new_obj" offset="0">New...</paper-tooltip>
+      <paper-icon-button id="delete" icon="delete" alt="Delete" on-tap="deletePath" disabled></paper-icon-button>
+      <paper-tooltip for="delete" offset="0">Delete...</paper-tooltip>
     </app-toolbar>
 
     <paper-dialog id="new_folder_dialog" on-iron-overlay-closed="folderClosed">
-      <h2>New Folder</h2>
+      <h2><iron-icon src="/images/folder_new.png" alt="New Folder..."></iron-icon>New Folder</h2>
       <paper-input id="new_folder_dialog_path" label="Path"></paper-input>
       <div class="buttons">
         <paper-button dialog-dismiss>Cancel</paper-button>
@@ -46,7 +60,7 @@
     </paper-dialog>
 
     <paper-dialog id="new_file_dialog" on-iron-overlay-closed="fileClosed">
-      <h2>New File</h2>
+      <h2><iron-icon src="/images/file_new.png" alt="New File..." class="file-button"></iron-icon>New File</h2>
       <paper-input id="new_file_dialog_path" label="Path"></paper-input>
       <div class="buttons">
         <paper-button dialog-dismiss>Cancel</paper-button>
@@ -54,9 +68,9 @@
       </div>
     </paper-dialog>
 
-    <paper-dialog id="delete_folder_dialog" on-iron-overlay-closed="folderDeleteClosed">
-      <h2>Delete folder</h2>
-      <paper-dialog-scrollable id="delete_folder_text">
+    <paper-dialog id="delete_dialog" on-iron-overlay-closed="deleteClosed">
+      <h2>Delete</h2>
+      <paper-dialog-scrollable id="delete_text">
       </paper-dialog-scrollable>
       <div class="buttons">
         <paper-button dialog-dismiss>Cancel</paper-button>
@@ -90,10 +104,19 @@
         if (!this.selectedPath){
           return "";
         } else {
+          var path=this.selectedPath.parentNode.path;
           if (add){
-            return this.selectedPath.parentNode.path+"/";
+            if (this.selectedPath.parentNode.type==="file"){
+              var ix=path.lastIndexOf("/");
+              if (ix>-1){
+                path=path.substring(0,ix);
+              } else {
+                path="";
+              }
+            }
+            return path+"/";
           }
-          return this.selectedPath.parentNode.path;
+          return path;
         }
       },
       newFile: function(){
@@ -104,9 +127,9 @@
         this.$.new_folder_dialog_path.value=this.selectedPathName(true);
         this.$.new_folder_dialog.open();
       },
-      deleteFolder: function(){
-        Polymer.dom(this.$.delete_folder_text).innerHTML="Are you sure you want to delete "+this.selectedPathName(false)+"?";
-        this.$.delete_folder_dialog.open();
+      deletePath: function(){
+        Polymer.dom(this.$.delete_text).innerHTML="Are you sure you want to delete <b>"+this.selectedPathName(false)+"</b>?";
+        this.$.delete_dialog.open();
       },
       fileClosed: function(e){
         if (e.detail.confirmed){
@@ -127,11 +150,16 @@
           this.lastCreated=p;
         }
       },
-      folderDeleteClosed: function(e){
+      deleteClosed: function(e){
         if (e.detail.confirmed){
           var aj=this.$.deletionAjax;
           var p=this.selectedPathName(false);
-          aj.url="/files/"+p;
+          if (this.selectedPath.parentNode.type==="file"){
+            aj.url="/file/"+p;
+          } else {
+            aj.url="/files/"+p;
+          }
+
           aj.generateRequest();
           this.lastDeleted=p;
         }
