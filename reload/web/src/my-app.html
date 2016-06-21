@@ -86,6 +86,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <paper-icon-button icon="more-vert" class="dropdown-trigger"></paper-icon-button>
               <paper-menu class="dropdown-content">
                 <paper-icon-item on-tap="closeCurrent"><iron-icon icon="close" alt="Close" item-icon></iron-icon>Close</paper-icon-item>
+                <paper-icon-item on-tap="closeAll"><iron-icon icon="close" alt="Close All" item-icon></iron-icon>Close All</paper-icon-item>
               </paper-menu>
             </paper-menu-button>
           </app-toolbar>
@@ -164,6 +165,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this.$.openedFileActions.disabled=true;
           }
         }
+      },
+      closeAll: function(e){
+        this.openedPaths={};
+        this.currentPath=null;
+        this.splice('openedItems',0,this.openedItems.length);
+        this.$.editor.fileOpened(null);
+        Polymer.dom(this.$.title).innerHTML=this.appTitle;
+        this.$.openedFileActions.disabled=true;
       }
     });
 
