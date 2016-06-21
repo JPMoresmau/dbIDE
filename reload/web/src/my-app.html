@@ -161,6 +161,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this.currentPath=null;
             this.$.editor.fileOpened(null);
             Polymer.dom(this.$.title).innerHTML=this.appTitle;
+            this.$.openedFileActions.disabled=true;
           }
         }
       }
