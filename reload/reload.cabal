@@ -34,8 +34,10 @@ library
                      , websockets
                      , wai-websockets
                      , warp
+                     , ghcid
   default-language:    Haskell2010
   other-modules:       Language.Haskell.Reload.FileBrowser
+                       Language.Haskell.Reload.Build
   ghc-options:         -Wall -O2
 
 executable reload-exe

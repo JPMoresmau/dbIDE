@@ -28,7 +28,8 @@
     "paper-card": "PolymerElements/paper-card#^1.1.1",
     "paper-menu-button": "PolymerElements/paper-menu-button#^1.1.1",
     "paper-menu": "PolymerElements/paper-menu#^1.2.2",
-    "x-websocket": "mdrmtz/x-websocket#^1.0.3"
+    "x-websocket": "mdrmtz/x-websocket#^1.0.3",
+    "paper-badge": "PolymerElements/paper-badge#^1.1.2"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"

@@ -91,6 +91,7 @@
       ed.editor.clearSelection( );
       ed.editor.moveCursorTo(0,0);
       ed.editor.focus();
+      this.setDetails();
       this.listen(this.$.editor, 'change', 'textChange');
     },
     textChange: function(e){
@@ -101,13 +102,29 @@
     },
     fileOpened: function(e){
       if (e && e.detail){
+        this.details=e.detail.details;
+        if (e.detail.path==this.path){
+          this.setDetails();
+        }
         this.path=e.detail.path;
         this.mime=e.detail.mime;
+
       } else {
+        this.details=null;
         this.path=null;
         this.mime="text/plain";
       }
 
+    },
+    setDetails(){
+      if (this.details){
+        if (this.details.line){
+          var ed=this.$.editor;
+          ed.editor.clearSelection( );
+          ed.editor.scrollToLine(this.details.line-1,true,true);
+          ed.editor.moveCursorTo(this.details.line-1,this.details.column-1);
+        }
+      }
     }
   });
   </script>

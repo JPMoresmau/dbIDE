@@ -19,6 +19,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-menu-button/paper-menu-button.html">
+<link rel="import" href="../bower_components/paper-menu/paper-menu.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
@@ -83,7 +85,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               </paper-menu>
             </paper-menu-button>
             <div title id="title">[[appTitle]]</div>
-            <build-status></build-status>
+            <build-status on-file-selected="fileOpened"></build-status>
             <paper-menu-button id="openedFileActions" disabled horizontal-align="right">
               <paper-icon-button icon="more-vert" class="dropdown-trigger"></paper-icon-button>
               <paper-menu class="dropdown-content">
