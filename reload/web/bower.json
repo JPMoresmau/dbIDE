@@ -27,7 +27,8 @@
     "juicy-ace-editor": "^1.1.2",
     "paper-card": "PolymerElements/paper-card#^1.1.1",
     "paper-menu-button": "PolymerElements/paper-menu-button#^1.1.1",
-    "paper-menu": "PolymerElements/paper-menu#^1.2.2"
+    "paper-menu": "PolymerElements/paper-menu#^1.2.2",
+    "x-websocket": "mdrmtz/x-websocket#^1.0.3"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"

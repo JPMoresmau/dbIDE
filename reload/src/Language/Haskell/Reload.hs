@@ -3,19 +3,26 @@ module Language.Haskell.Reload (runApp, app) where
 
 import Language.Haskell.Reload.FileBrowser
 
-import           Data.Aeson (Value(..))
-import           Network.Wai (Application)
+import           Data.Aeson (Value(..),object,(.=),encode)
+import           Network.Wai
+import           Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Static
 import Network.HTTP.Types.Status
 import Web.Scotty
 import Network.Wai.Middleware.RequestLogger (logStdout, logStdoutDev)
 import System.Directory
+import Control.Exception (finally)
 import Control.Monad
 import Control.Monad.IO.Class
 import System.FilePath
 import qualified Data.ByteString.Lazy as B
 import Data.Text.Lazy (fromStrict)
 import Data.List (isInfixOf)
+import Data.Text (Text)
+
+import Network.Wai.Handler.WebSockets
+import Network.WebSockets
+import Control.Concurrent (MVar, newEmptyMVar, readMVar)
 
 app' :: ScottyM ()
 app' = do
@@ -112,7 +119,25 @@ checkPath path f = do
     else f
 
 app :: IO Application
-app = scottyApp app'
+app = do
+  sco <- scottyApp app'
+  buildResult <- newEmptyMVar
+  return $ websocketsOr defaultConnectionOptions (wsApp buildResult) sco
+
+wsApp :: (MVar Value) -> ServerApp
+wsApp buildResult pending_conn = do
+    conn <- acceptRequest pending_conn
+    forkPingThread conn 30
+    forever $ sendBuild conn
+  where
+    sendBuild conn = do
+      v <- readMVar buildResult
+      sendTextData conn (encode v)
+
+
 
 runApp :: Int -> IO ()
-runApp port = scotty port app'
+runApp port = do --scotty port app
+    let setts = setPort port defaultSettings
+    putStrLn $ "Serving on http://localhost:" ++(show port)
+    runSettings setts =<< app

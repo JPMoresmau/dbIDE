@@ -26,6 +26,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="file-browser.html">
 <link rel="import" href="file-actions.html">
 <link rel="import" href="file-editor.html">
+<link rel="import" href="build-status.html">
 
 <dom-module id="my-app">
 
@@ -82,6 +83,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               </paper-menu>
             </paper-menu-button>
             <div title id="title">[[appTitle]]</div>
+            <build-status></build-status>
             <paper-menu-button id="openedFileActions" disabled horizontal-align="right">
               <paper-icon-button icon="more-vert" class="dropdown-trigger"></paper-icon-button>
               <paper-menu class="dropdown-content">

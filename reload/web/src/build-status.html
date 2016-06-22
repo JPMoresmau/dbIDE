@@ -1,0 +1,24 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/x-websocket/x-websocket.html">
+
+<dom-module id="build-status">
+  <template>
+    <x-websocket id="xws" url="ws://localhost:8081/" on-message="messageReceived" json="true"></x-websocket>
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'build-status',
+      messageReceived: function(e){
+        console.log(e.detail.data);
+      },
+      ready: function(){
+        var xws = this.$.xws;
+        xws.open();
+      }
+    });
+
+  </script>
+
+</dom-module>

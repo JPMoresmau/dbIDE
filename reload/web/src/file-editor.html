@@ -74,6 +74,8 @@
       var mode=this.mime;
       if (mode.indexOf("haskell")>-1){
         mode="ace/mode/haskell";
+      } else if (mode.indexOf("cabal")>-1){
+        mode="ace/mode/haskell_cabal";
       } else if (mode.indexOf("yaml")>-1){
         mode="ace/mode/yaml";
       } else if (mode.indexOf("json")>-1){
