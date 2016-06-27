@@ -51,6 +51,8 @@
     Polymer({
 
       is: 'build-status',
+      properties: {
+      },
       messageReceived: function(e){
         var loads=e.detail.data;
         this.$.xws.send("OK");
@@ -74,12 +76,19 @@
                   st={"mime":load.mime,"messages":[]};
                   this.status[path]=st;
                 }
-                st.messages.push({"severity":load.severity,"line":load.line,"column":load.column,"message":load.message})
+
+                if (load.message.length>1){
+                  if (load.message[0].indexOf(path)>-1){
+                    load.message.splice(0,1);
+                  }
+                }
+                st.messages.push({"severity":load.severity,"line":load.line,"column":load.column,"message":load.message});
               } else {
                 this.status[path]={"module":load.module,"mime":load.mime,"messages":[]};
               }
             }
           }
+          this.fire("status-changed",this.status);
           var errs=[];
           var warns=[];
           for (var p in this.status){
@@ -118,11 +127,7 @@
         var msgs=item.details.message;
         var l=item.details.line;
         var c=item.details.column;
-        if (msgs.length>1){
-          if (msgs[0].indexOf(p)>-1){
-            msgs=msgs.splice(1,msgs.length);
-          }
-        }
+
         var s=p;
         if (l){
           s+=":"+l;
@@ -131,7 +136,7 @@
           s+=":"+c;
         }
         if (msgs.length>0){
-          s+=msgs.join(" ");
+          s+=msgs.join(" ").trim();
         }
         return s;
       },

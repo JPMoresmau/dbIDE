@@ -85,7 +85,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               </paper-menu>
             </paper-menu-button>
             <div title id="title">[[appTitle]]</div>
-            <build-status on-file-selected="fileOpened"></build-status>
+            <build-status on-file-selected="fileOpened" on-status-changed="statusChanged"></build-status>
             <paper-menu-button id="openedFileActions" disabled horizontal-align="right">
               <paper-icon-button icon="more-vert" class="dropdown-trigger"></paper-icon-button>
               <paper-menu class="dropdown-content">
@@ -177,6 +177,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.editor.fileOpened(null);
         Polymer.dom(this.$.title).innerHTML=this.appTitle;
         this.$.openedFileActions.disabled=true;
+      },
+      statusChanged: function(e){
+        this.$.editor.statusChanged(e);
       }
     });
 

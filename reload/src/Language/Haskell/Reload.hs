@@ -135,7 +135,7 @@ wsApp buildResult pending_conn = do
         b::B.ByteString <- receiveData conn
         when ("\"OK\""== b) $ sendBuild conn
        ) (\(e::ConnectionException) -> do
-        tryPutMVar buildResult v
+        void $ tryPutMVar buildResult v
         throw e
         )
 
